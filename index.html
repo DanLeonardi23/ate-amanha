@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Até Amanhã — Sobrevivência</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="supabase.min.js"></script>
+  <script src="config.js"></script>
+</head>
+<body>
+
+  <!-- ===================== TELA DE LOGIN ===================== -->
+  <div id="tela-login" class="tela ativa">
+    <div class="login-container">
+
+      <div class="logo-wrapper">
+        <img src="img/logoAteAmanha.png" alt="Até Amanhã" class="logo-jogo" />
+      </div>
+
+      <div class="login-doc">
+        <div class="login-header">
+          <span class="login-label">SISTEMA DE AUTENTICAÇÃO</span>
+          <span class="login-sublabel">AUTORIDADE CIVIL DE EMERGÊNCIA — REDE SEGURA</span>
+        </div>
+
+        <div class="login-corpo">
+          <div class="login-campo">
+            <label class="login-campo-label" for="login-email">IDENTIFICAÇÃO (E-MAIL)</label>
+            <input type="email" id="login-email" class="login-input" placeholder="sobrevivente@zona.br" autocomplete="email" />
+          </div>
+          <div class="login-campo">
+            <label class="login-campo-label" for="login-senha">SENHA DE ACESSO</label>
+            <input type="password" id="login-senha" class="login-input" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+
+          <p id="login-erro" class="login-erro oculto">—</p>
+
+          <div class="login-acoes">
+            <button id="btn-login" class="btn-primario login-btn">▶ ENTRAR</button>
+            <button id="btn-registrar" class="btn-secundario login-btn">+ REGISTRAR</button>
+          </div>
+          <p class="login-acesso-info">Acesso mediante convite. Entre em contato com o administrador.</p>
+        </div>
+
+        <div class="login-footer">
+          <button id="btn-offline" class="login-offline-btn">Jogar sem conta (salvo localmente)</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== TELA DE INTRO ===================== -->
+  <div id="tela-intro" class="tela">
+    <div class="intro-container">
+
+      <div class="intro-linhas" aria-hidden="true">
+        <span class="intro-linha-deco">— — — — — — — — — — — — — — —</span>
+      </div>
+
+      <div id="intro-paragrafos" class="intro-paragrafos"></div>
+
+      <div id="intro-encerramento" class="intro-encerramento oculto">
+        <span class="intro-frase-final">Sua história começa agora.</span>
+        <button id="btn-intro-continuar" class="btn-primario intro-btn-continuar">▶ COMEÇAR</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== TELA DE CRIAÇÃO ===================== -->
+  <div id="tela-criacao" class="tela ativa">
+    <div class="criacao-container">
+
+      <!-- Logo acima do documento -->
+      <div class="logo-wrapper">
+        <img src="img/logoAteAmanha.png" alt="Até Amanhã" class="logo-jogo" />
+      </div>
+      <p class="subtitulo">Ano 2031. O colapso foi total. Você é um dos poucos que ainda respira.</p>
+
+      <!-- ══ DOCUMENTO ══ -->
+      <div class="doc-carteira">
+
+        <!-- Ruído de desgaste (decorativo) -->
+        <div class="doc-desgaste" aria-hidden="true"></div>
+
+        <!-- Cabeçalho do documento -->
+        <div class="doc-header">
+          <span class="doc-brasao" aria-hidden="true">✦</span>
+          <div class="doc-header-texto">
+            <span class="doc-autoridade">AUTORIDADE CIVIL DE EMERGÊNCIA</span>
+            <span class="doc-jurisdicao">ZONA DE CONTROLE — SETOR NORDESTE / A.C.E.</span>
+          </div>
+          <div class="doc-header-deco" aria-hidden="true">◈</div>
+        </div>
+
+        <!-- Corpo: foto + campos -->
+        <div class="doc-corpo">
+
+          <!-- Coluna esquerda: foto -->
+          <div class="doc-foto-col">
+            <div class="doc-foto-moldura">
+              <img id="carousel-img" src="img/chars/char01.png" alt="Avatar" class="doc-foto-img trocando" />
+              <div class="doc-foto-scan" aria-hidden="true"></div>
+            </div>
+            <div class="doc-foto-nav">
+              <button class="doc-seta" id="carousel-prev" aria-label="Anterior">◀</button>
+              <span id="carousel-num" class="doc-foto-num">01 / 12</span>
+              <button class="doc-seta" id="carousel-next" aria-label="Próximo">▶</button>
+            </div>
+            <span class="doc-foto-label">FOTO DO TITULAR</span>
+          </div>
+
+          <!-- Coluna direita: campos -->
+          <div class="doc-campos-col">
+
+            <div class="doc-campo">
+              <label class="doc-campo-label" for="input-nome">NOME COMPLETO</label>
+              <input type="text" id="input-nome" class="doc-campo-input"
+                     placeholder="________________" maxlength="20" autocomplete="off" spellcheck="false" />
+            </div>
+
+            <div class="doc-campo">
+              <span class="doc-campo-label">TRAÇO PSICOLÓGICO</span>
+              <div class="doc-tracos-inline">
+                <button class="traco-chip selecionado" data-traco="resistente">💪 Resistente</button>
+                <button class="traco-chip" data-traco="ansioso">😰 Ansioso</button>
+                <button class="traco-chip" data-traco="economico">🧠 Econômico</button>
+                <button class="traco-chip" data-traco="medico">🩹 Ex-Médico</button>
+              </div>
+              <span class="doc-traco-desc" id="doc-traco-desc">Vida máxima +20%. Perde vida mais devagar em situações críticas.</span>
+            </div>
+
+            <div class="doc-linha-dupla">
+              <div class="doc-campo">
+                <span class="doc-campo-label">Nº REGISTRO</span>
+                <span class="doc-campo-valor doc-rg" id="doc-rg-num">ACE-2031-????</span>
+              </div>
+              <div class="doc-campo">
+                <span class="doc-campo-label">VALIDADE</span>
+                <span class="doc-campo-valor">INDETERMINADA</span>
+              </div>
+            </div>
+
+            <div class="doc-linha-dupla">
+              <div class="doc-campo">
+                <span class="doc-campo-label">SETOR DE ORIGEM</span>
+                <span class="doc-campo-valor doc-redacted">██████████</span>
+              </div>
+              <div class="doc-campo">
+                <span class="doc-campo-label">CLASSIFICAÇÃO</span>
+                <span class="doc-campo-valor doc-redacted">███</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Rodapé do documento -->
+        <div class="doc-footer">
+          <span class="doc-footer-titulo">CARTEIRA DE SOBREVIVENTE</span>
+        </div>
+
+      </div><!-- fim doc-carteira -->
+
+      <button id="btn-comecar" class="btn-primario doc-btn-comecar">▶ SOBREVIVER</button>
+
+    </div><!-- fim criacao-container -->
+  </div>
+
+  <!-- ===================== TELA PRINCIPAL ===================== -->
+  <div id="tela-jogo" class="tela">
+
+    <!-- HEADER -->
+    <header class="game-header">
+      <div class="header-acoes">
+        <span id="hdr-usuario" class="hdr-usuario oculto"></span>
+        <button class="btn-ico" id="btn-salvar" title="Salvar">💾</button>
+        <button class="btn-ico" id="btn-reset" title="Reiniciar">🔄</button>
+        <button class="btn-ico" id="btn-logout" title="Sair da conta" style="display:none">🚪</button>
+      </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL: 3 colunas -->
+    <main class="game-main">
+
+      <!-- ══ COL ESQUERDA: PERSONAGEM + STATUS ══ -->
+      <section class="col col-esquerda">
+
+        <div class="personagem-card">
+          <!-- Display estilo terminal para o avatar -->
+          <div class="avatar-display">
+            <div class="avatar-display-label">
+              <span class="avatar-display-label-txt">ID · SOBREVIVENTE</span>
+            </div>
+            <div class="avatar-display-tela">
+              <div class="avatar-bg" id="avatar-bg"></div>
+              <div id="hdr-avatar" class="pc-avatar"></div>
+            </div>
+            <div class="avatar-display-rodape">
+              <span id="hdr-nome" class="pc-nome">—</span>
+              <span id="hdr-traco" class="pc-traco">—</span>
+              <div class="tatica-icons">
+                <button class="tatica-icon ativa" data-tatica="furtivo" title="Furtivo — menos risco, mais recuperação de estresse">🐾</button>
+                <button class="tatica-icon" data-tatica="oportunista" title="Oportunista — risco e loot equilibrados">⚡</button>
+                <button class="tatica-icon" data-tatica="agressivo" title="Agressivo — +30% loot, +50% eventos negativos">🔥</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avatar-dia-relogio">
+          <span id="hdr-dia" class="hdr-dia">Dia 1</span>
+          <div id="relogio" class="relogio">
+            <span id="relogio-fase" class="relogio-fase">☀</span>
+            <span id="relogio-hora" class="relogio-hora">06:00</span>
+            <div class="relogio-progresso-bg">
+              <div id="relogio-progresso" class="relogio-progresso-fill relogio-progresso-dia"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-bloco">
+          <h3 class="sec-titulo">STATUS</h3>
+          <div class="status-lista">
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-icone">❤️</span><span>Vida</span>
+                <span id="val-vida" class="status-val">100</span>
+              </div>
+              <div class="barra-bg"><div id="barra-vida" class="barra barra-vida" style="width:100%"></div></div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-icone">🍖</span><span>Fome</span>
+                <span id="val-fome" class="status-val">0</span>
+              </div>
+              <div class="barra-bg"><div id="barra-fome" class="barra barra-fome" style="width:0%"></div></div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-icone">💧</span><span>Sede</span>
+                <span id="val-sede" class="status-val">0</span>
+              </div>
+              <div class="barra-bg"><div id="barra-sede" class="barra barra-sede" style="width:0%"></div></div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-icone">😤</span><span>Estresse</span>
+                <span id="val-estresse" class="status-val">0</span>
+              </div>
+              <div class="barra-bg"><div id="barra-estresse" class="barra barra-estresse" style="width:0%"></div></div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">
+                <span class="status-icone">💊</span><span>Vício</span>
+                <span id="val-vicio" class="status-val">0</span>
+              </div>
+              <div class="barra-bg"><div id="barra-vicio" class="barra barra-vicio" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div id="avisos-status" class="avisos-status"></div>
+        </div>
+
+        <!-- Equipamento ativo -->
+        <div id="equip-resumo-bloco" class="equip-resumo-bloco" style="display:none">
+          <h3 class="sec-titulo">EQUIPADO</h3>
+          <div id="equip-resumo" class="equip-resumo"></div>
+        </div>
+
+      </section>
+
+      <!-- ══ COL CENTRO: LOG + ABAS ══ -->
+      <section class="col col-centro">
+
+        <!-- Log de eventos — sempre visível no topo -->
+        <div class="sec-bloco sec-log">
+          <div class="log-display">
+            <div class="log-label">
+              <span class="log-label-txt">TERMINAL · REGISTRO DE EVENTOS</span>
+            </div>
+            <div id="log-eventos" class="log-eventos">
+              <p class="log-item log-sistema">_ Sistema inicializado. Boa sorte.</p>
+            </div>
+          </div>
+          <nav class="abas-nav">
+            <button class="aba-btn ativa" data-aba="base">Base</button>
+            <button class="aba-btn" data-aba="locais">Locais</button>
+            <button class="aba-btn" data-aba="mercado">Mercado</button>
+            <button class="aba-btn" data-aba="bazar" id="aba-btn-bazar">Bazar</button>
+          </nav>
+        </div>
+
+        <!-- Abas -->
+        <div class="abas-wrapper">
+
+          <!-- ── ABA: BASE ── -->
+          <div class="aba-conteudo ativa" id="aba-base">
+
+            <!-- MAPA VISUAL DA BASE -->
+            <div class="base-mapa-wrapper">
+              <div class="base-mapa-label">ACAMPAMENTO · ZONA SEGURA</div>
+              <div class="base-mapa" id="base-mapa">
+
+                <!-- Linha 1: Abrigo + Bancada -->
+                <div class="base-slot slot-abrigo construida" data-pos="abrigo">
+                  <span class="slot-icone">⛺</span>
+                  <span class="slot-nome">Abrigo</span>
+                  <span class="slot-sub">Nível 1 · Ativo</span>
+                </div>
+
+                <div class="base-slot slot-bancada"
+                     data-id="bancada" data-painel="bancada"
+                     data-nome="Bancada de Trabalho"
+                     data-custo='{"sucata":8,"pano":3}'>
+                  <span class="slot-icone">🔨</span>
+                  <span class="slot-nome">Bancada</span>
+                  <span class="slot-sub slot-custo">8🔩 · 3🧻</span>
+                  <span class="slot-desc">Crafting avançado de ferramentas e armas.</span>
+                </div>
+
+                <!-- Linha 2: Fogueira + Cisterna -->
+                <div class="base-slot slot-fogueira"
+                     data-id="fogueira" data-painel="fogueira"
+                     data-nome="Fogueira"
+                     data-custo='{"madeira":5,"pilha":1}'>
+                  <span class="slot-icone">🔥</span>
+                  <span class="slot-nome">Fogueira</span>
+                  <span class="slot-sub slot-custo">5🪵 · 1🔋</span>
+                  <span class="slot-desc">Cozinhe alimentos para melhorar seus efeitos.</span>
+                </div>
+
+                <div class="base-slot slot-cisterna"
+                     data-id="cisterna" data-painel="cisterna"
+                     data-nome="Cisterna"
+                     data-custo='{"madeira":5,"pano":2,"arame":2}'>
+                  <span class="slot-icone">🪣</span>
+                  <span class="slot-nome">Cisterna</span>
+                  <span class="slot-sub slot-custo">5🪵 · 2🧻 · 2〰️</span>
+                  <span class="slot-desc">Acumula água da chuva. Potencializada pelo Filtro.</span>
+                </div>
+
+                <!-- Linha 3: Filtro + Depósito -->
+                <div class="base-slot slot-filtro"
+                     data-id="filtro"
+                     data-nome="Filtro de Água"
+                     data-requer="bancada"
+                     data-custo='{"sucata":4,"pano":3,"arame":1}'>
+                  <span class="slot-icone">🧪</span>
+                  <span class="slot-nome">Filtro</span>
+                  <span class="slot-sub slot-custo">4🔩 · 3🧻 · 1〰️</span>
+                  <span class="slot-desc">Purifica água suja. Melhora output da Cisterna.</span>
+                </div>
+
+                <div class="base-slot slot-deposito" id="mapa-slot-deposito" data-painel="deposito">
+                  <span class="slot-icone">📦</span>
+                  <span class="slot-nome">Depósito</span>
+                  <span class="slot-sub" id="mapa-deposito-nivel">Não construído</span>
+                  <span class="slot-desc">Armazena itens fora da mochila.</span>
+                </div>
+
+                <!-- Linha 4: Segurança (span full) -->
+                <div class="base-slot slot-seguranca"
+                     data-id="seguranca" data-painel="seguranca"
+                     data-nome="Segurança"
+                     data-requer="bancada"
+                     data-custo='{"armadilha":2}'>
+                  <span class="slot-icone">🪤</span>
+                  <span class="slot-nome">Segurança</span>
+                  <span class="slot-sub slot-custo">2🪤 · requer Bancada</span>
+                  <span class="slot-desc">Instale armadilhas e defesas perimetrais para proteger a base.</span>
+                </div>
+
+              </div><!-- fim base-mapa -->
+            </div><!-- fim base-mapa-wrapper -->
+
+            <!-- Tooltip de construção (slot não construído) -->
+            <div id="base-tooltip" class="base-tooltip oculto">
+              <span class="base-tooltip-nome" id="btt-nome">—</span>
+              <span class="base-tooltip-desc" id="btt-desc">—</span>
+              <span class="base-tooltip-custo" id="btt-custo">—</span>
+              <div class="base-tooltip-acoes">
+                <button class="btn-primario btn-sm" id="btt-btn-construir">Construir</button>
+                <button class="btn-secundario btn-sm" id="btt-btn-fechar">✕</button>
+              </div>
+            </div>
+
+            <!-- Seções das estruturas construídas (ocultas até serem construídas) -->
+            <div id="sec-fogueira" class="sec-bloco sec-estrutura oculto">
+              <h3 class="sec-titulo">🔥 FOGUEIRA</h3>
+              <div id="painel-fogueira"></div>
+            </div>
+
+            <div id="sec-bancada" class="sec-bloco sec-estrutura oculto">
+              <h3 class="sec-titulo">🔨 BANCADA</h3>
+              <div id="painel-bancada"></div>
+            </div>
+
+            <div id="sec-cisterna" class="sec-bloco sec-estrutura oculto">
+              <h3 class="sec-titulo">🪣 CISTERNA</h3>
+              <div id="painel-cisterna"></div>
+            </div>
+
+            <div class="sec-bloco">
+              <h3 class="sec-titulo">RECEITAS</h3>
+              <div id="lista-receitas" class="lista-receitas"></div>
+            </div>
+
+            <div class="sec-bloco">
+              <h3 class="sec-titulo">DEPÓSITO</h3>
+              <div id="deposito-painel"><!-- renderizado via JS --></div>
+            </div>
+
+            <div id="sec-seguranca" class="sec-bloco sec-estrutura oculto">
+              <h3 class="sec-titulo">🪤 SEGURANÇA</h3>
+              <div id="painel-seguranca"></div>
+            </div>
+
+            <div class="sec-bloco">
+              <h3 class="sec-titulo">DEFESA</h3>
+              <div class="defesa-painel">
+
+                <div class="defesa-stat">
+                  <div class="status-label">
+                    <span>Nível de segurança</span>
+                    <span id="val-seguranca" class="status-val">Crítico</span>
+                  </div>
+                  <div class="barra-bg">
+                    <div class="barra" id="barra-seguranca" style="width:5%;background:var(--red-l)"></div>
+                  </div>
+                </div>
+
+                <div class="defesa-stat">
+                  <div class="status-label">
+                    <span>Chance de saque esta noite</span>
+                    <span id="val-chance-saque" class="status-val defesa-alerta">—</span>
+                  </div>
+                </div>
+
+                <div id="defesa-estruturas" class="defesa-estruturas">
+                  <!-- populado via JS -->
+                </div>
+
+                <p class="defesa-dica" id="defesa-dica-txt">
+                  Sem proteção. Qualquer grupo de pilhadores pode invadir à noite.
+                </p>
+
+                <div id="ultimo-saque" class="ultimo-saque oculto">
+                  <span class="ultimo-saque-label">Último ataque</span>
+                  <span id="ultimo-saque-txt" class="ultimo-saque-desc">—</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div><!-- fim aba base -->
+
+          <!-- ── ABA: LOCAIS ── -->
+          <div class="aba-conteudo" id="aba-locais">
+
+            <!-- Status de exploração em andamento -->
+            <div id="painel-exploracao" class="painel-exploracao oculto">
+
+              <!-- Fase e destino -->
+              <div class="exp-cabecalho">
+                <span id="exp-fase-icone" class="exp-fase-icone">🚶</span>
+                <div class="exp-cabecalho-info">
+                  <span id="exp-zona-txt" class="exp-zona-txt">Indo para...</span>
+                  <span id="exp-fase-txt" class="exp-fase-txt">Indo ao local</span>
+                </div>
+                <span id="exp-timer-txt" class="exp-timer">10s</span>
+              </div>
+
+              <!-- Barra de jornada -->
+              <div class="exp-jornada">
+                <!-- Ponto de origem: base -->
+                <div class="exp-ponto exp-ponto-origem">
+                  <img src="img/locais/local00.png" alt="Base" class="exp-destino-img" />
+                </div>
+
+                <!-- Trilha com ícone móvel -->
+                <div class="exp-trilha-wrap">
+                  <div class="exp-trilha-bg">
+                    <div id="exp-trilha-fill" class="exp-trilha-fill"></div>
+                  </div>
+                  <img
+                    id="exp-personagem"
+                    src="img/icons/busca01.png"
+                    alt="Personagem"
+                    class="exp-personagem"
+                    style="left: 0%"
+                  />
+                  <img id="exp-lupa" src="img/icons/lupa.png" alt="Buscando" class="exp-lupa" style="left: 0%" />
+                </div>
+
+                <!-- Ponto de destino: local -->
+                <div class="exp-ponto exp-ponto-destino">
+                  <img id="exp-destino-img" src="" alt="Local" class="exp-destino-img" />
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Setor 1 -->
+            <div class="setor">
+              <h3 class="setor-titulo">
+                <span class="setor-num">Setor 01</span>
+                <span class="setor-nome">Zona Residencial</span>
+              </h3>
+              <div class="locais-grid">
+
+                <!-- Local 1 — Ruínas 10s · desbloqueado -->
+                <div class="local-card"
+                     data-local-id="ruinas"
+                     data-zona="ruinas" data-duracao="10" data-perigo="baixo">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local01.png" alt="Ruínas Residenciais" class="local-img" />
+                    <span class="local-perigo perigo-baixo">Baixo risco</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">Ruínas Residenciais</span>
+                    <span class="local-tempo">⏱ 10s</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario"
+                    data-zona="ruinas" data-duracao="10" data-perigo="baixo">Explorar</button>
+                </div>
+
+                <!-- Local 2 — Posto 15s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="posto"
+                     data-zona="posto" data-duracao="15" data-perigo="medio"
+                     data-anotacao="anotacao_posto">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local05.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+                <!-- Local 3 — Mercado 20s · desbloqueado -->
+                <div class="local-card"
+                     data-local-id="mercado"
+                     data-zona="mercado" data-duracao="20" data-perigo="medio">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local02.png" alt="Mercado Abandonado" class="local-img" />
+                    <span class="local-perigo perigo-medio">Médio risco</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">Mercado Abandonado</span>
+                    <span class="local-tempo">⏱ 20s</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario"
+                    data-zona="mercado" data-duracao="20" data-perigo="medio">Explorar</button>
+                </div>
+
+                <!-- Local 4 — Floresta 25s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="floresta"
+                     data-zona="floresta" data-duracao="25" data-perigo="medio"
+                     data-anotacao="anotacao_floresta">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local04.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+                <!-- Local 5 — Hospital 30s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="hospital"
+                     data-zona="hospital" data-duracao="30" data-perigo="alto"
+                     data-anotacao="anotacao_hospital">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local03.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Setor 2 — Zona Industrial -->
+            <div class="setor">
+              <h3 class="setor-titulo">
+                <span class="setor-num">Setor 02</span>
+                <span class="setor-nome">Zona Industrial</span>
+              </h3>
+              <div class="locais-grid">
+
+                <!-- Depósito Logístico 45s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="deposito_logistico"
+                     data-zona="deposito_logistico" data-duracao="45" data-perigo="medio"
+                     data-anotacao="anotacao_deposito">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local06.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+                <!-- Garagem Industrial 55s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="garagem"
+                     data-zona="garagem" data-duracao="55" data-perigo="medio"
+                     data-anotacao="anotacao_garagem">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local07.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+                <!-- Fábrica Têxtil 65s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="fabrica_textil"
+                     data-zona="fabrica_textil" data-duracao="65" data-perigo="medio"
+                     data-anotacao="anotacao_fabrica">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local08.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+                <!-- Subestação Elétrica 75s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="subestacao"
+                     data-zona="subestacao" data-duracao="75" data-perigo="alto"
+                     data-anotacao="anotacao_subestacao">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local09.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-alto">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+                <!-- Silo de Grãos 85s · bloqueado por anotação -->
+                <div class="local-card local-bloqueado"
+                     data-local-id="silo"
+                     data-zona="silo" data-duracao="85" data-perigo="medio"
+                     data-anotacao="anotacao_silo">
+                  <div class="local-img-wrap">
+                    <img src="img/locais/local10.png" alt="???" class="local-img local-img-blur" />
+                    <span class="local-perigo perigo-bloqueado">🔒 Bloqueado</span>
+                  </div>
+                  <div class="local-info">
+                    <span class="local-nome">???</span>
+                    <span class="local-tempo local-dica-anotacao">Encontre a anotação para revelar</span>
+                  </div>
+                  <button class="btn-explorar-local btn-primario" disabled>Bloqueado</button>
+                </div>
+
+              </div>
+            </div>
+
+          </div><!-- fim aba locais -->
+
+          <!-- ── ABA: MERCADO ── -->
+          <div class="aba-conteudo" id="aba-mercado">
+
+            <!-- Cabeçalho do mercado -->
+            <div class="mercado-header">
+              <div class="mercado-header-info">
+                <h3 class="mercado-titulo">🏷️ Loja Geral</h3>
+                <p class="mercado-subtitulo">Itens rotacionam a cada dia. Pague com Pilhas Velhas.</p>
+              </div>
+              <div class="mercado-saldo">
+                <span class="mercado-saldo-label">Saldo</span>
+                <span id="mercado-saldo-val" class="mercado-saldo-num">0 🔋</span>
+              </div>
+            </div>
+
+            <!-- Renovação + fator de venda do dia -->
+            <div class="mercado-renovacao">
+              <span class="mercado-renovacao-txt" id="mercado-renovacao-txt">Renova no próximo dia</span>
+              <span class="mercado-fator-venda" id="mercado-fator-venda"></span>
+            </div>
+
+            <!-- Grid de itens à venda -->
+            <div id="mercado-itens" class="mercado-itens">
+              <!-- populado via JS -->
+            </div>
+
+            <!-- Aviso sem estoque -->
+            <p id="mercado-vazio" class="inventario-vazio oculto">
+              Loja fechada. Volta amanhã.
+            </p>
+
+            <!-- Seção: vender itens -->
+            <div class="mercado-secao-titulo">
+              <span>💰 Vender Itens</span>
+            </div>
+            <div id="mercado-venda" class="mercado-itens"></div>
+            <p id="mercado-venda-vazio" class="inventario-vazio oculto">
+              Nada para vender. Explore para encontrar itens.
+            </p>
+
+            <!-- Separador futuro: lojas de jogadores -->
+            <div class="mercado-secao-titulo">
+              <span>🔒 Lojas de Sobreviventes</span>
+              <span class="mercado-em-breve">Em breve</span>
+            </div>
+            <p class="mercado-em-breve-desc">
+              Quando o servidor abrir, outros sobreviventes poderão montar suas bancas aqui.
+            </p>
+
+          </div><!-- fim aba mercado -->
+
+          <!-- ── ABA: BAZAR ── -->
+          <div class="aba-conteudo" id="aba-bazar">
+
+            <div class="bazar-header sec-bloco">
+              <div class="bazar-titulo-linha">
+                <h3 class="sec-titulo">BAZAR · SOBREVIVENTES</h3>
+                <span id="bazar-status" class="bazar-status">⚫ offline</span>
+              </div>
+              <p class="bazar-descricao">Troque itens com outros sobreviventes. Moeda: Pilhas Velhas 🔋</p>
+              <div class="bazar-saldo-linha">
+                <span class="bazar-saldo-label">Seu saldo:</span>
+                <span id="bazar-saldo" class="bazar-saldo-val">0 🔋</span>
+                <span id="bazar-pendente" class="bazar-pendente oculto"></span>
+              </div>
+            </div>
+
+            <!-- Anunciar item -->
+            <div class="sec-bloco" id="bazar-anunciar-bloco">
+              <h4 class="sec-titulo">ANUNCIAR ITEM</h4>
+              <div class="bazar-form">
+                <select id="bazar-sel-item" class="bazar-select">
+                  <option value="">— escolha um item —</option>
+                </select>
+                <div class="bazar-form-linha">
+                  <div class="bazar-form-campo">
+                    <label class="bazar-label">QTD</label>
+                    <input type="number" id="bazar-inp-qtd" class="bazar-input" min="1" value="1" />
+                  </div>
+                  <div class="bazar-form-campo">
+                    <label class="bazar-label">PREÇO (🔋)</label>
+                    <input type="number" id="bazar-inp-preco" class="bazar-input" min="1" value="5" />
+                  </div>
+                  <button id="bazar-btn-anunciar" class="btn-primario">Anunciar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seus anúncios ativos -->
+            <div class="sec-bloco" id="bazar-meus-anuncios-bloco">
+              <h4 class="sec-titulo">SEUS ANÚNCIOS</h4>
+              <div id="bazar-meus-anuncios">
+                <p class="bazar-vazio">Nenhum anúncio ativo.</p>
+              </div>
+            </div>
+
+            <!-- Anúncios de outros jogadores -->
+            <div class="sec-bloco">
+              <div class="bazar-titulo-linha">
+                <h4 class="sec-titulo">DISPONÍVEL</h4>
+                <button id="bazar-btn-atualizar" class="btn-secundario bazar-btn-sm">↻ Atualizar</button>
+              </div>
+              <div id="bazar-listagem">
+                <p class="bazar-vazio">Carregando anúncios...</p>
+              </div>
+            </div>
+
+          </div><!-- fim aba bazar -->
+
+        </div><!-- fim abas-wrapper -->
+      </section>
+
+      <!-- ══ COL DIREITA: MOCHILA ══ -->
+      <section class="col col-direita">
+        <div class="sec-bloco sec-mochila">
+          <h3 class="sec-titulo">
+            MOCHILA
+            <span id="cap-inventario" class="cap-info">0/10</span>
+          </h3>
+          <p class="mochila-dica">Clique num item e depois em outro para combinar.</p>
+          <div id="lista-inventario" class="lista-inventario"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast oculto"></div>
+
+    <!-- MODAL DE EVENTO COM ESCOLHA -->
+    <div id="modal-evento" class="modal modal-evento oculto">
+      <div class="modal-conteudo ev-conteudo">
+        <div class="ev-header">
+          <span class="ev-label">⚠ EVENTO</span>
+          <h3 id="ev-titulo" class="ev-titulo">—</h3>
+        </div>
+        <p id="ev-desc" class="ev-desc">—</p>
+        <div id="ev-escolhas" class="ev-escolhas"></div>
+        <p id="ev-resultado" class="ev-resultado oculto">—</p>
+      </div>
+    </div>
+
+    <!-- MODAL DE ITEM -->
+    <div id="modal-item" class="modal oculto">
+      <div class="modal-conteudo">
+        <h3 id="modal-item-nome">Item</h3>
+        <p id="modal-item-desc">Descrição do item.</p>
+        <div class="modal-acoes">
+          <button id="modal-btn-usar" class="btn-primario">Usar</button>
+          <div id="modal-guardar-grupo" class="modal-guardar-grupo oculto">
+            <input id="modal-qtd-guardar" class="modal-qtd-input" type="number" min="1" value="1" />
+            <button id="modal-btn-guardar" class="btn-secundario">Guardar</button>
+          </div>
+          <button id="modal-btn-excluir" class="btn-perigo">Descartar</button>
+          <button id="modal-btn-fechar" class="btn-secundario">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- fim tela-jogo -->
+
+  <!-- ===================== TELA GAME OVER ===================== -->
+  <div id="tela-gameover" class="tela go-tela">
+
+    <div class="go-container">
+
+      <!-- Cabeçalho sangrado -->
+      <div class="go-header">
+        <span class="go-linha-topo" aria-hidden="true">— — — — — — — — — —</span>
+        <p class="go-label-morte">REGISTRO DE ÓBITO</p>
+        <p class="go-titulo">VOCÊ NÃO SOBREVIVEU</p>
+        <span class="go-linha-topo" aria-hidden="true">— — — — — — — — — —</span>
+      </div>
+
+      <!-- Corpo: avatar + causa -->
+      <div class="go-corpo">
+
+        <div class="go-avatar-col">
+          <div class="go-avatar-moldura">
+            <div id="go-avatar" class="go-avatar"></div>
+            <div class="go-avatar-scan" aria-hidden="true"></div>
+          </div>
+          <span class="go-avatar-label">IDENTIFICADO</span>
+          <span id="go-nome" class="go-nome">—</span>
+        </div>
+
+        <div class="go-causa-col">
+          <span class="go-campo-label">CAUSA MORTIS</span>
+          <span id="go-causa" class="go-causa-valor">—</span>
+          <p id="go-causa-desc" class="go-causa-desc">—</p>
+
+          <div class="go-sep" aria-hidden="true"></div>
+
+          <span class="go-campo-label">RELATÓRIO DE SOBREVIVÊNCIA</span>
+          <div class="go-stats">
+            <div class="go-stat-item">
+              <span class="go-stat-icone">📅</span>
+              <span class="go-stat-label">Dias sobrevividos</span>
+              <span id="go-dias" class="go-stat-val">0</span>
+            </div>
+            <div class="go-stat-item">
+              <span class="go-stat-icone">🧭</span>
+              <span class="go-stat-label">Explorações concluídas</span>
+              <span id="go-exploracoes" class="go-stat-val">0</span>
+            </div>
+            <div class="go-stat-item">
+              <span class="go-stat-icone">⚗️</span>
+              <span class="go-stat-label">Itens fabricados</span>
+              <span id="go-crafts" class="go-stat-val">0</span>
+            </div>
+            <div class="go-stat-item">
+              <span class="go-stat-icone">🏗️</span>
+              <span class="go-stat-label">Estruturas construídas</span>
+              <span id="go-construcoes" class="go-stat-val">0</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- fim go-corpo -->
+
+      <!-- Rodapé -->
+      <div class="go-footer">
+        <p id="go-nota" class="go-nota">—</p>
+        <button id="btn-tentar-novamente" class="btn-primario go-btn-restart" onclick="location.reload()">
+          ▶ TENTAR NOVAMENTE
+        </button>
+      </div>
+
+    </div><!-- fim go-container -->
+
+  </div><!-- fim tela-gameover -->
+
+  <script src="script.js"></script>
+</body>
+</html>
