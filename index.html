@@ -173,9 +173,14 @@
   <div id="tela-jogo" class="tela">
 
     <!-- HEADER -->
+    <!-- Áudio de fundo -->
+    <audio id="audio-dia"   src="sound/dia.mp3"   loop preload="auto"></audio>
+    <audio id="audio-noite" src="sound/noite.mp3" loop preload="auto"></audio>
+
     <header class="game-header">
       <div class="header-acoes">
         <span id="hdr-usuario" class="hdr-usuario oculto"></span>
+        <button class="btn-ico" id="btn-som" title="Alternar som">🔊</button>
         <button class="btn-ico" id="btn-salvar" title="Salvar">💾</button>
         <button class="btn-ico" id="btn-reset" title="Reiniciar">🔄</button>
         <button class="btn-ico" id="btn-logout" title="Sair da conta" style="display:none">🚪</button>

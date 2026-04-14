@@ -2514,6 +2514,7 @@ function atualizarRelogio() {
     tela.classList.toggle('fase-noite', fase === 'noite');
     tela.classList.toggle('fase-dia',   fase === 'dia');
   }
+  audio.tocarFase(fase);
 }
 
 /** Chamado no início da noite. */
@@ -3995,6 +3996,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   mostrarTela('tela-intro');
   mostrarIntro(() => {
     mostrarTela('tela-jogo');
+    audio.iniciar();
 
     log(`${nome} acorda em um campo aberto. Sem proteção. Sem abrigo.`, 'log-alerta');
     log(`Traço: ${td.icone} ${td.nome} — ${td.desc}`, 'log-sistema');
@@ -4074,6 +4076,82 @@ function aplicarProgressoOffline(segundos) {
 // ============================================================
 // INICIALIZAR UI
 // ============================================================
+
+// ============================================================
+// SISTEMA DE ÁUDIO
+// ============================================================
+
+const audio = {
+  dia:   null,
+  noite: null,
+  mudo:  localStorage.getItem('atéamanha_mudo') === 'true',
+  faseAtual: null,
+  iniciado: false,
+
+  init() {
+    this.dia   = document.getElementById('audio-dia');
+    this.noite = document.getElementById('audio-noite');
+    if (!this.dia || !this.noite) return;
+    this.dia.volume   = 0;
+    this.noite.volume = 0;
+    this._atualizarBotao();
+  },
+
+  // Chamado na primeira interação do usuário
+  iniciar() {
+    if (this.iniciado || !this.dia) return;
+    this.iniciado = true;
+    this.tocarFase(this.faseAtual || 'dia');
+  },
+
+  tocarFase(fase) {
+    this.faseAtual = fase;
+    if (!this.iniciado || !this.dia) return;
+
+    const entrando = fase === 'dia' ? this.dia   : this.noite;
+    const saindo   = fase === 'dia' ? this.noite : this.dia;
+
+    if (entrando.paused) {
+      entrando.currentTime = 0;
+      entrando.play().catch(() => {});
+    }
+
+    this._fade(saindo,   entrando.volume > 0 ? 0.3 : 0, 0,   3000);
+    this._fade(entrando, 0, this.mudo ? 0 : 0.3, 3000);
+  },
+
+  alternarMudo() {
+    this.mudo = !this.mudo;
+    localStorage.setItem('atéamanha_mudo', this.mudo);
+    const vol = this.mudo ? 0 : 0.3;
+    const ativo = this.faseAtual === 'noite' ? this.noite : this.dia;
+    if (ativo) this._fade(ativo, ativo.volume, vol, 800);
+    this._atualizarBotao();
+  },
+
+  _atualizarBotao() {
+    const btn = document.getElementById('btn-som');
+    if (btn) btn.textContent = this.mudo ? '🔇' : '🔊';
+  },
+
+  _fade(el, de, ate, ms) {
+    if (!el) return;
+    clearInterval(el._fadeTimer);
+    el.volume = Math.max(0, Math.min(1, de));
+    const passos = 30;
+    const intervalo = ms / passos;
+    const delta = (ate - de) / passos;
+    let passo = 0;
+    el._fadeTimer = setInterval(() => {
+      passo++;
+      el.volume = Math.max(0, Math.min(1, de + delta * passo));
+      if (passo >= passos) {
+        clearInterval(el._fadeTimer);
+        if (ate === 0 && !el.paused) el.pause();
+      }
+    }, intervalo);
+  }
+};
 
 function inicializarUI() {
   // ── Abas ──
@@ -4172,6 +4250,8 @@ function inicializarUI() {
   });
 
   // ── Salvar / Reset ──
+  document.getElementById('btn-som')?.addEventListener('click', () => audio.alternarMudo());
+
   document.getElementById('btn-salvar').addEventListener('click', () => {
     salvarJogo();
     mostrarToast('💾 Jogo salvo.');
@@ -4571,6 +4651,7 @@ function aplicarDadosSave(s) {
 
 // Restaura toda a UI após carregar um save
 function restaurarUIJogo() {
+  audio.iniciar();
   const p  = estado.personagem;
   const td = TRACOS[p.traco];
   const avatarElR = document.getElementById('hdr-avatar');
@@ -4600,6 +4681,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   inicializarUI();
   inicializarLogin();
   inicializarBazar();
+  audio.init();
 
   const sb      = getSB();
   const session = sb ? await sbGetSession() : null;
