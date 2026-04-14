@@ -2591,7 +2591,7 @@ html, body {
 }
 
 .ev-conteudo {
-  width: min(520px, 94vw);
+  width: min(640px, 96vw);
   background: #0a100a;
   border: 1px solid var(--accent-d);
   padding: 0;
@@ -2615,18 +2615,18 @@ html, body {
 }
 
 .ev-titulo {
-  font-size: 1rem;
+  font-size: 1.15rem;
   letter-spacing: .12em;
   color: var(--accent-l);
   font-weight: 700;
 }
 
 .ev-desc {
-  padding: 14px 18px;
-  font-size: .84rem;
+  padding: 16px 20px;
+  font-size: .97rem;
   color: var(--text-sec);
   font-family: var(--font-body);
-  line-height: 1.55;
+  line-height: 1.65;
   border-bottom: 1px solid var(--border);
 }
 
@@ -2641,13 +2641,13 @@ html, body {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 12px 18px;
+  padding: 14px 20px;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border);
   color: var(--text-pri);
   font-family: var(--font-mono);
-  font-size: .8rem;
+  font-size: .92rem;
   text-align: left;
   cursor: pointer;
   transition: background var(--trans);
@@ -2697,14 +2697,36 @@ html, body {
 }
 
 .ev-resultado {
-  padding: 16px 18px;
-  font-size: .85rem;
+  padding: 20px 24px 8px;
+  font-size: 1rem;
   color: var(--accent);
   font-family: var(--font-body);
-  line-height: 1.5;
+  line-height: 1.65;
   text-align: center;
   font-style: italic;
   min-height: 52px;
+}
+
+.ev-fechar-wrap {
+  padding: 12px 20px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.ev-btn-fechar {
+  padding: 8px 32px;
+  background: transparent;
+  border: 1px solid var(--accent-d);
+  color: var(--accent-l);
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  letter-spacing: .12em;
+  cursor: pointer;
+  transition: background var(--trans);
+}
+
+.ev-btn-fechar:hover {
+  background: rgba(42,170,42,.1);
 }
 
 /* ============================================================

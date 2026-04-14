@@ -3713,6 +3713,7 @@ function dispararEventoEscolha() {
 
   // Esconder resultado anterior, mostrar escolhas
   document.getElementById('ev-resultado').classList.add('oculto');
+  document.getElementById('ev-fechar-wrap').classList.add('oculto');
   document.getElementById('ev-escolhas').classList.remove('oculto');
   document.getElementById('modal-evento').classList.remove('oculto');
 }
@@ -3771,13 +3772,17 @@ function resolverEscolha(eventoId, escolhaIdx) {
 
   log(`⚡ ${ev.titulo}: ${result.msg}`, 'log-alerta');
 
-  // Fechar modal e retomar exploração após 2.5s
-  setTimeout(() => {
+  // Mostrar botão de fechar para o jogador ler o resultado com calma
+  const fecharWrap = document.getElementById('ev-fechar-wrap');
+  const fecharBtn  = document.getElementById('ev-btn-fechar');
+  fecharWrap.classList.remove('oculto');
+  fecharBtn.onclick = () => {
+    fecharWrap.classList.add('oculto');
     document.getElementById('modal-evento').classList.add('oculto');
     if (estado.stats.vida <= 0) { gameOver(); return; }
     estado.exploracao.eventoAtivo = null;
     estado.exploracao.timer = setInterval(tickExploracao, 1000);
-  }, 2500);
+  };
 }
 
 // ============================================================
