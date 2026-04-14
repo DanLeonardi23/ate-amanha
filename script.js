@@ -4101,7 +4101,20 @@ const audio = {
   iniciar() {
     if (this.iniciado || !this.dia) return;
     this.iniciado = true;
-    this.tocarFase(this.faseAtual || 'dia');
+    const fase = this.faseAtual || 'dia';
+    const el   = fase === 'noite' ? this.noite : this.dia;
+    el.volume  = 0;
+    const p = el.play();
+    if (p !== undefined) {
+      p.then(() => {
+        // Autoplay permitido — fade in
+        this._fade(el, 0, this.mudo ? 0 : 0.3, 2000);
+      }).catch(() => {
+        // Autoplay bloqueado — aguardar próximo clique do usuário
+        this.iniciado = false;
+        document.addEventListener('click', () => this.iniciar(), { once: true });
+      });
+    }
   },
 
   tocarFase(fase) {
@@ -4111,13 +4124,16 @@ const audio = {
     const entrando = fase === 'dia' ? this.dia   : this.noite;
     const saindo   = fase === 'dia' ? this.noite : this.dia;
 
+    // Iniciar faixa que está entrando
     if (entrando.paused) {
+      entrando.volume = 0;
       entrando.currentTime = 0;
       entrando.play().catch(() => {});
     }
 
-    this._fade(saindo,   entrando.volume > 0 ? 0.3 : 0, 0,   3000);
-    this._fade(entrando, 0, this.mudo ? 0 : 0.3, 3000);
+    // Crossfade
+    this._fade(saindo,   saindo.volume,   0,                    3000);
+    this._fade(entrando, entrando.volume, this.mudo ? 0 : 0.3,  3000);
   },
 
   alternarMudo() {
