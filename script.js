@@ -3833,6 +3833,18 @@ function gameOver() {
     `<img src="img/chars/char${n}.png" alt="Avatar" class="go-avatar-img" />`;
 
   mostrarTela('tela-gameover');
+
+  document.getElementById('btn-tentar-novamente').onclick = async () => {
+    // Limpar save local e na nuvem — personagem morreu, começa do zero
+    localStorage.removeItem('atéamanha_save');
+    if (_sbUser) {
+      const sb = getSB();
+      if (sb) await sb.from('saves').delete().eq('user_id', _sbUser.id);
+    }
+    clearInterval(estado.loop);
+    estado.criado = false;
+    mostrarIntro(() => mostrarTela('tela-criacao'));
+  };
 }
 
 // ============================================================
