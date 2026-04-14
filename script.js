@@ -1963,7 +1963,11 @@ function tentarConstruir(card) {
   if (id === 'bancada') estado.temBancada = true;
   estado.placar.construcoes++;
 
-  log(`✅ ${nome} construída!`, 'log-sucesso');
+  if (id === 'abrigo') {
+    log(`⛺ Abrigo erguido! Agora você tem um lugar para se proteger. Construa o resto da base.`, 'log-sucesso');
+  } else {
+    log(`✅ ${nome} construída!`, 'log-sucesso');
+  }
   mostrarToast(`✅ ${nome} construída!`);
   renderizarBase();
   renderizarCrafting();
@@ -2019,11 +2023,20 @@ function renderizarBase() {
   // Atualizar indicador do depósito no mapa
   const dep = estado.deposito;
   const nivelEl = document.getElementById('mapa-deposito-nivel');
+  const slotDep = document.getElementById('mapa-slot-deposito');
+  const abrigoOk = baseTemEstrutura('abrigo');
   if (nivelEl) {
-    if (dep.nivel === 0) nivelEl.textContent = 'Não construído';
-    else nivelEl.textContent = `Nível ${dep.nivel} · ${dep.itens.length}/${capacidadeDeposito()} slots`;
-    const slotDep = document.getElementById('mapa-slot-deposito');
-    if (slotDep) slotDep.classList.toggle('construida', dep.nivel > 0);
+    if (dep.nivel > 0) {
+      nivelEl.textContent = `Nível ${dep.nivel} · ${dep.itens.length}/${capacidadeDeposito()} slots`;
+    } else if (!abrigoOk) {
+      nivelEl.textContent = '🔒 Requer Abrigo';
+    } else {
+      nivelEl.textContent = 'Não construído';
+    }
+  }
+  if (slotDep) {
+    slotDep.classList.toggle('construida', dep.nivel > 0);
+    slotDep.classList.toggle('bloqueada', !abrigoOk && dep.nivel === 0);
   }
 
   // Atualizar indicador de segurança no mapa
@@ -2256,6 +2269,11 @@ function capacidadeDeposito() {
 }
 
 function construirOuUpgradeDeposito() {
+  if (!baseTemEstrutura('abrigo')) {
+    mostrarToast('⚒️ Requer: Abrigo');
+    log('Construa o Abrigo primeiro antes de erguer o Depósito.', 'log-alerta');
+    return;
+  }
   const nivelAtual = estado.deposito.nivel;
   const proximoNivel = nivelAtual + 1;
   if (proximoNivel > 5) return;
@@ -3973,8 +3991,9 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   mostrarIntro(() => {
     mostrarTela('tela-jogo');
 
-    log(`${nome} acorda em um abrigo improvisado. O silêncio é pesado.`, 'log-alerta');
+    log(`${nome} acorda em um campo aberto. Sem proteção. Sem abrigo.`, 'log-alerta');
     log(`Traço: ${td.icone} ${td.nome} — ${td.desc}`, 'log-sistema');
+    log('⛺ Prioridade: construa o Abrigo (5🔩 · 5🪵 · 5🧻) antes de qualquer outra coisa.', 'log-info');
     log('Dica: na mochila, clique num item e depois em outro para combinar.', 'log-info');
 
     atualizarUI();
@@ -4096,6 +4115,7 @@ function inicializarUI() {
 
   // Slot do depósito no mapa
   document.getElementById('mapa-slot-deposito')?.addEventListener('click', () => {
+    if (!baseTemEstrutura('abrigo') && estado.deposito.nivel === 0) return;
     abrirPainelBase('deposito');
   });
 

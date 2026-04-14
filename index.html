@@ -304,15 +304,20 @@
               <div class="base-mapa" id="base-mapa">
 
                 <!-- Linha 1: Abrigo + Bancada -->
-                <div class="base-slot slot-abrigo construida" data-pos="abrigo">
+                <div class="base-slot slot-abrigo"
+                     data-id="abrigo"
+                     data-nome="Abrigo"
+                     data-custo='{"sucata":5,"madeira":5,"pano":5}'>
                   <span class="slot-icone">⛺</span>
                   <span class="slot-nome">Abrigo</span>
-                  <span class="slot-sub">Nível 1 · Ativo</span>
+                  <span class="slot-sub slot-custo">5🔩 · 5🪵 · 5🧻</span>
+                  <span class="slot-desc">Protege do frio e dos perigos. Base de tudo.</span>
                 </div>
 
                 <div class="base-slot slot-bancada"
                      data-id="bancada" data-painel="bancada"
                      data-nome="Bancada de Trabalho"
+                     data-requer="abrigo"
                      data-custo='{"sucata":8,"pano":3}'>
                   <span class="slot-icone">🔨</span>
                   <span class="slot-nome">Bancada</span>
@@ -324,6 +329,7 @@
                 <div class="base-slot slot-fogueira"
                      data-id="fogueira" data-painel="fogueira"
                      data-nome="Fogueira"
+                     data-requer="abrigo"
                      data-custo='{"madeira":5,"pilha":1}'>
                   <span class="slot-icone">🔥</span>
                   <span class="slot-nome">Fogueira</span>
@@ -334,6 +340,7 @@
                 <div class="base-slot slot-cisterna"
                      data-id="cisterna" data-painel="cisterna"
                      data-nome="Cisterna"
+                     data-requer="abrigo"
                      data-custo='{"madeira":5,"pano":2,"arame":2}'>
                   <span class="slot-icone">🪣</span>
                   <span class="slot-nome">Cisterna</span>
