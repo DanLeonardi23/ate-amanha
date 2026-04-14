@@ -3843,7 +3843,7 @@ function gameOver() {
     }
     clearInterval(estado.loop);
     estado.criado = false;
-    mostrarIntro(() => mostrarTela('tela-criacao'));
+    mostrarTela('tela-criacao');
   };
 }
 
@@ -3964,25 +3964,30 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   document.getElementById('hdr-dia').textContent   = 'Dia 1';
   atualizarRelogio();
 
-  mostrarTela('tela-jogo');
-
-  log(`${nome} acorda em um abrigo improvisado. O silêncio é pesado.`, 'log-alerta');
-  log(`Traço: ${td.icone} ${td.nome} — ${td.desc}`, 'log-sistema');
-  log('Dica: na mochila, clique num item e depois em outro para combinar.', 'log-info');
-
-  atualizarUI();
-  renderizarInventario();
-  renderizarCrafting();
-  renderizarBase();
-  renderizarLocais();
-  renderizarEquipamento();
-  renderizarEquipResumo();
-  verificarMercado();
-  renderizarMercado();
-  iniciarLoop();
   salvarJogo();
   // Garantir que o save inicial chegue à nuvem antes de o jogador navegar
   if (_sbUser) await sbSalvar(montarDadosSave());
+
+  // Mostrar intro depois da criação, depois iniciar o jogo
+  mostrarTela('tela-intro');
+  mostrarIntro(() => {
+    mostrarTela('tela-jogo');
+
+    log(`${nome} acorda em um abrigo improvisado. O silêncio é pesado.`, 'log-alerta');
+    log(`Traço: ${td.icone} ${td.nome} — ${td.desc}`, 'log-sistema');
+    log('Dica: na mochila, clique num item e depois em outro para combinar.', 'log-info');
+
+    atualizarUI();
+    renderizarInventario();
+    renderizarCrafting();
+    renderizarBase();
+    renderizarLocais();
+    renderizarEquipamento();
+    renderizarEquipResumo();
+    verificarMercado();
+    renderizarMercado();
+    iniciarLoop();
+  });
 }
 
 // ============================================================
@@ -4437,8 +4442,7 @@ async function entrarComSave(user) {
     if (saveNuvem.pilhas_pendentes > 0) aplicarPilhasPendentes(saveNuvem);
     log(`${saveNuvem.personagem.nome} acorda novamente. A luta continua.`, 'log-alerta');
   } else {
-    mostrarTela('tela-intro');
-    mostrarIntro(() => mostrarTela('tela-criacao'));
+    mostrarTela('tela-criacao');
   }
 }
 
@@ -4484,8 +4488,7 @@ function inicializarLogin() {
       restaurarUIJogo();
       log(`${estado.personagem.nome} acorda novamente. A luta continua.`, 'log-alerta');
     } else {
-      mostrarTela('tela-intro');
-      mostrarIntro(() => mostrarTela('tela-criacao'));
+      mostrarTela('tela-criacao');
     }
   });
 
@@ -4590,9 +4593,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if ((saveNuvem.pilhas_pendentes || 0) > 0) aplicarPilhasPendentes(saveNuvem);
       log(`${saveNuvem.personagem.nome} acorda novamente. A luta continua.`, 'log-alerta');
     } else {
-      // Conta sem save — intro → criação
-      mostrarTela('tela-intro');
-      mostrarIntro(() => mostrarTela('tela-criacao'));
+      // Conta sem save — criação direta
+      mostrarTela('tela-criacao');
     }
   } else if (!sb) {
     // Sem Supabase configurado — ir direto para localStorage
@@ -4602,8 +4604,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       restaurarUIJogo();
       log(`${estado.personagem.nome} acorda novamente. A luta continua.`, 'log-alerta');
     } else {
-      mostrarTela('tela-intro');
-      mostrarIntro(() => mostrarTela('tela-criacao'));
+      mostrarTela('tela-criacao');
     }
   }
   // else: Supabase configurado mas sem sessão → tela-login já está ativa
