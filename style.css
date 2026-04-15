@@ -682,11 +682,11 @@ html, body {
   transform: scale(1.01);
 }
 .avatar-bg::before {
-  background-image: url('img/bg/bgdia.png');
+  background-image: url('https://qoqmthdhmewivwgiehcn.supabase.co/storage/v1/object/public/imgs/bgdia.png');
   opacity: 1;
 }
 .avatar-bg::after {
-  background-image: url('img/bg/bgnoite.png');
+  background-image: url('https://qoqmthdhmewivwgiehcn.supabase.co/storage/v1/object/public/imgs/bgnoite.png');
   opacity: 0;
 }
 .fase-noite .avatar-bg::before { opacity: 0; }
