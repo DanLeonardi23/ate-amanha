@@ -2192,10 +2192,25 @@ function wirePainelBancada() {
 
 // ── Cisterna ──
 function htmlPainelCisterna() {
-  const acum       = estado.cisterna.aguaAcumulada;
-  const filtroAtivo = baseTemEstrutura('filtro');
-  const tipoNome   = filtroAtivo ? 'Água Limpa' : 'Água Suja';
-  const tipoIcone  = filtroAtivo ? '💧' : '🪣';
+  const acum        = estado.cisterna.aguaAcumulada;
+  const filtroOk    = baseTemEstrutura('filtro') && estado.filtroInstalado.diasRestantes > 0;
+  const diasRestantes = estado.filtroInstalado.diasRestantes;
+  const tipoNome    = filtroOk ? '💧 Água Limpa' : '🪣 Água Suja';
+  const temFiltroInv = temItem('filtro', 1);
+
+  let filtroStatus = '';
+  if (!baseTemEstrutura('filtro')) {
+    filtroStatus = '<p class="painel-cist-info">⚠ Construa o Filtro na base para purificar a água.</p>';
+  } else if (diasRestantes > 0) {
+    filtroStatus = `<p class="painel-cist-info">🧪 Filtro ativo · ${diasRestantes} dia(s) restante(s). Coletando água limpa.</p>`;
+  } else {
+    filtroStatus = `<p class="painel-cist-info">⚠ Sem filtro instalado. Coletando água suja.
+      ${temFiltroInv
+        ? '<br><button class="btn-secundario btn-sm btn-instalar-filtro">🧪 Instalar Filtro</button>'
+        : '<br><span style="color:var(--text-dim);font-size:.8rem">Crie um Filtro de Água na Bancada para instalar.</span>'}
+    </p>`;
+  }
+
   return `<div class="painel-cisterna">
     <div class="defesa-stat">
       <div class="status-label">
@@ -2204,7 +2219,7 @@ function htmlPainelCisterna() {
       </div>
       <div class="barra-bg"><div class="barra barra-sede" style="width:${acum / 5 * 100}%"></div></div>
     </div>
-    <p class="painel-cist-info">${tipoIcone} Coleta ~1 unidade por minuto. ${filtroAtivo ? 'Filtro ativo: água coletada é limpa.' : 'Construa um Filtro para coletar água limpa.'}</p>
+    ${filtroStatus}
     <button class="btn-primario btn-sm btn-coletar-cisterna" ${acum > 0 ? '' : 'disabled style="opacity:.45"'}>
       ${acum > 0 ? `Coletar ${acum}× ${tipoNome}` : 'Cisterna vazia'}
     </button>
@@ -2214,11 +2229,22 @@ function wirePainelCisterna() {
   document.querySelector('#painel-cisterna .btn-coletar-cisterna')?.addEventListener('click', () => {
     const qtd = estado.cisterna.aguaAcumulada;
     if (qtd <= 0) return;
-    const itemId = baseTemEstrutura('filtro') ? 'agua_limpa' : 'agua_suja';
+    const filtroOk = baseTemEstrutura('filtro') && estado.filtroInstalado.diasRestantes > 0;
+    const itemId   = filtroOk ? 'agua_limpa' : 'agua_suja';
     adicionarItem(ITENS[itemId], qtd);
     estado.cisterna.aguaAcumulada = 0;
     log(`🪣 Coletou ${qtd}× ${ITENS[itemId].nome} da cisterna.`, 'log-sucesso');
     mostrarToast(`${qtd}× ${ITENS[itemId].icone} coletados`);
+    salvarJogo(); abrirPainelBase('cisterna');
+  });
+
+  document.querySelector('#painel-cisterna .btn-instalar-filtro')?.addEventListener('click', () => {
+    if (!temItem('filtro', 1)) { mostrarToast('Sem filtro no inventário.'); return; }
+    removerItem('filtro', 1);
+    const dias = randInt(1, 3);
+    estado.filtroInstalado.diasRestantes = dias;
+    log(`🧪 Filtro instalado! Durará ${dias} dia(s).`, 'log-sucesso');
+    mostrarToast(`🧪 Filtro instalado · ${dias} dia(s)`);
     salvarJogo(); abrirPainelBase('cisterna');
   });
 }
@@ -2533,6 +2559,19 @@ function avancarDia() {
   estado.dia++;
   document.getElementById('hdr-dia').textContent = `Dia ${estado.dia}`;
   log(`☀ Dia ${estado.dia}. Você sobreviveu mais uma noite.`, 'log-alerta');
+
+  // Desgastar filtro instalado
+  if (estado.filtroInstalado.diasRestantes > 0) {
+    estado.filtroInstalado.diasRestantes--;
+    if (estado.filtroInstalado.diasRestantes === 0) {
+      log('🧪 O filtro de água se esgotou. A cisterna voltará a coletar água suja.', 'log-alerta');
+      mostrarToast('🧪 Filtro esgotado!');
+    } else {
+      log(`🧪 Filtro com ${estado.filtroInstalado.diasRestantes} dia(s) restante(s).`, 'log-sistema');
+    }
+    renderizarBase();
+  }
+
   verificarMercado();
   processarSaqueNoturno();
 }
@@ -3966,6 +4005,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.tatica             = 'furtivo';
   estado.deposito           = { nivel: 0, itens: [] };
   estado.cisterna           = { aguaAcumulada: 0 };
+  estado.filtroInstalado    = { diasRestantes: 0 };
   estado.seguranca          = { armadilhasInstaladas: 0 };
   estado.locaisDesbloqueados = [];
   estado.exploracoesZona    = {};
@@ -4040,7 +4080,7 @@ function montarDadosSave() {
     personagem: estado.personagem, stats: estado.stats, inventario: estado.inventario,
     receitasAprendidas: estado.receitasAprendidas, temBancada: estado.temBancada,
     base: estado.base, tatica: estado.tatica, deposito: estado.deposito,
-    cisterna: estado.cisterna, seguranca: estado.seguranca,
+    cisterna: estado.cisterna, filtroInstalado: estado.filtroInstalado, seguranca: estado.seguranca,
     locaisDesbloqueados: estado.locaisDesbloqueados, capInventario: estado.capInventario,
     exploracoesZona: estado.exploracoesZona, respawnTicks: estado.respawnTicks,
     ultimoSaque: estado.ultimoSaque, mercado: estado.mercado,
@@ -4696,6 +4736,7 @@ function aplicarDadosSave(s) {
   estado.tatica             = s.tatica             || 'furtivo';
   estado.deposito           = s.deposito           || { nivel: 0, itens: [] };
   estado.cisterna           = s.cisterna           || { aguaAcumulada: 0 };
+  estado.filtroInstalado    = s.filtroInstalado    || { diasRestantes: 0 };
   estado.seguranca          = s.seguranca          || { armadilhasInstaladas: 0 };
   estado.locaisDesbloqueados = s.locaisDesbloqueados || [];
   estado.capInventario      = s.capInventario      || 10;
