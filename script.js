@@ -1347,9 +1347,15 @@ function sortearPorPeso(lista) {
 function log(msg, classe = 'log-sistema') {
   const el = document.getElementById('log-eventos');
   const p  = document.createElement('p');
-  p.className   = `log-item ${classe}`;
-  const h = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-  p.textContent = `${h} > ${msg}`;
+  p.className = `log-item ${classe}`;
+  let prefixo = '';
+  if (estado.criado) {
+    const { hora, min } = getFase();
+    const hStr = String(hora).padStart(2, '0');
+    const mStr = String(min).padStart(2, '0');
+    prefixo = `D${estado.dia} ${hStr}:${mStr} › `;
+  }
+  p.textContent = `${prefixo}${msg}`;
   el.prepend(p);
   while (el.children.length > 80) el.removeChild(el.lastChild);
 }
