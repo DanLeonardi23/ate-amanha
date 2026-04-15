@@ -3336,6 +3336,35 @@ html, body {
   text-align: center;
 }
 
+.barraca-vendedor {
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.barraca-vendedor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: rgba(42,170,42,.06);
+  border-bottom: 1px solid var(--border);
+}
+
+.barraca-vendedor-ico {
+  font-size: 1rem;
+}
+
+.barraca-vendedor-nome {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  color: var(--accent-l);
+}
+
+.barraca-vendedor-itens {
+  padding: 4px 0;
+}
+
 .bazar-limite {
   font-size: .68rem;
   color: var(--text-dim);

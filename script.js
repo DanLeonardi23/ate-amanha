@@ -4383,28 +4383,45 @@ async function renderizarBazar() {
     }
   }
 
-  // ── Barracas de outros sobreviventes ──
+  // ── Barracas de outros sobreviventes (agrupadas por vendedor) ──
   const outros = anuncios.filter(a => a.vendedor_id !== _sbUser.id);
   if (listagemEl) {
     if (!outros.length) {
       listagemEl.innerHTML = '<p class="bazar-vazio">Nenhuma barraca aberta no momento.</p>';
     } else {
-      listagemEl.innerHTML = outros.map(a => `
-        <div class="bazar-item" data-id="${a.id}">
-          <span class="bazar-item-ico">${a.item_icone}</span>
-          <div class="bazar-item-info">
-            <span class="bazar-item-nome">${a.item_nome} ×${a.qtd}</span>
-            <span class="bazar-item-vendedor">por ${a.vendedor_nome}</span>
+      // Agrupar por vendedor
+      const porVendedor = outros.reduce((acc, a) => {
+        if (!acc[a.vendedor_id]) acc[a.vendedor_id] = { nome: a.vendedor_nome, itens: [] };
+        acc[a.vendedor_id].itens.push(a);
+        return acc;
+      }, {});
+
+      listagemEl.innerHTML = Object.values(porVendedor).map(v => `
+        <div class="barraca-vendedor">
+          <div class="barraca-vendedor-header">
+            <span class="barraca-vendedor-ico">🏕️</span>
+            <span class="barraca-vendedor-nome">${v.nome}</span>
           </div>
-          <span class="bazar-item-preco">${a.preco} 🔋</span>
-          <button class="btn-primario bazar-btn-sm btn-comprar-bazar"
-                  data-id="${a.id}" data-preco="${a.preco}"
-                  data-nome="${a.item_nome}" data-icone="${a.item_icone}"
-                  data-itemid="${a.item_id}" data-qtd="${a.qtd}">
-            Comprar
-          </button>
+          <div class="barraca-vendedor-itens">
+            ${v.itens.map(a => `
+              <div class="bazar-item" data-id="${a.id}">
+                <span class="bazar-item-ico">${a.item_icone}</span>
+                <div class="bazar-item-info">
+                  <span class="bazar-item-nome">${a.item_nome} ×${a.qtd}</span>
+                </div>
+                <span class="bazar-item-preco">${a.preco} 🔋</span>
+                <button class="btn-primario bazar-btn-sm btn-comprar-bazar"
+                        data-id="${a.id}" data-preco="${a.preco}"
+                        data-nome="${a.item_nome}" data-icone="${a.item_icone}"
+                        data-itemid="${a.item_id}" data-qtd="${a.qtd}">
+                  Comprar
+                </button>
+              </div>
+            `).join('')}
+          </div>
         </div>
       `).join('');
+
       listagemEl.querySelectorAll('.btn-comprar-bazar').forEach(btn => {
         btn.addEventListener('click', async () => {
           const preco = parseInt(btn.dataset.preco);
@@ -4425,7 +4442,7 @@ async function renderizarBazar() {
           removerItem('pilha', preco);
           const itemDef = ITENS[res.item_id];
           if (itemDef) adicionarItem(itemDef, res.qtd);
-          log(`🛒 Comprou ${res.item_icone} ${res.item_nome} ×${res.qtd} por ${preco} 🔋 (Barraca)`, 'log-sucesso');
+          log(`🛒 Comprou ${res.item_icone} ${res.item_nome} ×${res.qtd} por ${preco} 🔋 (Barracas)`, 'log-sucesso');
           mostrarToast(`🛒 ${res.item_icone} ${res.item_nome} comprado!`);
           salvarJogo();
           renderizarBazar();
