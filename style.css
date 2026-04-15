@@ -3336,6 +3336,69 @@ html, body {
   text-align: center;
 }
 
+/* ── Cultivo ── */
+.painel-cultivo { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+
+.cultivo-slot {
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cultivo-slot.pronto    { border-color: var(--accent); background: rgba(42,170,42,.06); }
+.cultivo-slot.crescendo { border-color: var(--accent-d); }
+.cultivo-slot.vazio     { border-color: var(--border); opacity: .8; }
+
+.cultivo-slot-num {
+  font-size: .62rem;
+  letter-spacing: .15em;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.cultivo-planta-icone { font-size: 1.3rem; }
+
+.cultivo-planta-nome {
+  font-size: .82rem;
+  font-family: var(--font-mono);
+  color: var(--text-pri);
+}
+
+.cultivo-aviso {
+  font-size: .72rem;
+  color: var(--red-l);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+.cultivo-slot-acao {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cultivo-vazio-txt {
+  font-size: .74rem;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+.btn-sucesso {
+  background: rgba(42,170,42,.15);
+  border: 1px solid var(--accent);
+  color: var(--accent-l);
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: background var(--trans);
+}
+.btn-sucesso:hover { background: rgba(42,170,42,.3); }
+
 .barraca-vendedor {
   border: 1px solid var(--border);
   margin-bottom: 10px;

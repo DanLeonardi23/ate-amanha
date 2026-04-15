@@ -229,6 +229,14 @@ const ITENS = {
   tala:           { id: 'tala',           nome: 'Tala Improvisada',  icone: '🦯', tipo: 'medicinal', efeitos: { vida: 5 }, desc: 'Imobiliza e protege um tornozelo torcido. Trata contusão.' },
   filtro:         { id: 'filtro',         nome: 'Filtro de Água',       icone: '🧪', tipo: 'ferramenta' },
 
+  // Cultivo — sementes e colheitas
+  semente_canhamo:  { id: 'semente_canhamo',  nome: 'Semente de Cânhamo',  icone: '🌱', tipo: 'material' },
+  semente_erva:     { id: 'semente_erva',     nome: 'Semente de Erva',     icone: '🌿', tipo: 'material' },
+  semente_abobora:  { id: 'semente_abobora',  nome: 'Semente de Abóbora',  icone: '🎃', tipo: 'material' },
+  canhamo:          { id: 'canhamo',          nome: 'Cânhamo',             icone: '🌾', tipo: 'material' },
+  erva_medicinal:   { id: 'erva_medicinal',   nome: 'Erva Medicinal',      icone: '🍃', tipo: 'material' },
+  abobora:          { id: 'abobora',          nome: 'Abóbora',             icone: '🎃', tipo: 'consumivel', efeitos: { fome: -35 } },
+
   // ── Itens raros — encontrados apenas em eventos de busca ──
   revolver:       { id: 'revolver',       nome: 'Revólver .38',          icone: '🔫', tipo: 'raro',      desc: 'Calibre .38, sem munição. Vale uma fortuna no mercado certo.' },
   faca_tatica:    { id: 'faca_tatica',    nome: 'Faca Tática Militar',   icone: '🗡️',  tipo: 'raro',      desc: 'Lâmina de aço inoxidável, cabo emborrachado. Nunca enferrujou.' },
@@ -509,6 +517,12 @@ const VENDA_PRECOS = {
   revolver:      30,
   remedio_exp:   32,
   pen_drive:     36,
+  canhamo:       1,
+  erva_medicinal:3,
+  abobora:       2,
+  semente_canhamo: 1,
+  semente_erva:    2,
+  semente_abobora: 2,
   joias:         38,
   relogio_ouro:  45,
   doc_classificado: 50,
@@ -611,9 +625,27 @@ const RECEITAS = [
     bancada: false,
     revelada: true
   },
+  {
+    id: 'pano',
+    ingredientes: { canhamo: 2 },
+    bancada: false,
+    revelada: true
+  },
+  {
+    id: 'remedio',
+    ingredientes: { erva_medicinal: 2 },
+    bancada: true,
+    revelada: true
+  },
 ];
 
 const CUSTO_BANCADA = { sucata: 8, pano: 3 };
+
+const CULTIVO_CONFIG = {
+  semente_canhamo: { nome: 'Cânhamo',       itemId: 'canhamo',        qtd: 2, dias: 2, icone: '🌾' },
+  semente_erva:    { nome: 'Erva Medicinal', itemId: 'erva_medicinal', qtd: 1, dias: 3, icone: '🍃' },
+  semente_abobora: { nome: 'Abóbora',        itemId: 'abobora',        qtd: 2, dias: 2, icone: '🎃' },
+};
 
 // ============================================================
 // DADOS: RECEITAS DA FOGUEIRA
@@ -670,12 +702,15 @@ const LOOT_TABLE = {
     { ...ITENS.manual_socorros, peso: 15, qtd: [1,1] },
   ],
   floresta: [
-    { ...ITENS.madeira,   peso: 40, qtd: [2,4] },
-    { ...ITENS.pano,      peso: 20, qtd: [1,2] },
-    { ...ITENS.agua_suja, peso: 25, qtd: [1,2] },
-    { ...ITENS.comida,    peso: 15, qtd: [1,1] },
-    { ...ITENS.sucata,    peso: 10, qtd: [1,2] },
-    { ...ITENS.guia_sobrev, peso: 12, qtd: [1,1] },
+    { ...ITENS.madeira,         peso: 40, qtd: [2,4] },
+    { ...ITENS.pano,            peso: 20, qtd: [1,2] },
+    { ...ITENS.agua_suja,       peso: 25, qtd: [1,2] },
+    { ...ITENS.comida,          peso: 15, qtd: [1,1] },
+    { ...ITENS.sucata,          peso: 10, qtd: [1,2] },
+    { ...ITENS.guia_sobrev,     peso: 12, qtd: [1,1] },
+    { ...ITENS.semente_canhamo, peso: 22, qtd: [1,2] },
+    { ...ITENS.semente_erva,    peso: 18, qtd: [1,1] },
+    { ...ITENS.semente_abobora, peso: 18, qtd: [1,1] },
   ],
   posto: [
     { ...ITENS.sucata,    peso: 35, qtd: [2,4] },
@@ -2013,6 +2048,7 @@ function renderizarBase() {
     fogueira:  { secId: 'sec-fogueira',  painelId: 'painel-fogueira',  html: htmlPainelFogueira,  wire: wirePainelFogueira  },
     bancada:   { secId: 'sec-bancada',   painelId: 'painel-bancada',   html: htmlPainelBancada,   wire: wirePainelBancada   },
     cisterna:  { secId: 'sec-cisterna',  painelId: 'painel-cisterna',  html: htmlPainelCisterna,  wire: wirePainelCisterna  },
+    cultivo:   { secId: 'sec-cultivo',   painelId: 'painel-cultivo',   html: htmlPainelCultivo,   wire: wirePainelCultivo   },
     seguranca: { secId: 'sec-seguranca', painelId: 'painel-seguranca', html: htmlPainelSeguranca, wire: wirePainelSeguranca },
   };
   for (const [id, cfg] of Object.entries(secoes)) {
@@ -2246,6 +2282,82 @@ function wirePainelCisterna() {
     log(`🧪 Filtro instalado! Durará ${dias} dia(s).`, 'log-sucesso');
     mostrarToast(`🧪 Filtro instalado · ${dias} dia(s)`);
     salvarJogo(); abrirPainelBase('cisterna');
+  });
+}
+
+// ── Cultivo ──
+function htmlPainelCultivo() {
+  const slots = estado.cultivo.slots;
+  const sementesInv = Object.keys(CULTIVO_CONFIG).filter(id => temItem(id, 1));
+
+  const htmlSlots = slots.map((slot, i) => {
+    if (!slot) {
+      const opcoes = sementesInv.length
+        ? `<select class="bazar-select cultivo-sel-semente" data-slot="${i}">
+            <option value="">— escolha uma semente —</option>
+            ${sementesInv.map(id => `<option value="${id}">${ITENS[id].icone} ${ITENS[id].nome}</option>`).join('')}
+           </select>
+           <button class="btn-primario btn-sm btn-plantar" data-slot="${i}">Plantar</button>`
+        : `<span class="cultivo-vazio-txt">Sem sementes. Explore a Mata do Cônego.</span>`;
+      return `<div class="cultivo-slot vazio">
+        <span class="cultivo-slot-num">Slot ${i + 1}</span>
+        <div class="cultivo-slot-acao">${opcoes}</div>
+      </div>`;
+    }
+    if (slot.pronto) {
+      return `<div class="cultivo-slot pronto">
+        <span class="cultivo-slot-num">Slot ${i + 1}</span>
+        <span class="cultivo-planta-icone">${slot.icone}</span>
+        <span class="cultivo-planta-nome">${slot.nome} — PRONTO!</span>
+        <span class="cultivo-aviso">Colha agora! Apodrece amanhã.</span>
+        <button class="btn-sucesso btn-sm btn-colher" data-slot="${i}">🌾 Colher</button>
+      </div>`;
+    }
+    const pct = ((slot.diasTotal - slot.diasRestantes) / slot.diasTotal) * 100;
+    return `<div class="cultivo-slot crescendo">
+      <span class="cultivo-slot-num">Slot ${i + 1}</span>
+      <span class="cultivo-planta-icone">${slot.icone}</span>
+      <span class="cultivo-planta-nome">${slot.nome} — ${slot.diasRestantes} dia(s) restante(s)</span>
+      <div class="barra-bg"><div class="barra barra-sucesso" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  return `<div class="painel-cultivo">${htmlSlots}</div>`;
+}
+
+function wirePainelCultivo() {
+  document.querySelectorAll('#painel-cultivo .btn-plantar').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i   = parseInt(btn.dataset.slot);
+      const sel = document.querySelector(`#painel-cultivo .cultivo-sel-semente[data-slot="${i}"]`);
+      const id  = sel?.value;
+      if (!id) { mostrarToast('Escolha uma semente.'); return; }
+      if (!temItem(id, 1)) { mostrarToast('Sem semente no inventário.'); return; }
+      const cfg = CULTIVO_CONFIG[id];
+      removerItem(id, 1);
+      estado.cultivo.slots[i] = {
+        sementeId: id, nome: cfg.nome, itemId: cfg.itemId,
+        qtd: cfg.qtd, icone: cfg.icone,
+        diasRestantes: cfg.dias, diasTotal: cfg.dias,
+        pronto: false, diasEspera: 0
+      };
+      log(`🌱 Plantou ${ITENS[id].nome} no Slot ${i + 1}. Colheita em ${cfg.dias} dia(s).`, 'log-sucesso');
+      mostrarToast(`🌱 ${cfg.nome} plantado!`);
+      salvarJogo(); abrirPainelBase('cultivo');
+    });
+  });
+
+  document.querySelectorAll('#painel-cultivo .btn-colher').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i    = parseInt(btn.dataset.slot);
+      const slot = estado.cultivo.slots[i];
+      if (!slot?.pronto) return;
+      adicionarItem(ITENS[slot.itemId], slot.qtd);
+      estado.cultivo.slots[i] = null;
+      log(`🌾 Colheu ${slot.icone} ${slot.nome} ×${slot.qtd}!`, 'log-sucesso');
+      mostrarToast(`🌾 ${slot.nome} colhida!`);
+      salvarJogo(); abrirPainelBase('cultivo');
+    });
   });
 }
 
@@ -2569,6 +2681,29 @@ function avancarDia() {
     } else {
       log(`🧪 Filtro com ${estado.filtroInstalado.diasRestantes} dia(s) restante(s).`, 'log-sistema');
     }
+    renderizarBase();
+  }
+
+  // Crescimento das plantas
+  if (baseTemEstrutura('cultivo')) {
+    estado.cultivo.slots = estado.cultivo.slots.map((slot, i) => {
+      if (!slot) return null;
+      if (slot.pronto) {
+        if (slot.diasEspera >= 1) {
+          log(`🥀 Slot ${i + 1} do cultivo apodreceu! Colha antes que seja tarde.`, 'log-alerta');
+          mostrarToast('🥀 Planta apodreceu!');
+          return null;
+        }
+        return { ...slot, diasEspera: slot.diasEspera + 1 };
+      }
+      const dias = slot.diasRestantes - 1;
+      if (dias <= 0) {
+        log(`🌾 ${slot.nome} está pronta para colher! (Slot ${i + 1})`, 'log-sucesso');
+        mostrarToast(`🌾 ${slot.nome} pronta!`);
+        return { ...slot, diasRestantes: 0, pronto: true, diasEspera: 0 };
+      }
+      return { ...slot, diasRestantes: dias };
+    });
     renderizarBase();
   }
 
@@ -4006,6 +4141,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.deposito           = { nivel: 0, itens: [] };
   estado.cisterna           = { aguaAcumulada: 0 };
   estado.filtroInstalado    = { diasRestantes: 0 };
+  estado.cultivo            = { slots: [null, null, null] };
   estado.seguranca          = { armadilhasInstaladas: 0 };
   estado.locaisDesbloqueados = [];
   estado.exploracoesZona    = {};
@@ -4080,7 +4216,8 @@ function montarDadosSave() {
     personagem: estado.personagem, stats: estado.stats, inventario: estado.inventario,
     receitasAprendidas: estado.receitasAprendidas, temBancada: estado.temBancada,
     base: estado.base, tatica: estado.tatica, deposito: estado.deposito,
-    cisterna: estado.cisterna, filtroInstalado: estado.filtroInstalado, seguranca: estado.seguranca,
+    cisterna: estado.cisterna, filtroInstalado: estado.filtroInstalado,
+    cultivo: estado.cultivo, seguranca: estado.seguranca,
     locaisDesbloqueados: estado.locaisDesbloqueados, capInventario: estado.capInventario,
     exploracoesZona: estado.exploracoesZona, respawnTicks: estado.respawnTicks,
     ultimoSaque: estado.ultimoSaque, mercado: estado.mercado,
@@ -4737,6 +4874,7 @@ function aplicarDadosSave(s) {
   estado.deposito           = s.deposito           || { nivel: 0, itens: [] };
   estado.cisterna           = s.cisterna           || { aguaAcumulada: 0 };
   estado.filtroInstalado    = s.filtroInstalado    || { diasRestantes: 0 };
+  estado.cultivo            = s.cultivo            || { slots: [null, null, null] };
   estado.seguranca          = s.seguranca          || { armadilhasInstaladas: 0 };
   estado.locaisDesbloqueados = s.locaisDesbloqueados || [];
   estado.capInventario      = s.capInventario      || 10;

@@ -354,15 +354,15 @@
                 </div>
 
                 <!-- Linha 3: Filtro + Depósito -->
-                <div class="base-slot slot-filtro"
-                     data-id="filtro"
-                     data-nome="Filtro de Água"
-                     data-requer="bancada"
-                     data-custo='{"sucata":4,"pano":3,"arame":1}'>
-                  <span class="slot-icone">🧪</span>
-                  <span class="slot-nome">Filtro</span>
-                  <span class="slot-sub slot-custo">4🔩 · 3🧻 · 1〰️</span>
-                  <span class="slot-desc">Purifica água suja. Melhora output da Cisterna.</span>
+                <div class="base-slot slot-cultivo"
+                     data-id="cultivo" data-painel="cultivo"
+                     data-nome="Área de Cultivo"
+                     data-requer="abrigo"
+                     data-custo='{"madeira":5,"pano":2}'>
+                  <span class="slot-icone">🌱</span>
+                  <span class="slot-nome">Cultivo</span>
+                  <span class="slot-sub slot-custo">5🪵 · 2🧻</span>
+                  <span class="slot-desc">Plante até 3 culturas simultâneas. Sementes na Mata.</span>
                 </div>
 
                 <div class="base-slot slot-deposito" id="mapa-slot-deposito" data-painel="deposito">
@@ -412,6 +412,11 @@
             <div id="sec-cisterna" class="sec-bloco sec-estrutura oculto">
               <h3 class="sec-titulo">🪣 CISTERNA</h3>
               <div id="painel-cisterna"></div>
+            </div>
+
+            <div id="sec-cultivo" class="sec-bloco sec-estrutura oculto">
+              <h3 class="sec-titulo">🌱 CULTIVO</h3>
+              <div id="painel-cultivo"></div>
             </div>
 
             <div class="sec-bloco">
