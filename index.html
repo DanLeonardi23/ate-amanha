@@ -293,7 +293,7 @@
             <button class="aba-btn ativa" data-aba="locais">Locais</button>
             <button class="aba-btn" data-aba="base">Base</button>
             <button class="aba-btn" data-aba="mercado">Mercado</button>
-            <button class="aba-btn" data-aba="bazar" id="aba-btn-bazar">Bazar</button>
+            <button class="aba-btn" data-aba="bazar" id="aba-btn-bazar">Barraca</button>
           </nav>
         </div>
 
@@ -754,54 +754,49 @@
 
             <div class="bazar-header sec-bloco">
               <div class="bazar-titulo-linha">
-                <h3 class="sec-titulo">BAZAR · SOBREVIVENTES</h3>
+                <h3 class="sec-titulo">🏕️ BARRACA DO SOBREVIVENTE</h3>
                 <span id="bazar-status" class="bazar-status">⚫ offline</span>
               </div>
-              <p class="bazar-descricao">Troque itens com outros sobreviventes. Moeda: Pilhas Velhas 🔋</p>
+              <p class="bazar-descricao">Compre e venda itens com outros sobreviventes. Moeda: Pilhas Velhas 🔋</p>
               <div class="bazar-saldo-linha">
-                <span class="bazar-saldo-label">Seu saldo:</span>
+                <span class="bazar-saldo-label">Suas pilhas:</span>
                 <span id="bazar-saldo" class="bazar-saldo-val">0 🔋</span>
                 <span id="bazar-pendente" class="bazar-pendente oculto"></span>
               </div>
             </div>
 
-            <!-- Anunciar item -->
+            <!-- Colocar item à venda -->
             <div class="sec-bloco" id="bazar-anunciar-bloco">
-              <h4 class="sec-titulo">ANUNCIAR ITEM</h4>
+              <h4 class="sec-titulo">SUA BARRACA <span id="bazar-limite-label" class="bazar-limite">(0/5 slots)</span></h4>
               <div class="bazar-form">
                 <select id="bazar-sel-item" class="bazar-select">
-                  <option value="">— escolha um item —</option>
+                  <option value="">— escolha um item para vender —</option>
                 </select>
                 <div class="bazar-form-linha">
                   <div class="bazar-form-campo">
-                    <label class="bazar-label">QTD</label>
-                    <input type="number" id="bazar-inp-qtd" class="bazar-input" min="1" value="1" />
+                    <label class="bazar-label">QTD (máx 99)</label>
+                    <input type="number" id="bazar-inp-qtd" class="bazar-input" min="1" max="99" value="1" />
                   </div>
                   <div class="bazar-form-campo">
                     <label class="bazar-label">PREÇO (🔋)</label>
                     <input type="number" id="bazar-inp-preco" class="bazar-input" min="1" value="5" />
                   </div>
-                  <button id="bazar-btn-anunciar" class="btn-primario">Anunciar</button>
+                  <button id="bazar-btn-anunciar" class="btn-primario">Colocar à venda</button>
                 </div>
               </div>
-            </div>
-
-            <!-- Seus anúncios ativos -->
-            <div class="sec-bloco" id="bazar-meus-anuncios-bloco">
-              <h4 class="sec-titulo">SEUS ANÚNCIOS</h4>
               <div id="bazar-meus-anuncios">
-                <p class="bazar-vazio">Nenhum anúncio ativo.</p>
+                <p class="bazar-vazio">Sua barraca está vazia.</p>
               </div>
             </div>
 
-            <!-- Anúncios de outros jogadores -->
-            <div class="sec-bloco">
+            <!-- Barracas de outros sobreviventes -->
+            <div class="sec-bloco" id="bazar-meus-anuncios-bloco">
               <div class="bazar-titulo-linha">
-                <h4 class="sec-titulo">DISPONÍVEL</h4>
-                <button id="bazar-btn-atualizar" class="btn-secundario bazar-btn-sm">↻ Atualizar</button>
+                <h4 class="sec-titulo">BARRACAS DISPONÍVEIS</h4>
+                <span class="bazar-auto-refresh" id="bazar-refresh-label">↻ atualiza em <span id="bazar-countdown">10</span>s</span>
               </div>
               <div id="bazar-listagem">
-                <p class="bazar-vazio">Carregando anúncios...</p>
+                <p class="bazar-vazio">Carregando barracas...</p>
               </div>
             </div>
 

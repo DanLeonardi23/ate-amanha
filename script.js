@@ -152,8 +152,8 @@ function aplicarPilhasPendentes(saveData) {
   const pendentes = saveData?.pilhas_pendentes;
   if (!pendentes || pendentes <= 0) return;
   adicionarItem(ITENS.pilha, pendentes);
-  log(`🔋 +${pendentes} Pilhas recebidas de vendas no Bazar!`, 'log-sucesso');
-  mostrarToast(`🔋 +${pendentes} Pilhas do Bazar`);
+  log(`🔋 +${pendentes} Pilhas recebidas de vendas na Barraca!`, 'log-sucesso');
+  mostrarToast(`🔋 +${pendentes} Pilhas da Barraca`);
   // Limpar pendentes no save
   sbSalvar(montarDadosSave());
 }
@@ -4183,7 +4183,8 @@ function inicializarUI() {
       btn.classList.add('ativa');
       document.getElementById(`aba-${aba}`).classList.add('ativa');
       document.getElementById(`aba-${aba}`)?.scrollTo({ top: 0, behavior: 'smooth' });
-      if (aba === 'bazar') renderizarBazar();
+      if (aba === 'bazar') { renderizarBazar(); iniciarAutoRefreshBazar(); }
+      else pararAutoRefreshBazar();
     });
   });
 
@@ -4302,32 +4303,27 @@ async function renderizarBazar() {
   const sb = getSB();
   const statusEl = document.getElementById('bazar-status');
   const saldoEl  = document.getElementById('bazar-saldo');
-  // Saldo local
-  const pilhas = estado.inventario.find(i => i.id === 'pilha');
+  const pilhas   = estado.inventario.find(i => i.id === 'pilha');
   if (saldoEl) saldoEl.textContent = `${pilhas?.qtd || 0} 🔋`;
 
-  const anunciarBloco  = document.getElementById('bazar-anunciar-bloco');
-  const meusBloco      = document.getElementById('bazar-meus-anuncios-bloco');
-  const listagemEl     = document.getElementById('bazar-listagem');
-  const atualizarBtn   = document.getElementById('bazar-btn-atualizar');
+  const anunciarBloco = document.getElementById('bazar-anunciar-bloco');
+  const outrosBloco   = document.getElementById('bazar-meus-anuncios-bloco');
+  const listagemEl    = document.getElementById('bazar-listagem');
 
   if (!sb || !_sbUser) {
-    if (statusEl)    statusEl.textContent = '⚫ offline';
-    if (anunciarBloco)  anunciarBloco.style.display  = 'none';
-    if (meusBloco)      meusBloco.style.display      = 'none';
-    if (atualizarBtn)   atualizarBtn.style.display   = 'none';
-    if (listagemEl) listagemEl.innerHTML =
-      '<p class="bazar-vazio">Faça login para acessar o Bazar entre sobreviventes.</p>';
+    if (statusEl)     statusEl.textContent = '⚫ offline';
+    if (anunciarBloco) anunciarBloco.style.display = 'none';
+    if (outrosBloco)   outrosBloco.style.display   = 'none';
+    if (listagemEl)    listagemEl.innerHTML =
+      '<p class="bazar-vazio">Faça login para acessar a Barraca do Sobrevivente.</p>';
     return;
   }
 
-  // Online — garantir que os blocos estão visíveis
-  if (anunciarBloco)  anunciarBloco.style.display  = '';
-  if (meusBloco)      meusBloco.style.display      = '';
-  if (atualizarBtn)   atualizarBtn.style.display   = '';
+  if (anunciarBloco)  anunciarBloco.style.display = '';
+  if (outrosBloco)    outrosBloco.style.display   = '';
   if (statusEl) statusEl.textContent = '🟢 online';
 
-  // Popular select de itens vendáveis (mochila + depósito)
+  // Popular select com itens da mochila + depósito
   const selEl = document.getElementById('bazar-sel-item');
   if (selEl) {
     const todosItens = [
@@ -4339,49 +4335,55 @@ async function renderizarBazar() {
       else acc.push({ ...i, qtd: i.qtd || 1 });
       return acc;
     }, []);
-
-    selEl.innerHTML = '<option value="">— escolha um item —</option>' +
+    selEl.innerHTML = '<option value="">— escolha um item para vender —</option>' +
       todosItens.map(i =>
         `<option value="${i.id}" data-icone="${i.icone || '📦'}" data-nome="${i.nome}">${i.icone} ${i.nome} ×${i.qtd}</option>`
       ).join('');
   }
 
-  // Buscar anúncios do Supabase
   const anuncios = await sbCarregarBazar();
 
-  // ── Seus anúncios ──
-  const meusEl = document.getElementById('bazar-meus-anuncios');
-  const meus   = anuncios.filter(a => a.vendedor_id === _sbUser.id);
+  // ── Sua barraca ──
+  const meusEl     = document.getElementById('bazar-meus-anuncios');
+  const limiteLabel = document.getElementById('bazar-limite-label');
+  const meus       = anuncios.filter(a => a.vendedor_id === _sbUser.id);
+  if (limiteLabel) limiteLabel.textContent = `(${meus.length}/5 slots)`;
   if (meusEl) {
     if (!meus.length) {
-      meusEl.innerHTML = '<p class="bazar-vazio">Nenhum anúncio ativo.</p>';
+      meusEl.innerHTML = '<p class="bazar-vazio">Sua barraca está vazia.</p>';
     } else {
       meusEl.innerHTML = meus.map(a => `
         <div class="bazar-item meu-anuncio">
           <span class="bazar-item-ico">${a.item_icone}</span>
           <span class="bazar-item-nome">${a.item_nome} ×${a.qtd}</span>
           <span class="bazar-item-preco">${a.preco} 🔋</span>
-          <button class="btn-perigo bazar-btn-sm btn-retirar" data-id="${a.id}">Retirar</button>
+          <button class="btn-perigo bazar-btn-sm btn-retirar" data-id="${a.id}"
+                  data-itemid="${a.item_id}" data-qtd="${a.qtd}">Retirar</button>
         </div>
       `).join('');
       meusEl.querySelectorAll('.btn-retirar').forEach(btn => {
         btn.addEventListener('click', async () => {
           btn.disabled = true;
-          await sbRetirarAnuncio(btn.dataset.id);
+          const ok = await sbRetirarAnuncio(btn.dataset.id);
+          if (ok) {
+            // Devolver item ao inventário
+            const itemDef = ITENS[btn.dataset.itemid];
+            if (itemDef) adicionarItem(itemDef, parseInt(btn.dataset.qtd));
+            salvarJogo();
+          }
           renderizarBazar();
         });
       });
     }
   }
 
-  // ── Anúncios de outros jogadores ──
-  const outrosEl = document.getElementById('bazar-listagem');
-  const outros   = anuncios.filter(a => a.vendedor_id !== _sbUser.id);
-  if (outrosEl) {
+  // ── Barracas de outros sobreviventes ──
+  const outros = anuncios.filter(a => a.vendedor_id !== _sbUser.id);
+  if (listagemEl) {
     if (!outros.length) {
-      outrosEl.innerHTML = '<p class="bazar-vazio">Nenhum item disponível no momento.</p>';
+      listagemEl.innerHTML = '<p class="bazar-vazio">Nenhuma barraca aberta no momento.</p>';
     } else {
-      outrosEl.innerHTML = outros.map(a => `
+      listagemEl.innerHTML = outros.map(a => `
         <div class="bazar-item" data-id="${a.id}">
           <span class="bazar-item-ico">${a.item_icone}</span>
           <div class="bazar-item-info">
@@ -4397,8 +4399,7 @@ async function renderizarBazar() {
           </button>
         </div>
       `).join('');
-
-      outrosEl.querySelectorAll('.btn-comprar-bazar').forEach(btn => {
+      listagemEl.querySelectorAll('.btn-comprar-bazar').forEach(btn => {
         btn.addEventListener('click', async () => {
           const preco = parseInt(btn.dataset.preco);
           const pilhasAtuais = estado.inventario.find(i => i.id === 'pilha');
@@ -4415,11 +4416,10 @@ async function renderizarBazar() {
             btn.textContent = 'Comprar';
             return;
           }
-          // Débito local
           removerItem('pilha', preco);
           const itemDef = ITENS[res.item_id];
           if (itemDef) adicionarItem(itemDef, res.qtd);
-          log(`🛒 Comprou ${res.item_icone} ${res.item_nome} ×${res.qtd} por ${preco} 🔋 (Bazar)`, 'log-sucesso');
+          log(`🛒 Comprou ${res.item_icone} ${res.item_nome} ×${res.qtd} por ${preco} 🔋 (Barraca)`, 'log-sucesso');
           mostrarToast(`🛒 ${res.item_icone} ${res.item_nome} comprado!`);
           salvarJogo();
           renderizarBazar();
@@ -4429,37 +4429,64 @@ async function renderizarBazar() {
   }
 }
 
+let _bazarTimer     = null;
+let _bazarCountdown = 10;
+
+function iniciarAutoRefreshBazar() {
+  pararAutoRefreshBazar();
+  _bazarCountdown = 10;
+  _bazarTimer = setInterval(() => {
+    _bazarCountdown--;
+    const el = document.getElementById('bazar-countdown');
+    if (el) el.textContent = _bazarCountdown;
+    if (_bazarCountdown <= 0) {
+      _bazarCountdown = 10;
+      renderizarBazar();
+    }
+  }, 1000);
+}
+
+function pararAutoRefreshBazar() {
+  if (_bazarTimer) { clearInterval(_bazarTimer); _bazarTimer = null; }
+}
+
 function inicializarBazar() {
-  // Botão anunciar
   document.getElementById('bazar-btn-anunciar')?.addEventListener('click', async () => {
-    const sel   = document.getElementById('bazar-sel-item');
+    const sel    = document.getElementById('bazar-sel-item');
     const itemId = sel?.value;
     if (!itemId) { mostrarToast('Escolha um item.'); return; }
 
-    const qtd   = parseInt(document.getElementById('bazar-inp-qtd')?.value) || 1;
-    const preco = parseInt(document.getElementById('bazar-inp-preco')?.value) || 1;
-    const opt   = sel.options[sel.selectedIndex];
-    const nome  = opt?.dataset.nome  || itemId;
-    const icone = opt?.dataset.icone || '📦';
+    const qtdInp = document.getElementById('bazar-inp-qtd');
+    const qtd    = Math.min(99, Math.max(1, parseInt(qtdInp?.value) || 1));
+    if (qtdInp) qtdInp.value = qtd;
+
+    const preco  = Math.max(1, parseInt(document.getElementById('bazar-inp-preco')?.value) || 1);
+    const opt    = sel.options[sel.selectedIndex];
+    const nome   = opt?.dataset.nome  || itemId;
+    const icone  = opt?.dataset.icone || '📦';
+
+    // Verificar limite de 5 tipos na barraca
+    const anunciosAtuais = await sbCarregarBazar();
+    const meus = anunciosAtuais.filter(a => a.vendedor_id === _sbUser?.id);
+    if (meus.length >= 5) {
+      mostrarToast('🏕️ Barraca cheia. Máximo 5 tipos de item.');
+      return;
+    }
 
     if (!temItem(itemId, qtd)) { mostrarToast('Você não tem esse item em quantidade suficiente.'); return; }
 
     removerItem(itemId, qtd);
     const ok = await sbAnunciarBazar(itemId, nome, icone, qtd, preco);
     if (!ok) {
-      // Devolver se falhou
       adicionarItem(ITENS[itemId], qtd);
-      mostrarToast('❌ Erro ao anunciar. Tente novamente.');
+      mostrarToast('❌ Erro ao colocar à venda. Tente novamente.');
       return;
     }
-    log(`🏪 Anunciou ${icone} ${nome} ×${qtd} por ${preco} 🔋 no Bazar.`, 'log-sucesso');
-    mostrarToast(`🏪 ${nome} anunciado!`);
+    log(`🏕️ Colocou ${icone} ${nome} ×${qtd} por ${preco} 🔋 na Barraca.`, 'log-sucesso');
+    mostrarToast(`🏕️ ${nome} à venda!`);
     salvarJogo();
     renderizarBazar();
   });
-
-  // Botão atualizar listagem
-  document.getElementById('bazar-btn-atualizar')?.addEventListener('click', () => renderizarBazar());
 }
 
 // ============================================================
