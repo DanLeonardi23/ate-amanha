@@ -2226,6 +2226,7 @@ function abrirPainelBase(tipo) {
   fecharTooltipBase();
   const alvo = {
     fogueira:  'sec-fogueira',
+    bancada:   'lista-receitas',
     cisterna:  'sec-cisterna',
     cultivo:   'sec-cultivo',
     deposito:  'deposito-painel',
