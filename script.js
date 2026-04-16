@@ -196,7 +196,7 @@ const ITENS = {
   // Materiais brutos
   sucata:       { id: 'sucata',       nome: 'Sucata',              icone: '🔩', tipo: 'material'   },
   pano:         { id: 'pano',         nome: 'Trapo',               icone: '🧻', tipo: 'material'   },
-  pilha:        { id: 'pilha',        nome: 'Pilha Velha',         icone: '🔋', tipo: 'material'   },
+  pilha:        { id: 'pilha',        nome: 'Bateria',             icone: '🔋', tipo: 'material'   },
   faca:         { id: 'faca',         nome: 'Faca de Cozinha',     icone: '🔪', tipo: 'ferramenta' },
   arame:        { id: 'arame',        nome: 'Arame',               icone: '〰️',  tipo: 'material'   },
   madeira:      { id: 'madeira',      nome: 'Madeira',             icone: '🪵', tipo: 'material'   },
@@ -457,7 +457,6 @@ const MERCADO_POOL = [
   { itemId: 'agua_limpa', precoBase: 2, qtd: 2, peso: 14 },
   { itemId: 'arame',      precoBase: 2, qtd: 2, peso: 12 },
   { itemId: 'bebida',     precoBase: 3, qtd: 1, peso: 10 },
-  { itemId: 'pilha',      precoBase: 3, qtd: 2, peso: 10 },
   // Tier 3 — itens úteis (incomuns)
   { itemId: 'atadura',    precoBase: 3, qtd: 1, peso: 10 },
   { itemId: 'curativo',   precoBase: 4, qtd: 1, peso: 9  },
