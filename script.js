@@ -152,8 +152,8 @@ function aplicarPilhasPendentes(saveData) {
   const pendentes = saveData?.pilhas_pendentes;
   if (!pendentes || pendentes <= 0) return;
   adicionarItem(ITENS.pilha, pendentes);
-  log(`🔋 +${pendentes} Pilhas recebidas de vendas na Barraca!`, 'log-sucesso');
-  mostrarToast(`🔋 +${pendentes} Pilhas da Barraca`);
+  log(`🔋 +${pendentes} Baterias recebidas de vendas na Barraca!`, 'log-sucesso');
+  mostrarToast(`🔋 +${pendentes} Baterias da Barraca`);
   // Limpar pendentes no save
   sbSalvar(montarDadosSave());
 }
@@ -1276,7 +1276,7 @@ const EVENTOS_NPC = [
     id: 'npc_enfermeira',
     nome: 'Enfermeira Errante',
     icone: '🩺',
-    desc: 'Uma mulher com braçadeira improvisada de cruz vermelha. "Tenho remédios de sobra, mas preciso de pilhas pra minha lanterna. Negócio?"',
+    desc: 'Uma mulher com braçadeira improvisada de cruz vermelha. "Tenho remédios de sobra, mas preciso de baterias pra minha lanterna. Negócio?"',
     perigo_min: null,
     trocas: [
       { oferecem: [{id:'remedio',qtd:3}],            querem: [{id:'pilha',qtd:5}] },
@@ -3132,7 +3132,7 @@ function comprarItemMercado(idx) {
 
   // Verificar saldo (Pilhas Velhas)
   if (!temItem('pilha', entrada.preco)) {
-    mostrarToast(`🔋 Precisa de ${entrada.preco} Pilha(s) Velha(s).`);
+    mostrarToast(`🔋 Precisa de ${entrada.preco} Bateria(s).`);
     log(`Sem saldo para comprar ${item.nome}. Precisa de ${entrada.preco} 🔋.`, 'log-alerta');
     return;
   }
@@ -3157,7 +3157,7 @@ function comprarItemMercado(idx) {
 }
 
 /**
- * Vende 1 unidade de um item em troca de Pilhas Velhas.
+ * Vende 1 unidade de um item em troca de Baterias.
  */
 function venderItem(itemId) {
   const preco = getPrecoVenda(itemId);
@@ -4836,7 +4836,7 @@ async function renderizarBazar() {
           const preco = parseInt(btn.dataset.preco);
           const pilhasAtuais = estado.inventario.find(i => i.id === 'pilha');
           if (!pilhasAtuais || (pilhasAtuais.qtd || 0) < preco) {
-            mostrarToast(`🔋 Precisa de ${preco} Pilhas.`);
+            mostrarToast(`🔋 Precisa de ${preco} Baterias.`);
             return;
           }
           btn.disabled = true;
