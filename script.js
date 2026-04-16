@@ -2344,7 +2344,9 @@ function wirePainelCultivo() {
       };
       log(`🌱 Plantou ${ITENS[id].nome} no Slot ${i + 1}. Colheita em ${cfg.dias} dia(s).`, 'log-sucesso');
       mostrarToast(`🌱 ${cfg.nome} plantado!`);
-      salvarJogo(); abrirPainelBase('cultivo');
+      salvarJogo();
+      renderizarBase();
+      abrirPainelBase('cultivo');
     });
   });
 
@@ -2355,9 +2357,12 @@ function wirePainelCultivo() {
       if (!slot?.pronto) return;
       adicionarItem(ITENS[slot.itemId], slot.qtd);
       estado.cultivo.slots[i] = null;
-      log(`🌾 Colheu ${slot.icone} ${slot.nome} ×${slot.qtd}!`, 'log-sucesso');
+      log(`🌾 Colheu ${slot.icone} ${slot.nome} ×${slot.qtd}! Item adicionado à mochila.`, 'log-sucesso');
       mostrarToast(`🌾 ${slot.nome} colhida!`);
-      salvarJogo(); abrirPainelBase('cultivo');
+      salvarJogo();
+      renderizarInventario();
+      renderizarBase();
+      abrirPainelBase('cultivo');
     });
   });
 }
