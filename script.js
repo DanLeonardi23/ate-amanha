@@ -692,6 +692,8 @@ const LOOT_TABLE = {
     { ...ITENS.remedio,   peso: 14, qtd: [1,2] },
     { ...ITENS.sucata,    peso: 22, qtd: [1,2] },
     { ...ITENS.bebida,    peso: 9,  qtd: [1,1] },
+    { ...ITENS.semente_canhamo,  peso: 10, qtd: [1,2] },
+    { ...ITENS.semente_abobora,  peso: 10, qtd: [1,1] },
     { ...ITENS.catalogo_ferramentas, peso: 15, qtd: [1,1] },
     { ...ITENS.anotacao_hospital,    peso: 15, qtd: [1,1] },
   ],
@@ -772,6 +774,9 @@ const LOOT_TABLE = {
     { ...ITENS.agua_suja, peso: 25, qtd: [1,2] },
     { ...ITENS.sucata,    peso: 12, qtd: [1,2] },
     { ...ITENS.bebida,    peso: 8,  qtd: [1,1] },
+    { ...ITENS.semente_canhamo,  peso: 18, qtd: [1,2] },
+    { ...ITENS.semente_erva,     peso: 14, qtd: [1,1] },
+    { ...ITENS.semente_abobora,  peso: 18, qtd: [1,2] },
   ],
 };
 
