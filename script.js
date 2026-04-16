@@ -2441,7 +2441,8 @@ function htmlPainelSeguranca() {
       </div>
       <div class="barra-bg"><div class="barra" style="width:${pct}%;background:var(--accent)"></div></div>
     </div>
-    <p class="painel-seg-info">Na mochila: ${noMoch}× Armadilha 🪤 · Cada armadilha reduz a chance de saque noturno.</p>
+    <p class="painel-seg-info">Na mochila: ${noMoch}× Armadilha 🪤 · Cada armadilha reduz a chance de invasão.</p>
+    <p class="painel-seg-info">⚠ Enquanto você explora, a base fica desprotegida — invasores roubam do depósito. Fique em casa para protegê-la.</p>
     <div class="painel-seg-acoes">
       <button class="btn-primario btn-sm btn-instalar-arm" ${noMoch > 0 && inst < capMax ? '' : 'disabled style="opacity:.45"'}>
         ＋ Instalar
@@ -3345,111 +3346,128 @@ function calcularSeguranca() {
 }
 
 /**
- * Narrativas de saque por intensidade.
+ * Narrativas de saque — jogador ausente (explorando), itens do depósito roubados.
  */
 const NARRATIVAS_SAQUE = {
   leve: [
-    'Você acorda com sons lá fora. Alguém vasculhou sua área enquanto dormia.',
-    'Rastros de pegadas ao redor do abrigo. Levaram o que estava mais à vista.',
-    'A noite foi agitada. Ouviu barulho, mas estava exausto demais para reagir.',
+    'Ao voltar, você percebe que alguém entrou. Pegaram o que estava mais à vista no depósito.',
+    'Rastros de pegadas ao redor do abrigo. Vasculharam enquanto você estava fora.',
+    'A tranca estava forçada. Levaram pouco — ou não encontraram o resto.',
   ],
   medio: [
-    'Um grupo entrou enquanto você dormia. Trabalho silencioso. Profissional.',
-    'Acordou com o abrigo revirado. Levaram mais do que você gostaria de admitir.',
-    'Dois deles. Você viu as sombras saindo. Não tinha como enfrentar.',
+    'Você chega e o depósito está revirado. Trabalho silencioso. Sabiam o que procuravam.',
+    'Dois deles, pelo rastro. Levaram mais do que você gostaria de admitir do depósito.',
+    'Entraram pela lateral. O depósito foi o alvo. Levaram uma parte considerável.',
   ],
   pesado: [
-    'Vieram em número. Você se escondeu e ficou imóvel enquanto limpavam o abrigo.',
-    'Pilhadores organizados. Levaram quase tudo. Você sobreviveu escondido no escuro.',
-    'Ataque coordenado. Resistir era morrer. Você deixou eles levar.',
+    'Vieram em número enquanto você estava fora. Limparam o depósito quase por inteiro.',
+    'Pilhadores organizados. Você deveria ter ficado. O depósito pagou o preço.',
+    'Ataque coordenado na sua ausência. O depósito foi devastado.',
   ],
 };
 
 /**
  * Processa o saque noturno ao virar o dia.
+ * Se o jogador está na base → protege, saque não ocorre.
+ * Se está explorando → saque roba do depósito.
  */
 function processarSaqueNoturno() {
-  if (estado.inventario.length === 0) return; // nada a roubar
+  const jogadorAusente = estado.exploracao.ativa;
 
-  const seg = calcularSeguranca();
-
-  // Rolar dado
-  if (Math.random() > seg.chanceSaque) {
-    // Noite tranquila
-    if (Math.random() < 0.3) {
-      log('🌙 A noite passou sem incidentes.', 'log-sistema');
+  // Jogador presente: protege a base — saque não acontece
+  if (!jogadorAusente) {
+    if (Math.random() < 0.35) {
+      log('🌙 Você manteve vigília. A base não foi invadida.', 'log-sistema');
     }
     atualizarDefesaUI();
     return;
   }
 
-  // ── SAQUE ACONTECE ──
-  // Intensidade determina quantos itens são roubados
-  // Armadilha perimetral reduz a quantidade roubada em 50%
+  // Jogador ausente: calcular chance de saque
+  const seg = calcularSeguranca();
+
+  if (Math.random() > seg.chanceSaque) {
+    // Noite tranquila mesmo sem o jogador
+    if (Math.random() < 0.3) {
+      log('🌙 A noite passou sem incidentes. O depósito está intacto.', 'log-sistema');
+    }
+    atualizarDefesaUI();
+    return;
+  }
+
+  // ── SAQUE ACONTECE — roba do depósito ──
   const temArmadilha = estado.seguranca.armadilhasInstaladas > 0;
   let fatorRoubo;
   let intensidade;
 
   const roll = Math.random();
   if (roll < 0.5) {
-    fatorRoubo = temArmadilha ? 0.10 : 0.20; // leve: rouba ~10-20% dos itens
+    fatorRoubo = temArmadilha ? 0.10 : 0.20;
     intensidade = 'leve';
   } else if (roll < 0.85) {
-    fatorRoubo = temArmadilha ? 0.20 : 0.40; // médio
+    fatorRoubo = temArmadilha ? 0.20 : 0.40;
     intensidade = 'medio';
   } else {
-    fatorRoubo = temArmadilha ? 0.30 : 0.60; // pesado
+    fatorRoubo = temArmadilha ? 0.30 : 0.60;
     intensidade = 'pesado';
   }
 
-  // Selecionar itens a roubar — priorizando consumíveis e medicinais (mais valiosos)
-  const itensRoubaveis = [...estado.inventario]
+  // Itens roubáveis = depósito (exceto anotações e leituras)
+  const itensDeposito = estado.deposito.itens
+    .filter(i => i.tipo !== 'anotacao' && i.tipo !== 'leitura')
     .sort((a, b) => {
-      const prio = { medicinal: 3, consumivel: 2, ferramenta: 1, material: 0, leitura: 0, anotacao: 0 };
+      const prio = { medicinal: 3, consumivel: 2, ferramenta: 1, material: 0 };
       return (prio[b.tipo] || 0) - (prio[a.tipo] || 0);
     });
 
-  const qtdTotalItens = itensRoubaveis.reduce((s, i) => s + i.qtd, 0);
-  let qtdRoubar = Math.max(1, Math.floor(qtdTotalItens * fatorRoubo));
+  if (itensDeposito.length === 0) {
+    log('🌙 Tentaram invadir enquanto você estava fora, mas o depósito estava vazio.', 'log-sistema');
+    atualizarDefesaUI();
+    return;
+  }
 
+  const qtdTotal = itensDeposito.reduce((s, i) => s + i.qtd, 0);
+  let qtdRoubar  = Math.max(1, Math.floor(qtdTotal * fatorRoubo));
   const roubados = [];
 
-  for (const item of itensRoubaveis) {
+  for (const item of itensDeposito) {
     if (qtdRoubar <= 0) break;
-    // Anotações e leituras nunca são roubadas
-    if (item.tipo === 'anotacao' || item.tipo === 'leitura') continue;
-
     const qtdLevar = Math.min(item.qtd, qtdRoubar);
-    removerItem(item.id, qtdLevar);
+    // Remover do depósito
+    const depItem = estado.deposito.itens.find(i => i.id === item.id);
+    if (depItem) {
+      depItem.qtd -= qtdLevar;
+      if (depItem.qtd <= 0) {
+        estado.deposito.itens = estado.deposito.itens.filter(i => i.id !== item.id);
+      }
+    }
     roubados.push(`${item.icone} ${item.nome} ×${qtdLevar}`);
     qtdRoubar -= qtdLevar;
   }
 
   // Narrativa
-  const narrativas = NARRATIVAS_SAQUE[intensidade];
-  const narrativa  = narrativas[randInt(0, narrativas.length - 1)];
+  const narrativa = NARRATIVAS_SAQUE[intensidade][randInt(0, 2)];
 
-  // Saque aumenta estresse
-  const estresseSaque = { leve: 15, medio: 25, pesado: 40 }[intensidade];
+  // Estresse ao descobrir o saque
+  const estresseSaque = { leve: 12, medio: 22, pesado: 35 }[intensidade];
   estado.stats.estresse = clamp(estado.stats.estresse + estresseSaque, 0, 100);
 
-  // Log e UI
-  log(`🚨 SAQUE NOTURNO — ${intensidade.toUpperCase()}`, 'log-perigo');
+  // Log
+  log(`🚨 INVASÃO NA SUA AUSÊNCIA — ${intensidade.toUpperCase()}`, 'log-perigo');
   log(`   ${narrativa}`, 'log-perigo');
   if (roubados.length > 0) {
-    log(`   Roubaram: ${roubados.join(', ')}`, 'log-perigo');
+    log(`   Depósito: ${roubados.join(', ')}`, 'log-perigo');
   }
   if (temArmadilha) {
-    log(`   🪤 ${estado.seguranca.armadilhasInstaladas} armadilha(s) reduziram o dano.`, 'log-alerta');
+    log(`   🪤 ${estado.seguranca.armadilhasInstaladas} armadilha(s) limitaram o estrago.`, 'log-alerta');
   }
 
-  mostrarToast(`🚨 Saque noturno! Perdeu ${roubados.length} tipo(s) de item.`, 4000);
+  mostrarToast(`🚨 Base invadida! Depósito saqueado.`, 4000);
 
-  // Registrar último saque
   estado.ultimoSaque = {
-    dia: estado.dia - 1,
+    dia:        estado.dia - 1,
     intensidade,
-    itens: roubados.join(', ') || 'nenhum item'
+    itens:      roubados.join(', ') || 'nenhum item'
   };
 
   atualizarDefesaUI();
@@ -3506,11 +3524,18 @@ function atualizarDefesaUI() {
 
   // Dica dinâmica
   if (dica) {
-    if (seg.pontos < 15)      dica.textContent = 'Sem proteção alguma. Pilhadores entram sem resistência.';
-    else if (seg.pontos < 35) dica.textContent = 'Proteção mínima. Construa armadilhas para reduzir o risco.';
-    else if (seg.pontos < 60) dica.textContent = 'Segurança razoável. Ainda vulnerável a grupos organizados.';
-    else if (seg.pontos < 80) dica.textContent = 'Boa defesa. A maioria dos pilhadores vai evitar seu abrigo.';
-    else                      dica.textContent = 'Abrigo bem defendido. Apenas ataques pesados são risco real.';
+    const ausente = estado.exploracao?.ativa;
+    if (ausente) {
+      dica.textContent = '⚠ Você está fora — base desprotegida. Invasores podem roubar o depósito.';
+      dica.style.color = 'var(--red-l)';
+    } else {
+      dica.style.color = '';
+      if (seg.pontos < 15)      dica.textContent = 'Sua presença protege a base. Sem armadilhas, o risco ao sair é crítico.';
+      else if (seg.pontos < 35) dica.textContent = 'Proteção mínima. Instale armadilhas antes de explorar.';
+      else if (seg.pontos < 60) dica.textContent = 'Segurança razoável. Ainda vulnerável se você sair por muito tempo.';
+      else if (seg.pontos < 80) dica.textContent = 'Boa defesa. A maioria dos pilhadores vai evitar a base na sua ausência.';
+      else                      dica.textContent = 'Base bem defendida. Pode explorar com menos preocupação.';
+    }
   }
 
   // Último saque
