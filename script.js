@@ -2143,7 +2143,7 @@ function abrirPainelBase(tipo) {
   fecharTooltipBase();
   const alvo = {
     fogueira:  'sec-fogueira',
-    bancada:   'sec-bancada',
+    bancada:   'lista-receitas',
     cisterna:  'sec-cisterna',
     deposito:  'deposito-painel',
     seguranca: 'sec-seguranca',
