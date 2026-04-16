@@ -2357,7 +2357,9 @@ function wirePainelCisterna() {
     estado.cisterna.aguaAcumulada = 0;
     log(`🪣 Coletou ${qtd}× ${ITENS[itemId].nome} da cisterna.`, 'log-sucesso');
     mostrarToast(`${qtd}× ${ITENS[itemId].icone} coletados`);
-    salvarJogo(); abrirPainelBase('cisterna');
+    salvarJogo();
+    renderizarBase();
+    abrirPainelBase('cisterna');
   });
 
   document.querySelector('#painel-cisterna .btn-instalar-filtro')?.addEventListener('click', () => {
@@ -2367,7 +2369,9 @@ function wirePainelCisterna() {
     estado.filtroInstalado.diasRestantes = dias;
     log(`🧪 Filtro instalado! Durará ${dias} dia(s).`, 'log-sucesso');
     mostrarToast(`🧪 Filtro instalado · ${dias} dia(s)`);
-    salvarJogo(); abrirPainelBase('cisterna');
+    salvarJogo();
+    renderizarBase();
+    abrirPainelBase('cisterna');
   });
 }
 
