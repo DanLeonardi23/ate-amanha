@@ -631,12 +631,6 @@ const RECEITAS = [
     bancada: false,
     revelada: true
   },
-  {
-    id: 'remedio',
-    ingredientes: { erva_medicinal: 2 },
-    bancada: true,
-    revelada: true
-  },
 ];
 
 const CUSTO_BANCADA = { sucata: 8, pano: 3 };
@@ -660,6 +654,11 @@ const RECEITAS_FOGUEIRA = [
     id: 'sopa',
     ingredientes: { comida: 1, agua_suja: 1 },
     desc: 'Cozinhar neutraliza parte das toxinas da água suja.'
+  },
+  {
+    id: 'remedio',
+    ingredientes: { erva_medicinal: 2 },
+    desc: 'Ferva as ervas até virar um chá concentrado. Alivia dores e ferimentos.'
   },
 ];
 
@@ -2131,7 +2130,6 @@ function renderizarBase() {
   // Mostrar/ocultar e re-renderizar seções das estruturas construídas
   const secoes = {
     fogueira:  { secId: 'sec-fogueira',  painelId: 'painel-fogueira',  html: htmlPainelFogueira,  wire: wirePainelFogueira  },
-    bancada:   { secId: 'sec-bancada',   painelId: 'painel-bancada',   html: htmlPainelBancada,   wire: wirePainelBancada   },
     cisterna:  { secId: 'sec-cisterna',  painelId: 'painel-cisterna',  html: htmlPainelCisterna,  wire: wirePainelCisterna  },
     cultivo:   { secId: 'sec-cultivo',   painelId: 'painel-cultivo',   html: htmlPainelCultivo,   wire: wirePainelCultivo   },
     seguranca: { secId: 'sec-seguranca', painelId: 'painel-seguranca', html: htmlPainelSeguranca, wire: wirePainelSeguranca },
@@ -2228,7 +2226,6 @@ function abrirPainelBase(tipo) {
   fecharTooltipBase();
   const alvo = {
     fogueira:  'sec-fogueira',
-    bancada:   'lista-receitas',
     cisterna:  'sec-cisterna',
     cultivo:   'sec-cultivo',
     deposito:  'deposito-painel',
@@ -2272,42 +2269,9 @@ function wirePainelFogueira() {
       const item = ITENS[btn.dataset.id];
       log(`🔥 Cozinhou: ${item?.icone} ${item?.nome}`, 'log-sucesso');
       mostrarToast(`${item?.icone} ${item?.nome} pronto!`);
-      salvarJogo(); abrirPainelBase('fogueira');
-    });
-  });
-}
-
-// ── Bancada ──
-function htmlPainelBancada() {
-  const reveladas = RECEITAS.filter(r => r.bancada && r.revelada);
-  if (!reveladas.length)
-    return '<p class="painel-vazio">Nenhuma receita avançada aprendida ainda.<br>Encontre manuais e catálogos explorando.</p>';
-  let html = '<div class="painel-receitas">';
-  for (const r of reveladas) {
-    const item = ITENS[r.resultado];
-    const pode = Object.entries(r.ingredientes).every(([id, q]) => temItem(id, q));
-    const ingr = Object.entries(r.ingredientes)
-      .map(([id, q]) => `${ITENS[id]?.icone || ''} ${ITENS[id]?.nome || id} ×${q}`).join(' + ');
-    html += `<div class="painel-receita">
-      <div class="painel-receita-info">
-        <span class="painel-receita-nome">${item?.icone || ''} ${item?.nome || r.resultado}</span>
-        <span class="painel-receita-ingred">${ingr}</span>
-      </div>
-      <button class="btn-primario btn-sm btn-craftar-bancada" data-idx="${RECEITAS.indexOf(r)}" ${pode ? '' : 'disabled style="opacity:.45"'}>
-        ${pode ? 'Craftar' : 'Sem materiais'}
-      </button>
-    </div>`;
-  }
-  html += '</div>';
-  return html;
-}
-function wirePainelBancada() {
-  document.querySelectorAll('#painel-bancada .btn-craftar-bancada').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const r = RECEITAS[parseInt(btn.dataset.idx)];
-      if (!r) return;
-      executarCraft(r);
-      abrirPainelBase('bancada');
+      salvarJogo();
+      renderizarBase();
+      abrirPainelBase('fogueira');
     });
   });
 }
