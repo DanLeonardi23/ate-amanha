@@ -1232,6 +1232,91 @@ const EVENTOS_ESCOLHA = [
 ];
 
 // ============================================================
+// EVENTOS DE NPC ANDARILHO (disparados durante exploração)
+// Oferecem trocas: itens por itens ou pilhas.
+// ============================================================
+
+const EVENTOS_NPC = [
+  {
+    id: 'npc_mercador',
+    nome: 'Mercador Andarilho',
+    icone: '🧳',
+    desc: 'Um homem carregado de bugigangas para na sua frente. O olhar cauteloso, mas o sorriso calculado. "Pode escolher à vontade. Preço é o preço."',
+    perigo_min: null,
+    trocas: [
+      { oferecem: [{id:'remedio',qtd:2}],            querem: [{id:'pilha',qtd:6}] },
+      { oferecem: [{id:'pilha',qtd:8}],              querem: [{id:'comida',qtd:3}] },
+      { oferecem: [{id:'kit',qtd:1}],                querem: [{id:'pilha',qtd:10}] },
+      { oferecem: [{id:'agua_limpa',qtd:3}],         querem: [{id:'sucata',qtd:4}] },
+    ]
+  },
+  {
+    id: 'npc_catador',
+    nome: 'Catador de Sucata',
+    icone: '🔧',
+    desc: '"Só preciso de comida. Em troca, tenho tudo que tirei das ruínas hoje." Ele abre a mochila com orgulho.',
+    perigo_min: null,
+    trocas: [
+      { oferecem: [{id:'sucata',qtd:5}],             querem: [{id:'comida',qtd:2}] },
+      { oferecem: [{id:'madeira',qtd:4}],            querem: [{id:'comida',qtd:1}] },
+      { oferecem: [{id:'pilha',qtd:3}],              querem: [{id:'comida',qtd:2}] },
+      { oferecem: [{id:'sucata',qtd:3},{id:'pano',qtd:1}], querem: [{id:'comida',qtd:2}] },
+    ]
+  },
+  {
+    id: 'npc_enfermeira',
+    nome: 'Enfermeira Errante',
+    icone: '🩺',
+    desc: 'Uma mulher com braçadeira improvisada de cruz vermelha. "Tenho remédios de sobra, mas preciso de pilhas pra minha lanterna. Negócio?"',
+    perigo_min: null,
+    trocas: [
+      { oferecem: [{id:'remedio',qtd:3}],            querem: [{id:'pilha',qtd:5}] },
+      { oferecem: [{id:'kit',qtd:1}],                querem: [{id:'pilha',qtd:8}] },
+      { oferecem: [{id:'atadura',qtd:3}],            querem: [{id:'pilha',qtd:3}] },
+      { oferecem: [{id:'remedio',qtd:1},{id:'atadura',qtd:2}], querem: [{id:'pilha',qtd:4}] },
+    ]
+  },
+  {
+    id: 'npc_crianca',
+    nome: 'Criança Sozinha',
+    icone: '👧',
+    desc: 'Uma criança de uns 10 anos, suja mas alerta, segura um saco. "Achei isso mas não sei o que fazer. Você tem comida?"',
+    perigo_min: null,
+    trocas: [
+      { oferecem: [{id:'semente_canhamo',qtd:2}],    querem: [{id:'comida',qtd:1}] },
+      { oferecem: [{id:'semente_abobora',qtd:2}],    querem: [{id:'comida',qtd:1}] },
+      { oferecem: [{id:'semente_erva',qtd:2}],       querem: [{id:'comida',qtd:1}] },
+      { oferecem: [{id:'erva_medicinal',qtd:2}],     querem: [{id:'comida',qtd:1}] },
+    ]
+  },
+  {
+    id: 'npc_ex_soldado',
+    nome: 'Ex-Soldado',
+    icone: '🪖',
+    desc: '"Fui da guarda até o colapso. Agora só ando, não fico em lugar nenhum." Ele fala pouco, mas mostra o que tem.',
+    perigo_min: 'medio',
+    trocas: [
+      { oferecem: [{id:'kit',qtd:2}],                querem: [{id:'pilha',qtd:12}] },
+      { oferecem: [{id:'kit_avancado',qtd:1}],       querem: [{id:'pilha',qtd:18}] },
+      { oferecem: [{id:'remedio',qtd:2},{id:'kit',qtd:1}], querem: [{id:'pilha',qtd:14}] },
+      { oferecem: [{id:'pilha',qtd:15}],             querem: [{id:'comida',qtd:4},{id:'agua_limpa',qtd:2}] },
+    ]
+  },
+  {
+    id: 'npc_professora',
+    nome: 'Professora Aposentada',
+    icone: '📚',
+    desc: 'Uma senhora de óculos consertados com arame. "Ainda guardo algumas coisas úteis. Toco em frente se tiver o que preciso."',
+    perigo_min: null,
+    trocas: [
+      { oferecem: [{id:'agua_filtrada',qtd:2}],      querem: [{id:'pano',qtd:3}] },
+      { oferecem: [{id:'comida',qtd:2}],             querem: [{id:'sucata',qtd:5}] },
+      { oferecem: [{id:'remedio',qtd:1}],            querem: [{id:'pano',qtd:2},{id:'sucata',qtd:2}] },
+    ]
+  },
+];
+
+// ============================================================
 // EVENTOS DE DESCOBERTA (passivos, sem escolha, raros)
 // Disparam silenciosamente durante a fase explorando.
 // Produzem itens encontráveis apenas por este canal.
@@ -3505,6 +3590,7 @@ function iniciarExploracao() {
     tickFase:       0,       // tick dentro da fase atual
     eventoDisparado:    false, // garante no máximo 1 evento de escolha por exploração
     eventoAtivo:        null,  // id do evento em espera de resposta
+    _npcTrocaAtiva:     null,  // dados da troca de NPC em andamento
     descobertaDisparada: false, // garante no máximo 1 descoberta por exploração
   });
 
@@ -3853,6 +3939,19 @@ function dispararEventoEscolha() {
   const exp   = estado.exploracao;
   const nivel = exp.perigo; // 'baixo' | 'medio' | 'alto'
 
+  // 30% de chance de ser encontro com NPC andarilho
+  if (Math.random() < 0.30) {
+    const ordemPerigo = ['baixo', 'medio', 'alto'];
+    const npcsCandidatos = EVENTOS_NPC.filter(n => {
+      if (!n.perigo_min) return true;
+      return ordemPerigo.indexOf(nivel) >= ordemPerigo.indexOf(n.perigo_min);
+    });
+    if (npcsCandidatos.length) {
+      dispararEventoNPC(npcsCandidatos[randInt(0, npcsCandidatos.length - 1)]);
+      return;
+    }
+  }
+
   // Filtrar eventos elegíveis para o perigo atual
   const ordemPerigo = ['baixo', 'medio', 'alto'];
   const candidatos  = EVENTOS_ESCOLHA.filter(ev => {
@@ -3968,6 +4067,129 @@ function resolverEscolha(eventoId, escolhaIdx) {
     document.getElementById('modal-evento').classList.add('oculto');
     if (estado.stats.vida <= 0) { gameOver(); return; }
     estado.exploracao.eventoAtivo = null;
+    estado.exploracao.timer = setInterval(tickExploracao, 1000);
+  };
+}
+
+// ── NPC Andarilho ────────────────────────────────────────────
+
+function dispararEventoNPC(npc) {
+  const exp = estado.exploracao;
+  exp.eventoDisparado = true;
+  exp.eventoAtivo     = npc.id;
+
+  // Sortear uma troca aleatória do pool do NPC
+  const troca = npc.trocas[randInt(0, npc.trocas.length - 1)];
+  exp._npcTrocaAtiva = { npcId: npc.id, troca };
+
+  // Verificar se o jogador tem o que o NPC quer
+  const podeTrocar = troca.querem.every(req => temItem(req.id, req.qtd));
+
+  // Montar descrição da troca
+  function listarItens(lista) {
+    return lista.map(r => `${ITENS[r.id]?.icone || ''} ${ITENS[r.id]?.nome || r.id} ×${r.qtd}`).join('  +  ');
+  }
+
+  // Popular modal
+  const label = document.querySelector('.ev-label');
+  if (label) label.textContent = '👤 NPC';
+  document.getElementById('ev-titulo').textContent = `${npc.icone} ${npc.nome}`;
+  document.getElementById('ev-desc').textContent   = npc.desc;
+
+  const container = document.getElementById('ev-escolhas');
+  container.innerHTML = '';
+
+  // Card visual da troca
+  const trocaDiv = document.createElement('div');
+  trocaDiv.className = 'npc-troca-card';
+  trocaDiv.innerHTML = `
+    <div class="npc-troca-lado">
+      <span class="npc-troca-label">Ele oferece</span>
+      <span class="npc-troca-itens">${listarItens(troca.oferecem)}</span>
+    </div>
+    <div class="npc-troca-seta">⇄</div>
+    <div class="npc-troca-lado">
+      <span class="npc-troca-label">Ele quer</span>
+      <span class="npc-troca-itens npc-troca-quer ${!podeTrocar ? 'sem-recursos' : ''}">${listarItens(troca.querem)}</span>
+    </div>
+  `;
+  container.appendChild(trocaDiv);
+
+  // Botão aceitar
+  const btnAceitar = document.createElement('button');
+  btnAceitar.className = `ev-escolha-btn risco-baixo npc-btn-aceitar${!podeTrocar ? ' desabilitado' : ''}`;
+  btnAceitar.disabled  = !podeTrocar;
+  btnAceitar.innerHTML = `
+    <span class="ev-escolha-ico">🤝</span>
+    <span class="ev-escolha-txt">Aceitar troca</span>
+    ${!podeTrocar ? `<span class="ev-requer">Você não tem o suficiente</span>` : ''}
+  `;
+  if (podeTrocar) btnAceitar.addEventListener('click', () => resolverTrocaNPC(true));
+  container.appendChild(btnAceitar);
+
+  // Botão recusar
+  const btnRecusar = document.createElement('button');
+  btnRecusar.className = 'ev-escolha-btn risco-baixo';
+  btnRecusar.innerHTML = `
+    <span class="ev-escolha-ico">🚶</span>
+    <span class="ev-escolha-txt">Recusar e seguir</span>
+  `;
+  btnRecusar.addEventListener('click', () => resolverTrocaNPC(false));
+  container.appendChild(btnRecusar);
+
+  // Resetar label ao fechar
+  document.getElementById('ev-resultado').classList.add('oculto');
+  document.getElementById('ev-fechar-wrap').classList.add('oculto');
+  container.classList.remove('oculto');
+  document.getElementById('modal-evento').classList.remove('oculto');
+}
+
+function resolverTrocaNPC(aceitar) {
+  const exp   = estado.exploracao;
+  const dados = exp._npcTrocaAtiva;
+  if (!dados) return;
+
+  const npc   = EVENTOS_NPC.find(n => n.id === dados.npcId);
+  const troca = dados.troca;
+
+  let msgResult = '';
+
+  if (aceitar) {
+    // Consumir itens do jogador
+    for (const req of troca.querem) removerItem(req.id, req.qtd);
+    // Dar itens ao jogador
+    for (const oferta of troca.oferecem) {
+      const itemDef = ITENS[oferta.id];
+      if (itemDef) {
+        if (!adicionarItem(itemDef, oferta.qtd))
+          log(`  → Mochila cheia! Deixou ${itemDef.nome} para trás.`, 'log-alerta');
+      }
+    }
+    msgResult = 'Troca feita. Ele acena com a cabeça e segue o caminho sem dizer mais nada.';
+    log(`🤝 ${npc?.nome || 'NPC'}: troca aceita.`, 'log-sucesso');
+    mostrarToast('🤝 Troca realizada!');
+  } else {
+    msgResult = 'Você agradece e passa reto. Ele encolhe os ombros e desaparece entre os escombros.';
+    log(`🚶 ${npc?.nome || 'NPC'}: você recusou a troca.`, 'log-sistema');
+  }
+
+  // Restaurar label do modal
+  const label = document.querySelector('.ev-label');
+  if (label) label.textContent = '⚠ EVENTO';
+
+  const resEl = document.getElementById('ev-resultado');
+  resEl.textContent = msgResult;
+  resEl.classList.remove('oculto');
+  document.getElementById('ev-escolhas').classList.add('oculto');
+
+  const fecharWrap = document.getElementById('ev-fechar-wrap');
+  const fecharBtn  = document.getElementById('ev-btn-fechar');
+  fecharWrap.classList.remove('oculto');
+  fecharBtn.onclick = () => {
+    fecharWrap.classList.add('oculto');
+    document.getElementById('modal-evento').classList.add('oculto');
+    exp._npcTrocaAtiva = null;
+    exp.eventoAtivo    = null;
     estado.exploracao.timer = setInterval(tickExploracao, 1000);
   };
 }

@@ -2730,6 +2730,52 @@ html, body {
 }
 
 /* ============================================================
+   NPC ANDARILHO — card de troca
+   ============================================================ */
+
+.npc-troca-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(42,170,42,.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 0 20px 8px;
+}
+
+.npc-troca-lado {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.npc-troca-label {
+  font-size: .68rem;
+  color: var(--txt-dim);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.npc-troca-itens {
+  font-size: .92rem;
+  color: var(--txt-l);
+  font-family: var(--font-mono);
+  line-height: 1.5;
+}
+
+.npc-troca-itens.npc-troca-quer { color: var(--accent-l); }
+.npc-troca-itens.sem-recursos   { color: var(--red-l); text-decoration: line-through; }
+
+.npc-troca-seta {
+  font-size: 1.4rem;
+  color: var(--txt-dim);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ============================================================
    TELA GAME OVER
    ============================================================ */
 
