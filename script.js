@@ -250,6 +250,8 @@ const ITENS = {
   whisky_fino:    { id: 'whisky_fino',    nome: 'Whisky 18 Anos',        icone: '🥃', tipo: 'raro',      efeitos: { estresse: -40, vicio: 25, vida: -5 }, desc: 'Garrafa selada, lacre intacto. Drena estresse — e também você.' },
   remedio_exp:    { id: 'remedio_exp',    nome: 'Medicamento Experimental', icone: '🧬', tipo: 'raro',   efeitos: { vida: 50, estresse: -20 }, desc: 'Rótulo apagado. Embalagem hospitalar. Alto risco, alto retorno.' },
   colar_id:       { id: 'colar_id',       nome: 'Placa de Identificação Militar', icone: '🪖', tipo: 'raro', desc: 'Dog tag. Nome, número de série, tipo sanguíneo. De quem era isso?' },
+  motor_arranque: { id: 'motor_arranque', nome: 'Motor de Arranque',      icone: '⚙️',  tipo: 'raro',      desc: 'Peça automotiva pesada, ainda funcional. Alguém, em algum lugar, paga caro por isso.' },
+  ursinho:        { id: 'ursinho',        nome: 'Ursinho de Pelúcia',     icone: '🧸', tipo: 'raro',      desc: 'Manchado, um olho faltando. Para uma criança, ainda vale o mundo.' },
 
   // Culinária (produzidos na Fogueira)
   comida_quente:  { id: 'comida_quente',  nome: 'Refeição Quente',      icone: '🍲', tipo: 'consumivel', efeitos: { fome: -55, estresse: -10 }, desc: 'Uma refeição quente faz tudo parecer menos terrível.' },
@@ -680,6 +682,7 @@ const LOOT_TABLE = {
     { ...ITENS.pilha,          peso: 14, qtd: [1,2] },
     { ...ITENS.madeira,        peso: 10, qtd: [1,2] },
     { ...ITENS.carvao_ativado, peso: 5,  qtd: [1,1] },
+    { ...ITENS.ursinho,              peso: 4,  qtd: [1,1] },
     { ...ITENS.guia_sobrev,          peso: 15, qtd: [1,1] },
     { ...ITENS.anotacao_floresta,    peso: 15, qtd: [1,1] },
     { ...ITENS.anotacao_posto,       peso: 15, qtd: [1,1] },
@@ -748,6 +751,7 @@ const LOOT_TABLE = {
     { ...ITENS.pano,      peso: 14, qtd: [1,2] },
     { ...ITENS.bebida,    peso: 10, qtd: [1,1] },
     { ...ITENS.arame,     peso: 16, qtd: [1,3] },
+    { ...ITENS.motor_arranque,   peso: 5,  qtd: [1,1] },
     { ...ITENS.anotacao_fabrica, peso: 10, qtd: [1,1] },
   ],
   fabrica_textil: [
@@ -1437,6 +1441,7 @@ let estado = {
   deposito:  { nivel: 0, itens: [] },
   cisterna:  { aguaAcumulada: 0 },
   seguranca: { armadilhasInstaladas: 0 },
+  trabalhos: { disponiveis: [], aceitos: [], diaGerado: 0 },
   condicoes: { intoxicado: 0 },
   locaisDesbloqueados: [],
   exploracoesZona: {},   // { zona: contagem } — quantas vezes explorou cada local
@@ -2780,6 +2785,8 @@ function avancarDia() {
 
   verificarMercado();
   processarSaqueNoturno();
+  // Novos trabalhos disponíveis a cada dia
+  estado.trabalhos.diaGerado = 0; // força regeneração ao abrir a aba
 }
 
 function atualizarStatus() {
@@ -4453,7 +4460,7 @@ function montarDadosSave() {
     locaisDesbloqueados: estado.locaisDesbloqueados, capInventario: estado.capInventario,
     exploracoesZona: estado.exploracoesZona, respawnTicks: estado.respawnTicks,
     ultimoSaque: estado.ultimoSaque, mercado: estado.mercado,
-    equipamento: estado.equipamento,
+    equipamento: estado.equipamento, trabalhos: estado.trabalhos,
     dia: estado.dia, segundos: estado.segundos, condicoes: estado.condicoes,
     placar: estado.placar, ultimoSave: Date.now()
   };
@@ -4600,6 +4607,7 @@ function inicializarUI() {
       document.getElementById(`aba-${aba}`)?.scrollTo({ top: 0, behavior: 'smooth' });
       if (aba === 'bazar') { renderizarBazar(); iniciarAutoRefreshBazar(); }
       else pararAutoRefreshBazar();
+      if (aba === 'trabalhos') renderizarTrabalhos();
     });
   });
 
@@ -4983,6 +4991,279 @@ function mostrarIntro(aoTerminar) {
 }
 
 // ============================================================
+// TRABALHOS
+// ============================================================
+
+const TRABALHOS_POOL = [
+  {
+    id: 'trab_sucata',
+    titulo: 'Sucata urgente',
+    cliente: 'Construtor Renato',
+    icone: '🔩',
+    desc: 'Estou reforçando meu abrigo antes do inverno. Preciso de sucata rápido — pago bem.',
+    entrega: [{ id: 'sucata', qtd: 20 }],
+    recompensa: { tipo: 'pilha', qtd: 18 },
+  },
+  {
+    id: 'trab_remedios',
+    titulo: 'Remédios para o posto médico',
+    cliente: 'Dra. Carla',
+    icone: '💊',
+    desc: 'Estamos sem analgésicos. Toda doação salva alguém. Pago o que tenho.',
+    entrega: [{ id: 'remedio', qtd: 8 }],
+    recompensa: { tipo: 'pilha', qtd: 22 },
+  },
+  {
+    id: 'trab_motor',
+    titulo: 'Motor de arranque',
+    cliente: 'Mecânico Tulio',
+    icone: '⚙️',
+    desc: 'Tenho um gerador quase pronto. Só falta o motor de arranque. Você acha, eu pago.',
+    entrega: [{ id: 'motor_arranque', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 40 },
+  },
+  {
+    id: 'trab_ursinho',
+    titulo: 'Ursinho para a Sofia',
+    cliente: 'Pai desesperado',
+    icone: '🧸',
+    desc: 'Minha filha não dorme desde o colapso. Se você achar um ursinho de pelúcia — qualquer um — pago o que for.',
+    entrega: [{ id: 'ursinho', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 35 },
+  },
+  {
+    id: 'trab_agua',
+    titulo: 'Água limpa para o acampamento',
+    cliente: 'Coordenadora Nina',
+    icone: '💧',
+    desc: 'São 30 pessoas sem água limpa há dois dias. Qualquer quantidade ajuda.',
+    entrega: [{ id: 'agua_limpa', qtd: 6 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'remedio', qtd: 3 }, { id: 'atadura', qtd: 3 }] },
+  },
+  {
+    id: 'trab_comida',
+    titulo: 'Comida para idosos',
+    cliente: 'Voluntário Marcos',
+    icone: '🥫',
+    desc: 'Cuido de um grupo de idosos que não conseguem mais explorar. Preciso de comida.',
+    entrega: [{ id: 'comida', qtd: 10 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'pilha', qtd: 8 }, { id: 'sucata', qtd: 6 }] },
+  },
+  {
+    id: 'trab_pano',
+    titulo: 'Trapos para curativos',
+    cliente: 'Enfermeira Bete',
+    icone: '🧻',
+    desc: 'Sem algodão, sem gaze — usamos trapos mesmo. Preciso de bastante.',
+    entrega: [{ id: 'pano', qtd: 12 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'kit', qtd: 1 }, { id: 'remedio', qtd: 2 }] },
+  },
+  {
+    id: 'trab_madeira',
+    titulo: 'Madeira para barricada',
+    cliente: 'Líder do Bloco 4',
+    icone: '🪵',
+    desc: 'Vamos fechar a entrada da rua. Precisamos de madeira para as barricadas.',
+    entrega: [{ id: 'madeira', qtd: 15 }],
+    recompensa: { tipo: 'pilha', qtd: 14 },
+  },
+  {
+    id: 'trab_sementes',
+    titulo: 'Sementes para a horta coletiva',
+    cliente: 'Agricultora Dona Zélia',
+    icone: '🌱',
+    desc: 'Estamos montando uma horta comunitária. Qualquer semente serve — abóbora, erva, o que tiver.',
+    entrega: [{ id: 'semente_abobora', qtd: 3 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'comida', qtd: 4 }, { id: 'agua_limpa', qtd: 2 }] },
+  },
+  {
+    id: 'trab_kit',
+    titulo: 'Kit de primeiros socorros',
+    cliente: 'Patrulha Leste',
+    icone: '🩹',
+    desc: 'Nossa patrulha ficou sem kit. Saímos de novo amanhã — precisamos antes disso.',
+    entrega: [{ id: 'kit', qtd: 3 }],
+    recompensa: { tipo: 'pilha', qtd: 28 },
+  },
+  {
+    id: 'trab_pilhas',
+    titulo: 'Baterias para o rádio',
+    cliente: 'Operador de Rádio',
+    icone: '📻',
+    desc: 'O único rádio que ainda capta frequências está morrendo. Preciso de baterias para mantê-lo funcionando.',
+    entrega: [{ id: 'pilha', qtd: 10 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'remedio', qtd: 2 }, { id: 'comida', qtd: 3 }] },
+  },
+  {
+    id: 'trab_arame',
+    titulo: 'Arame para cerca elétrica',
+    cliente: 'Técnico Orlando',
+    icone: '〰️',
+    desc: 'Consigo montar uma cerca de baixa voltagem — só preciso de arame suficiente.',
+    entrega: [{ id: 'arame', qtd: 8 }],
+    recompensa: { tipo: 'pilha', qtd: 16 },
+  },
+];
+
+const TRABALHOS_POR_DIA = 5;
+const TRABALHOS_ACEITOS_MAX = 3;
+
+function gerarTrabalhosDodia() {
+  // Embaralha e pega N trabalhos para o dia
+  const embaralhado = [...TRABALHOS_POOL].sort(() => Math.random() - 0.5);
+  // Exclui os já aceitos para não duplicar
+  const aceitos = estado.trabalhos.aceitos.map(t => t.id);
+  const filtrado = embaralhado.filter(t => !aceitos.includes(t.id));
+  return filtrado.slice(0, TRABALHOS_POR_DIA);
+}
+
+function atualizarTrabalhosDiarios() {
+  if (estado.trabalhos.diaGerado === estado.dia) return; // já gerou hoje
+  estado.trabalhos.disponiveis = gerarTrabalhosDodia();
+  estado.trabalhos.diaGerado   = estado.dia;
+}
+
+function aceitarTrabalho(id) {
+  if (estado.trabalhos.aceitos.length >= TRABALHOS_ACEITOS_MAX) {
+    mostrarToast('Você já tem 3 trabalhos em andamento.');
+    return;
+  }
+  const idx = estado.trabalhos.disponiveis.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const trabalho = estado.trabalhos.disponiveis.splice(idx, 1)[0];
+  estado.trabalhos.aceitos.push({ ...trabalho, diaAceito: estado.dia });
+  log(`📋 Trabalho aceito: "${trabalho.titulo}"`, 'log-sucesso');
+  mostrarToast(`📋 "${trabalho.titulo}" aceito!`);
+  salvarJogo();
+  renderizarTrabalhos();
+}
+
+function entregarTrabalho(id) {
+  const trabalho = estado.trabalhos.aceitos.find(t => t.id === id);
+  if (!trabalho) return;
+
+  // Checar se tem os itens
+  const temTudo = trabalho.entrega.every(e => temItem(e.id, e.qtd));
+  if (!temTudo) { mostrarToast('Você não tem todos os itens para entregar.'); return; }
+
+  // Remover itens da mochila
+  for (const e of trabalho.entrega) removerItem(e.id, e.qtd);
+
+  // Dar recompensa
+  const rec = trabalho.recompensa;
+  let recTxt = '';
+  if (rec.tipo === 'pilha') {
+    adicionarItem(ITENS.pilha, rec.qtd);
+    recTxt = `${rec.qtd} 🔋`;
+  } else {
+    for (const r of rec.itens) {
+      if (!adicionarItem(ITENS[r.id], r.qtd))
+        log(`  → Mochila cheia! ${ITENS[r.id]?.nome} ficou para trás.`, 'log-alerta');
+    }
+    recTxt = rec.itens.map(r => `${ITENS[r.id]?.icone} ${ITENS[r.id]?.nome} ×${r.qtd}`).join(', ');
+  }
+
+  // Remover dos aceitos
+  estado.trabalhos.aceitos = estado.trabalhos.aceitos.filter(t => t.id !== id);
+
+  log(`✅ Trabalho entregue: "${trabalho.titulo}" — Recebeu: ${recTxt}`, 'log-sucesso');
+  mostrarToast(`✅ "${trabalho.titulo}" concluído!`);
+  salvarJogo();
+  renderizarTrabalhos();
+}
+
+function renderizarTrabalhos() {
+  atualizarTrabalhosDiarios();
+
+  // ── Em andamento ──
+  const andamentoEl = document.getElementById('trabalhos-andamento');
+  if (andamentoEl) {
+    if (estado.trabalhos.aceitos.length === 0) {
+      andamentoEl.innerHTML = '<p class="trab-vazio">Nenhum trabalho em andamento.</p>';
+    } else {
+      andamentoEl.innerHTML = estado.trabalhos.aceitos.map(t => {
+        const temTudo = t.entrega.every(e => temItem(e.id, e.qtd));
+        const entregaTxt = t.entrega.map(e =>
+          `${ITENS[e.id]?.icone || ''} ${ITENS[e.id]?.nome || e.id} ×${e.qtd}`
+        ).join(' + ');
+        return `
+          <div class="trab-card trab-aceito${temTudo ? ' trab-pronto' : ''}">
+            <div class="trab-header">
+              <span class="trab-icone">${t.icone}</span>
+              <div class="trab-info">
+                <span class="trab-titulo">${t.titulo}</span>
+                <span class="trab-cliente">— ${t.cliente}</span>
+              </div>
+              ${temTudo ? '<span class="trab-badge-pronto">PRONTO</span>' : ''}
+            </div>
+            <p class="trab-desc">${t.desc}</p>
+            <div class="trab-detalhes">
+              <span class="trab-label">Entregar:</span>
+              <span class="trab-itens">${entregaTxt}</span>
+            </div>
+            <div class="trab-detalhes">
+              <span class="trab-label">Recompensa:</span>
+              <span class="trab-itens trab-recomp">${htmlRecompensa(t.recompensa)}</span>
+            </div>
+            <button class="btn-primario btn-sm btn-entregar-trab" data-id="${t.id}" ${temTudo ? '' : 'disabled style="opacity:.45"'}>
+              ${temTudo ? '✅ Entregar' : 'Aguardando itens'}
+            </button>
+          </div>`;
+      }).join('');
+    }
+    andamentoEl.querySelectorAll('.btn-entregar-trab').forEach(btn => {
+      btn.addEventListener('click', () => entregarTrabalho(btn.dataset.id));
+    });
+  }
+
+  // ── Disponíveis ──
+  const disponiveisEl = document.getElementById('trabalhos-disponiveis');
+  if (disponiveisEl) {
+    const slots = estado.trabalhos.aceitos.length;
+    if (estado.trabalhos.disponiveis.length === 0) {
+      disponiveisEl.innerHTML = '<p class="trab-vazio">Nenhum trabalho disponível no momento. Volte amanhã.</p>';
+    } else {
+      disponiveisEl.innerHTML = estado.trabalhos.disponiveis.map(t => {
+        const entregaTxt = t.entrega.map(e =>
+          `${ITENS[e.id]?.icone || ''} ${ITENS[e.id]?.nome || e.id} ×${e.qtd}`
+        ).join(' + ');
+        const cheio = slots >= TRABALHOS_ACEITOS_MAX;
+        return `
+          <div class="trab-card">
+            <div class="trab-header">
+              <span class="trab-icone">${t.icone}</span>
+              <div class="trab-info">
+                <span class="trab-titulo">${t.titulo}</span>
+                <span class="trab-cliente">— ${t.cliente}</span>
+              </div>
+            </div>
+            <p class="trab-desc">${t.desc}</p>
+            <div class="trab-detalhes">
+              <span class="trab-label">Entregar:</span>
+              <span class="trab-itens">${entregaTxt}</span>
+            </div>
+            <div class="trab-detalhes">
+              <span class="trab-label">Recompensa:</span>
+              <span class="trab-itens trab-recomp">${htmlRecompensa(t.recompensa)}</span>
+            </div>
+            <button class="btn-secundario btn-sm btn-aceitar-trab" data-id="${t.id}" ${cheio ? 'disabled style="opacity:.45"' : ''}>
+              ${cheio ? 'Lotado (máx. 3)' : '📋 Aceitar'}
+            </button>
+          </div>`;
+      }).join('');
+    }
+    disponiveisEl.querySelectorAll('.btn-aceitar-trab').forEach(btn => {
+      btn.addEventListener('click', () => aceitarTrabalho(btn.dataset.id));
+    });
+  }
+}
+
+function htmlRecompensa(rec) {
+  if (rec.tipo === 'pilha') return `${rec.qtd} 🔋 Baterias`;
+  return rec.itens.map(r => `${ITENS[r.id]?.icone || ''} ${ITENS[r.id]?.nome || r.id} ×${r.qtd}`).join(' + ');
+}
+
+// ============================================================
 // TELA DE LOGIN
 // ============================================================
 
@@ -5115,6 +5396,7 @@ function aplicarDadosSave(s) {
   estado.ultimoSaque        = s.ultimoSaque        || null;
   estado.mercado            = s.mercado            || { itens: [], diaGerado: 0 };
   estado.equipamento        = s.equipamento        || { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null };
+  estado.trabalhos          = s.trabalhos          || { disponiveis: [], aceitos: [], diaGerado: 0 };
   estado.dia                = s.dia                || 1;
   estado.segundos           = s.segundos           || 0;
   estado.condicoes          = { intoxicado: 0, contundido: false, sangramento: false, ...(s.condicoes || {}) };

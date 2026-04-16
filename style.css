@@ -3489,6 +3489,129 @@ html, body {
   font-style: italic;
 }
 
+/* ============================================================
+   ABA TRABALHOS
+   ============================================================ */
+
+.trab-subtitulo {
+  font-size: .78rem;
+  color: var(--txt-dim);
+  margin: 4px 0 0;
+}
+
+.trab-secao-titulo {
+  font-size: .72rem;
+  letter-spacing: .12em;
+  color: var(--txt-dim);
+  text-transform: uppercase;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trab-slots-info {
+  font-size: .68rem;
+  color: var(--accent-d);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.trab-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  transition: border-color var(--trans);
+}
+
+.trab-card.trab-aceito { border-left: 3px solid var(--accent-d); }
+.trab-card.trab-pronto { border-left: 3px solid var(--accent); background: rgba(42,170,42,.04); }
+
+.trab-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.trab-icone {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.trab-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.trab-titulo {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--txt-l);
+}
+
+.trab-cliente {
+  font-size: .72rem;
+  color: var(--txt-dim);
+  font-style: italic;
+}
+
+.trab-badge-pronto {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  background: rgba(42,170,42,.18);
+  color: var(--accent-l);
+  border: 1px solid var(--accent-d);
+  padding: 2px 7px;
+  border-radius: 2px;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.trab-desc {
+  font-size: .78rem;
+  color: var(--txt-dim);
+  margin: 0 0 8px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.trab-detalhes {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+  font-size: .78rem;
+}
+
+.trab-label {
+  color: var(--txt-dim);
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.trab-itens { color: var(--txt-l); }
+.trab-recomp { color: var(--accent-l); font-weight: 600; }
+
+.trab-card .btn-primario,
+.trab-card .btn-secundario {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.trab-vazio {
+  font-size: .78rem;
+  color: var(--txt-dim);
+  font-style: italic;
+  padding: 8px 0;
+}
+
 /* ── RESPONSIVO BÁSICO ── */
 @media (max-width: 900px) {
   .game-main {
