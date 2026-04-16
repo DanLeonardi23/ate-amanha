@@ -411,6 +411,12 @@ const ITENS_EQUIPAVEIS = {
     desc: 'Alguma proteção. Menos dano em confrontos.'
   },
 
+  machado: {
+    slot: 'arma',
+    efeitos: { vidaDecayMulti: 0.75, lootBonus: 0.1 },
+    desc: 'Pesado e intimidador. Reduz bastante o dano recebido e melhora o loot.'
+  },
+
   // Ferramentas como equipamento
   lanterna: {
     slot: 'acessorio',
