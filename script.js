@@ -4388,6 +4388,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.ultimoSaque        = null;
   estado.mercado            = { itens: [], diaGerado: 0 };
   estado.equipamento        = { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null };
+  estado.trabalhos          = { disponiveis: [], aceitos: [], diaGerado: 0 };
   estado.dia                = 1;
   estado.segundos           = 0;
   estado.condicoes          = { intoxicado: 0, contundido: false, sangramento: false };
