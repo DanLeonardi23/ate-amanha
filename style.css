@@ -1248,6 +1248,20 @@ html, body {
 .equip-resumo-icone { font-size: 1rem; flex-shrink: 0; }
 .equip-resumo-nome  { flex: 1; font-size: .76rem; font-weight: 600; color: var(--text-pri); }
 
+.equip-resumo-btn-desequipar {
+  background: transparent;
+  border: none;
+  color: var(--txt-dim);
+  cursor: pointer;
+  font-size: .75rem;
+  padding: 0 2px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--trans), color var(--trans);
+}
+.equip-resumo-item:hover .equip-resumo-btn-desequipar { opacity: 1; }
+.equip-resumo-btn-desequipar:hover { color: var(--red-l); }
+
 .equip-resumo-vazio {
   font-size: .75rem;
   color: var(--text-dim);

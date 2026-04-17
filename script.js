@@ -3039,7 +3039,10 @@ function renderizarEquipResumo() {
       <span class="equip-resumo-slot">${SLOT_LABELS[slot]}</span>
       <span class="equip-resumo-icone">${item?.icone || '?'}</span>
       <span class="equip-resumo-nome">${item?.nome || itemId}</span>
+      <button class="equip-resumo-btn-desequipar" title="Desequipar">✕</button>
     `;
+    row.querySelector('.equip-resumo-btn-desequipar')
+      .addEventListener('click', e => { e.stopPropagation(); desequiparSlot(slot); });
     el.appendChild(row);
   }
 }
