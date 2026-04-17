@@ -5103,6 +5103,124 @@ const TRABALHOS_POOL = [
     entrega: [{ id: 'arame', qtd: 8 }],
     recompensa: { tipo: 'pilha', qtd: 16 },
   },
+
+  // ── Trabalhos com itens comuns ──
+  {
+    id: 'trab_atadura',
+    titulo: 'Ataduras para o campo',
+    cliente: 'Sargento Ferreira',
+    icone: '🩺',
+    desc: 'Minha equipe está saindo em patrulha amanhã de madrugada. Precisamos de ataduras para o kit de campo.',
+    entrega: [{ id: 'atadura', qtd: 6 }],
+    recompensa: { tipo: 'pilha', qtd: 20 },
+  },
+  {
+    id: 'trab_agua_suja',
+    titulo: 'Água para o tanque',
+    cliente: 'Mecânico Tulio',
+    icone: '🪣',
+    desc: 'Preciso encher o tanque de resfriamento. Água suja serve — o processo filtra tudo depois.',
+    entrega: [{ id: 'agua_suja', qtd: 8 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'sucata', qtd: 10 }, { id: 'arame', qtd: 4 }] },
+  },
+  {
+    id: 'trab_carvao',
+    titulo: 'Carvão ativado urgente',
+    cliente: 'Dra. Carla',
+    icone: '🧪',
+    desc: 'Três casos de intoxicação esta semana. Preciso de carvão ativado antes que piore.',
+    entrega: [{ id: 'carvao_ativado', qtd: 4 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'kit', qtd: 2 }, { id: 'pilha', qtd: 8 }] },
+  },
+  {
+    id: 'trab_lanterna',
+    titulo: 'Lanterna para o vigia',
+    cliente: 'Coordenadora Nina',
+    icone: '🔦',
+    desc: 'Nosso vigia noturno ficou sem lanterna. Sem iluminação, não consegue fazer ronda.',
+    entrega: [{ id: 'lanterna', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 18 },
+  },
+  {
+    id: 'trab_faca',
+    titulo: 'Faca para caça',
+    cliente: 'Caçador Breno',
+    icone: '🔪',
+    desc: 'A minha quebrou na última saída. Sem uma faca decente não consigo trazer comida para o grupo.',
+    entrega: [{ id: 'faca', qtd: 1 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'comida', qtd: 5 }, { id: 'agua_limpa', qtd: 3 }] },
+  },
+  {
+    id: 'trab_sopa',
+    titulo: 'Sopa para os feridos',
+    cliente: 'Voluntário Marcos',
+    icone: '🥣',
+    desc: 'Os feridos no acampamento precisam de algo quente e fácil de digerir. Sopa, o que tiver.',
+    entrega: [{ id: 'sopa', qtd: 3 }],
+    recompensa: { tipo: 'pilha', qtd: 24 },
+  },
+
+  // ── Trabalhos com itens raros ──
+  {
+    id: 'trab_revolver',
+    titulo: 'Arma para o conselho',
+    cliente: 'Líder do Conselho',
+    icone: '🔫',
+    desc: 'O conselho precisa de algo para intimidar sem precisar usar. Um revólver, mesmo sem munição, resolve.',
+    entrega: [{ id: 'revolver', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 55 },
+    raro: true,
+  },
+  {
+    id: 'trab_relogio',
+    titulo: 'Relógio para troca',
+    cliente: 'Negociador Hélio',
+    icone: '⌚',
+    desc: 'Tenho uma negociação difícil com outro grupo. Um relógio de ouro na mesa muda o tom da conversa.',
+    entrega: [{ id: 'relogio_ouro', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 50 },
+    raro: true,
+  },
+  {
+    id: 'trab_joias',
+    titulo: 'Joias para pagamento de dívida',
+    cliente: 'Mulher anônima',
+    icone: '💍',
+    desc: 'Não pergunta o motivo. Preciso de joias antes do anoitecer. Pago bem, não conto para ninguém.',
+    entrega: [{ id: 'joias', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 45 },
+    raro: true,
+  },
+  {
+    id: 'trab_pen_drive',
+    titulo: 'Pen drive criptografado',
+    cliente: 'Hacker Lis',
+    icone: '💾',
+    desc: 'Ouvi dizer que você pode ter encontrado um pen drive militar. Tenho equipamento para abrir — e divido o que encontrar.',
+    entrega: [{ id: 'pen_drive', qtd: 1 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'pilha', qtd: 30 }, { id: 'remedio_exp', qtd: 1 }] },
+    raro: true,
+  },
+  {
+    id: 'trab_binoculo',
+    titulo: 'Binóculo para posto de observação',
+    cliente: 'Capitã Rute',
+    icone: '🔭',
+    desc: 'Estamos montando um posto de observação no telhado. Binóculo militar é essencial para vigiar as rotas.',
+    entrega: [{ id: 'binoculo', qtd: 1 }],
+    recompensa: { tipo: 'pilha', qtd: 42 },
+    raro: true,
+  },
+  {
+    id: 'trab_whisky',
+    titulo: 'Algo para comemorar',
+    cliente: 'Velho Samir',
+    icone: '🥃',
+    desc: 'Completei 60 anos hoje. Sobrevivi ao colapso, à doença, à fome. Se você tiver um whisky de qualidade, pago qualquer coisa.',
+    entrega: [{ id: 'whisky_fino', qtd: 1 }],
+    recompensa: { tipo: 'item', itens: [{ id: 'pilha', qtd: 25 }, { id: 'kit_avancado', qtd: 1 }] },
+    raro: true,
+  },
 ];
 
 const TRABALHOS_POR_DIA = 5;
@@ -5121,6 +5239,23 @@ function atualizarTrabalhosDiarios() {
   if (estado.trabalhos.diaGerado === estado.dia) return; // já gerou hoje
   estado.trabalhos.disponiveis = gerarTrabalhosDodia();
   estado.trabalhos.diaGerado   = estado.dia;
+}
+
+const CUSTO_DESISTIR = 10;
+
+function desistirTrabalho(id) {
+  if (!temItem('pilha', CUSTO_DESISTIR)) {
+    mostrarToast(`Precisa de ${CUSTO_DESISTIR} 🔋 para desistir.`);
+    return;
+  }
+  const trabalho = estado.trabalhos.aceitos.find(t => t.id === id);
+  if (!trabalho) return;
+  removerItem('pilha', CUSTO_DESISTIR);
+  estado.trabalhos.aceitos = estado.trabalhos.aceitos.filter(t => t.id !== id);
+  log(`❌ Desistiu de "${trabalho.titulo}" — ${CUSTO_DESISTIR} 🔋 cobrados.`, 'log-alerta');
+  mostrarToast(`❌ Desistiu de "${trabalho.titulo}"`);
+  salvarJogo();
+  renderizarTrabalhos();
 }
 
 function aceitarTrabalho(id) {
@@ -5195,6 +5330,7 @@ function renderizarTrabalhos() {
                 <span class="trab-cliente">— ${t.cliente}</span>
               </div>
               ${temTudo ? '<span class="trab-badge-pronto">PRONTO</span>' : ''}
+              ${t.raro ? '<span class="trab-badge-raro">RARO</span>' : ''}
             </div>
             <p class="trab-desc">${t.desc}</p>
             <div class="trab-detalhes">
@@ -5205,14 +5341,22 @@ function renderizarTrabalhos() {
               <span class="trab-label">Recompensa:</span>
               <span class="trab-itens trab-recomp">${htmlRecompensa(t.recompensa)}</span>
             </div>
-            <button class="btn-primario btn-sm btn-entregar-trab" data-id="${t.id}" ${temTudo ? '' : 'disabled style="opacity:.45"'}>
-              ${temTudo ? '✅ Entregar' : 'Aguardando itens'}
-            </button>
+            <div class="trab-acoes">
+              <button class="btn-primario btn-sm btn-entregar-trab" data-id="${t.id}" ${temTudo ? '' : 'disabled style="opacity:.45"'}>
+                ${temTudo ? '✅ Entregar' : 'Aguardando itens'}
+              </button>
+              <button class="btn-perigo btn-sm btn-desistir-trab" data-id="${t.id}">
+                ✕ Desistir (${CUSTO_DESISTIR}🔋)
+              </button>
+            </div>
           </div>`;
       }).join('');
     }
     andamentoEl.querySelectorAll('.btn-entregar-trab').forEach(btn => {
       btn.addEventListener('click', () => entregarTrabalho(btn.dataset.id));
+    });
+    andamentoEl.querySelectorAll('.btn-desistir-trab').forEach(btn => {
+      btn.addEventListener('click', () => desistirTrabalho(btn.dataset.id));
     });
   }
 
@@ -5229,13 +5373,14 @@ function renderizarTrabalhos() {
         ).join(' + ');
         const cheio = slots >= TRABALHOS_ACEITOS_MAX;
         return `
-          <div class="trab-card">
+          <div class="trab-card${t.raro ? ' trab-raro' : ''}">
             <div class="trab-header">
               <span class="trab-icone">${t.icone}</span>
               <div class="trab-info">
                 <span class="trab-titulo">${t.titulo}</span>
                 <span class="trab-cliente">— ${t.cliente}</span>
               </div>
+              ${t.raro ? '<span class="trab-badge-raro">RARO</span>' : ''}
             </div>
             <p class="trab-desc">${t.desc}</p>
             <div class="trab-detalhes">
