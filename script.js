@@ -250,8 +250,17 @@ const ITENS = {
   whisky_fino:    { id: 'whisky_fino',    nome: 'Whisky 18 Anos',        icone: '🥃', tipo: 'raro',      efeitos: { estresse: -40, vicio: 25, vida: -5 }, desc: 'Garrafa selada, lacre intacto. Drena estresse — e também você.' },
   remedio_exp:    { id: 'remedio_exp',    nome: 'Medicamento Experimental', icone: '🧬', tipo: 'raro',   efeitos: { vida: 50, estresse: -20 }, desc: 'Rótulo apagado. Embalagem hospitalar. Alto risco, alto retorno.' },
   colar_id:       { id: 'colar_id',       nome: 'Placa de Identificação Militar', icone: '🪖', tipo: 'raro', desc: 'Dog tag. Nome, número de série, tipo sanguíneo. De quem era isso?' },
-  motor_arranque: { id: 'motor_arranque', nome: 'Motor de Arranque',      icone: '⚙️',  tipo: 'raro',      desc: 'Peça automotiva pesada, ainda funcional. Alguém, em algum lugar, paga caro por isso.' },
-  ursinho:        { id: 'ursinho',        nome: 'Ursinho de Pelúcia',     icone: '🧸', tipo: 'raro',      desc: 'Manchado, um olho faltando. Para uma criança, ainda vale o mundo.' },
+  motor_arranque:    { id: 'motor_arranque',    nome: 'Motor de Arranque',       icone: '⚙️',  tipo: 'raro',       desc: 'Peça automotiva pesada, ainda funcional. Alguém, em algum lugar, paga caro por isso.' },
+  ursinho:           { id: 'ursinho',           nome: 'Ursinho de Pelúcia',      icone: '🧸', tipo: 'raro',       desc: 'Manchado, um olho faltando. Para uma criança, ainda vale o mundo.' },
+
+  // Equipamentos de proteção
+  capacete:          { id: 'capacete',          nome: 'Capacete Industrial',     icone: '⛑️',  tipo: 'ferramenta', desc: 'Plástico duro, alça ajustável. Não foi feito para guerra, mas serve.' },
+  colete:            { id: 'colete',            nome: 'Colete de Carga',         icone: '🦺', tipo: 'ferramenta', desc: 'Vários bolsos internos e externos. Carrega mais, pesa pouco.' },
+  capuz:             { id: 'capuz',             nome: 'Capuz de Lã',             icone: '🧣', tipo: 'ferramenta', desc: 'Esconde o rosto, abafa o som dos passos. Bom para quem prefere não ser visto.' },
+  jaqueta_couro:     { id: 'jaqueta_couro',     nome: 'Jaqueta de Couro',        icone: '🧥', tipo: 'ferramenta', desc: 'Grossa e pesada. Já absorveu alguns cortes — e vai absorver mais.' },
+  luvas_trabalho:    { id: 'luvas_trabalho',    nome: 'Luvas de Trabalho',       icone: '🧤', tipo: 'ferramenta', desc: 'Reforço nas palmas, costura dupla. Permite vasculhar com mais cuidado.' },
+  calcas_reforcadas: { id: 'calcas_reforcadas', nome: 'Calças Reforçadas',       icone: '👖', tipo: 'ferramenta', desc: 'Joelheiras embutidas, tecido duplo nas coxas. Aguenta mais do que parece.' },
+  botas_trabalho:    { id: 'botas_trabalho',    nome: 'Botas de Trabalho',       icone: '👢', tipo: 'ferramenta', desc: 'Biqueira de aço, solado antiderrapante. Sente o chão como nunca.' },
 
   // Culinária (produzidos na Fogueira)
   comida_quente:  { id: 'comida_quente',  nome: 'Refeição Quente',      icone: '🍲', tipo: 'consumivel', efeitos: { fome: -55, estresse: -10 }, desc: 'Uma refeição quente faz tudo parecer menos terrível.' },
@@ -417,6 +426,51 @@ const ITENS_EQUIPAVEIS = {
     slot: 'arma',
     efeitos: { vidaDecayMulti: 0.75, lootBonus: 0.1 },
     desc: 'Pesado e intimidador. Reduz bastante o dano recebido e melhora o loot.'
+  },
+
+  // Cabeça
+  capacete: {
+    slot: 'cabeca',
+    efeitos: { vidaDecayMulti: 0.95 },
+    desc: '-5% de dano sofrido em eventos de exploração.'
+  },
+  capuz: {
+    slot: 'cabeca',
+    efeitos: { eventoChanceMult: 0.90 },
+    desc: '+10% de eficiência furtiva. Reduz a chance de eventos negativos.'
+  },
+
+  // Peito
+  colete: {
+    slot: 'peito',
+    efeitos: { mochilaBonus: 2 },
+    desc: '+2 slots na mochila enquanto equipado.'
+  },
+  jaqueta_couro: {
+    slot: 'peito',
+    efeitos: { vidaDecayMulti: 0.95 },
+    desc: '-5% de dano recebido em confrontos e eventos.'
+  },
+
+  // Mãos
+  luvas_trabalho: {
+    slot: 'maos',
+    efeitos: { lootRaroBonus: 0.05 },
+    desc: '+5% de chance de encontrar itens raros durante exploração.'
+  },
+
+  // Pernas
+  calcas_reforcadas: {
+    slot: 'pernas',
+    efeitos: { vidaMaxBonus: 10 },
+    desc: '+10 de vida máxima enquanto equipado.'
+  },
+
+  // Pés
+  botas_trabalho: {
+    slot: 'pes',
+    efeitos: { lootBonus: 0.05 },
+    desc: '+5% de chance de loot em explorações.'
   },
 
   // Ferramentas como equipamento
@@ -682,7 +736,8 @@ const LOOT_TABLE = {
     { ...ITENS.pilha,          peso: 14, qtd: [1,2] },
     { ...ITENS.madeira,        peso: 10, qtd: [1,2] },
     { ...ITENS.carvao_ativado, peso: 5,  qtd: [1,1] },
-    { ...ITENS.ursinho,              peso: 4,  qtd: [1,1] },
+    { ...ITENS.ursinho,        peso: 4,  qtd: [1,1] },
+    { ...ITENS.capuz,          peso: 6,  qtd: [1,1] },
     { ...ITENS.guia_sobrev,          peso: 15, qtd: [1,1] },
     { ...ITENS.anotacao_floresta,    peso: 15, qtd: [1,1] },
     { ...ITENS.anotacao_posto,       peso: 15, qtd: [1,1] },
@@ -728,6 +783,7 @@ const LOOT_TABLE = {
     { ...ITENS.faca,      peso: 10, qtd: [1,1] },
     { ...ITENS.pano,      peso: 15, qtd: [1,2] },
     { ...ITENS.agua_limpa,peso: 12, qtd: [1,1] },
+    { ...ITENS.jaqueta_couro,        peso: 5,  qtd: [1,1] },
     { ...ITENS.catalogo_ferramentas, peso: 12, qtd: [1,1] },
     { ...ITENS.revista_hq,           peso: 18, qtd: [1,1] },
     { ...ITENS.anotacao_garagem,     peso: 10, qtd: [1,1] },
@@ -741,6 +797,8 @@ const LOOT_TABLE = {
     { ...ITENS.agua_limpa,peso: 15, qtd: [1,1] },
     { ...ITENS.pilha,     peso: 10, qtd: [1,2] },
     { ...ITENS.remedio,   peso: 6,  qtd: [1,1] },
+    { ...ITENS.capacete,  peso: 6,  qtd: [1,1] },
+    { ...ITENS.colete,    peso: 5,  qtd: [1,1] },
     { ...ITENS.anotacao_subestacao, peso: 8, qtd: [1,1] },
   ],
   garagem: [
@@ -751,6 +809,7 @@ const LOOT_TABLE = {
     { ...ITENS.pano,      peso: 14, qtd: [1,2] },
     { ...ITENS.bebida,    peso: 10, qtd: [1,1] },
     { ...ITENS.arame,     peso: 16, qtd: [1,3] },
+    { ...ITENS.botas_trabalho,   peso: 6,  qtd: [1,1] },
     { ...ITENS.motor_arranque,   peso: 5,  qtd: [1,1] },
     { ...ITENS.anotacao_fabrica, peso: 10, qtd: [1,1] },
   ],
@@ -761,6 +820,7 @@ const LOOT_TABLE = {
     { ...ITENS.madeira,   peso: 18, qtd: [1,2] },
     { ...ITENS.pilha,     peso: 12, qtd: [1,2] },
     { ...ITENS.faca,      peso: 8,  qtd: [1,1] },
+    { ...ITENS.luvas_trabalho,   peso: 7,  qtd: [1,1] },
     { ...ITENS.anotacao_silo, peso: 10, qtd: [1,1] },
   ],
   subestacao: [
@@ -768,6 +828,7 @@ const LOOT_TABLE = {
     { ...ITENS.arame,     peso: 40, qtd: [2,4] },
     { ...ITENS.sucata,    peso: 35, qtd: [2,4] },
     { ...ITENS.faca,      peso: 15, qtd: [1,1] },
+    { ...ITENS.calcas_reforcadas,    peso: 6,  qtd: [1,1] },
     { ...ITENS.catalogo_ferramentas, peso: 12, qtd: [1,1] },
     { ...ITENS.madeira,   peso: 8,  qtd: [1,2] },
   ],
@@ -2657,9 +2718,11 @@ function renderizarDeposito() {
  */
 function getEfeitosEquipamento() {
   const resultado = {
-    vidaDecayMulti: 1,    // multiplicador de dano recebido (< 1 = menos dano)
-    lootBonus:      0,    // bônus aditivo de loot (somado ao traço)
-    estresseRedux:  0,    // redução extra de estresse por tick (> 0 = reduz mais)
+    vidaDecayMulti:  1,    // multiplicador de dano recebido (< 1 = menos dano)
+    lootBonus:       0,    // bônus aditivo de loot
+    estresseRedux:   0,    // redução extra de estresse
+    eventoChanceMult: 1,   // multiplicador da chance de evento negativo (< 1 = menos eventos)
+    lootRaroBonus:   0,    // bônus na chance de descoberta rara
   };
 
   for (const slot of SLOTS_EQUIP) {
@@ -2667,9 +2730,11 @@ function getEfeitosEquipamento() {
     if (!itemId) continue;
     const ef = ITENS_EQUIPAVEIS[itemId]?.efeitos || {};
 
-    if (ef.vidaDecayMulti !== undefined) resultado.vidaDecayMulti *= ef.vidaDecayMulti;
-    if (ef.lootBonus      !== undefined) resultado.lootBonus      += ef.lootBonus;
-    if (ef.estresseRedux  !== undefined) resultado.estresseRedux  += ef.estresseRedux;
+    if (ef.vidaDecayMulti  !== undefined) resultado.vidaDecayMulti  *= ef.vidaDecayMulti;
+    if (ef.lootBonus       !== undefined) resultado.lootBonus       += ef.lootBonus;
+    if (ef.estresseRedux   !== undefined) resultado.estresseRedux   += ef.estresseRedux;
+    if (ef.eventoChanceMult!== undefined) resultado.eventoChanceMult *= ef.eventoChanceMult;
+    if (ef.lootRaroBonus   !== undefined) resultado.lootRaroBonus   += ef.lootRaroBonus;
   }
 
   return resultado;
@@ -2915,6 +2980,24 @@ function getSlotItem(itemId) {
  * Equipa um item no slot correspondente.
  * Se já havia algo equipado, devolve para a mochila.
  */
+function _aplicarEfeitosEquip(itemId) {
+  const ef = ITENS_EQUIPAVEIS[itemId]?.efeitos || {};
+  if (ef.mochilaBonus)  { estado.capInventario += ef.mochilaBonus; renderizarInventario(); }
+  if (ef.vidaMaxBonus)  { estado.stats.vidaMax  += ef.vidaMaxBonus; }
+}
+
+function _reverterEfeitosEquip(itemId) {
+  const ef = ITENS_EQUIPAVEIS[itemId]?.efeitos || {};
+  if (ef.mochilaBonus)  {
+    estado.capInventario = Math.max(estado.inventario.length, estado.capInventario - ef.mochilaBonus);
+    renderizarInventario();
+  }
+  if (ef.vidaMaxBonus)  {
+    estado.stats.vidaMax  -= ef.vidaMaxBonus;
+    estado.stats.vida      = Math.min(estado.stats.vida, estado.stats.vidaMax);
+  }
+}
+
 function equiparItem(itemId) {
   const equipInfo = ITENS_EQUIPAVEIS[itemId];
   if (!equipInfo) return;
@@ -2929,9 +3012,10 @@ function equiparItem(itemId) {
     return;
   }
 
-  // Desequipar o que estava no slot (devolver à mochila)
+  // Desequipar o que estava no slot (devolver à mochila e reverter efeitos)
   if (estado.equipamento[slot]) {
     const anterior = estado.equipamento[slot];
+    _reverterEfeitosEquip(anterior);
     adicionarItem(ITENS[anterior], 1);
     log(`↩ Desequipou: ${ITENS[anterior]?.icone} ${ITENS[anterior]?.nome}`, 'log-sistema');
   }
@@ -2939,6 +3023,7 @@ function equiparItem(itemId) {
   // Remover da mochila e equipar
   removerItem(itemId, 1);
   estado.equipamento[slot] = itemId;
+  _aplicarEfeitosEquip(itemId);
 
   log(`⚔️ Equipou: ${itemBase.icone} ${itemBase.nome} [${SLOT_LABELS[slot]}]`, 'log-sucesso');
   mostrarToast(`⚔️ ${itemBase.nome} equipado!`);
@@ -2956,6 +3041,7 @@ function desequiparSlot(slot) {
   if (!itemId) return;
 
   const itemBase = ITENS[itemId];
+  _reverterEfeitosEquip(itemId);
   adicionarItem(itemBase, 1);
   estado.equipamento[slot] = null;
 
@@ -3646,7 +3732,7 @@ function tickExploracao() {
   // ── Tentar descoberta rara (tick final da fase explorando, ~8%) ──
   if (exp.faseAtual === 'explorando' && !exp.descobertaDisparada) {
     const tickFinal = Math.max(1, exp.tempoExplora - 1);
-    if (exp.tickFase === tickFinal && Math.random() < 0.08) {
+    if (exp.tickFase === tickFinal && Math.random() < 0.08 + getEfeitosEquipamento().lootRaroBonus) {
       exp.descobertaDisparada = true;
       dispararEventoDescoberta();
     }
@@ -3804,7 +3890,7 @@ function finalizarExploracao() {
   gerarLoot(estado.exploracao.zona, estado.exploracao.perigo);
 
   const chanceBase = { baixo: 0.25, medio: 0.45, alto: 0.65 }[estado.exploracao.perigo];
-  const chance = chanceBase * getMultiTatica().eventoChance;
+  const chance = chanceBase * getMultiTatica().eventoChance * getEfeitosEquipamento().eventoChanceMult;
   if (Math.random() < chance) {
     const lista = EVENTOS_NEGATIVOS[estado.exploracao.perigo];
     const ev    = lista[randInt(0, lista.length - 1)];
