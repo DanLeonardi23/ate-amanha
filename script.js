@@ -578,9 +578,9 @@ const VENDA_PRECOS = {
   revolver:      30,
   remedio_exp:   32,
   pen_drive:     36,
-  canhamo:       1,
-  erva_medicinal:3,
-  abobora:       2,
+  canhamo:         6,
+  erva_medicinal: 10,
+  abobora:         7,
   semente_canhamo: 1,
   semente_erva:    2,
   semente_abobora: 2,
@@ -733,7 +733,7 @@ const LOOT_TABLE = {
     { ...ITENS.comida,         peso: 28, qtd: [1,2] },
     { ...ITENS.pano,           peso: 25, qtd: [1,2] },
     { ...ITENS.agua_suja,      peso: 18, qtd: [1,1] },
-    { ...ITENS.pilha,          peso: 14, qtd: [1,2] },
+    { ...ITENS.pilha,          peso: 4,  qtd: [1,1] },
     { ...ITENS.madeira,        peso: 10, qtd: [1,2] },
     { ...ITENS.carvao_ativado, peso: 5,  qtd: [1,1] },
     { ...ITENS.ursinho,        peso: 4,  qtd: [1,1] },
@@ -778,7 +778,7 @@ const LOOT_TABLE = {
   ],
   posto: [
     { ...ITENS.sucata,    peso: 35, qtd: [2,4] },
-    { ...ITENS.pilha,     peso: 25, qtd: [1,3] },
+    { ...ITENS.pilha,     peso: 6,  qtd: [1,1] },
     { ...ITENS.comida,    peso: 20, qtd: [1,2] },
     { ...ITENS.faca,      peso: 10, qtd: [1,1] },
     { ...ITENS.pano,      peso: 15, qtd: [1,2] },
@@ -795,7 +795,7 @@ const LOOT_TABLE = {
     { ...ITENS.bebida,    peso: 20, qtd: [1,2] },
     { ...ITENS.pano,      peso: 18, qtd: [1,2] },
     { ...ITENS.agua_limpa,peso: 15, qtd: [1,1] },
-    { ...ITENS.pilha,     peso: 10, qtd: [1,2] },
+    { ...ITENS.pilha,     peso: 3,  qtd: [1,1] },
     { ...ITENS.remedio,   peso: 6,  qtd: [1,1] },
     { ...ITENS.capacete,  peso: 6,  qtd: [1,1] },
     { ...ITENS.colete,    peso: 5,  qtd: [1,1] },
@@ -805,7 +805,7 @@ const LOOT_TABLE = {
     { ...ITENS.sucata,    peso: 45, qtd: [2,5] },
     { ...ITENS.faca,      peso: 22, qtd: [1,2] },
     { ...ITENS.madeira,   peso: 20, qtd: [1,3] },
-    { ...ITENS.pilha,     peso: 18, qtd: [1,3] },
+    { ...ITENS.pilha,     peso: 5,  qtd: [1,1] },
     { ...ITENS.pano,      peso: 14, qtd: [1,2] },
     { ...ITENS.bebida,    peso: 10, qtd: [1,1] },
     { ...ITENS.arame,     peso: 16, qtd: [1,3] },
@@ -818,13 +818,13 @@ const LOOT_TABLE = {
     { ...ITENS.arame,     peso: 35, qtd: [2,4] },
     { ...ITENS.sucata,    peso: 28, qtd: [1,3] },
     { ...ITENS.madeira,   peso: 18, qtd: [1,2] },
-    { ...ITENS.pilha,     peso: 12, qtd: [1,2] },
+    { ...ITENS.pilha,     peso: 4,  qtd: [1,1] },
     { ...ITENS.faca,      peso: 8,  qtd: [1,1] },
     { ...ITENS.luvas_trabalho,   peso: 7,  qtd: [1,1] },
     { ...ITENS.anotacao_silo, peso: 10, qtd: [1,1] },
   ],
   subestacao: [
-    { ...ITENS.pilha,     peso: 50, qtd: [2,5] },
+    { ...ITENS.pilha,     peso: 12, qtd: [1,2] },
     { ...ITENS.arame,     peso: 40, qtd: [2,4] },
     { ...ITENS.sucata,    peso: 35, qtd: [2,4] },
     { ...ITENS.faca,      peso: 15, qtd: [1,1] },
@@ -950,8 +950,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🩹', risco: 'baixo',
         requer: { item: 'kit', qtd: 1 },
         resultados: [
-          { chance: 70, msg: 'Ele acorda. Com voz fraca, aponta um esconderijo próximo. Você encontra mantimentos.', efeitos: { estresse: -10 }, loot: [{id:'comida',qtd:2},{id:'remedio',qtd:1}], consumir: [{id:'kit',qtd:1}] },
-          { chance: 30, msg: 'Você fez o que pôde. Não foi suficiente. O kit foi usado em vão.', efeitos: { estresse: 22 }, consumir: [{id:'kit',qtd:1}] }
+          { chance: 70, msg: 'Ele acorda. Com voz fraca, aponta um esconderijo próximo. Você encontra mantimentos.', efeitos: { estresse: -10 }, loot: [{id:'comida',qtd:2},{id:'remedio',qtd:1}], consumir: [{id:'kit',qtd:1}], reputacao: 10 },
+          { chance: 30, msg: 'Você fez o que pôde. Não foi suficiente. O kit foi usado em vão.', efeitos: { estresse: 22 }, consumir: [{id:'kit',qtd:1}], reputacao: 5 }
         ]
       },
       {
@@ -959,8 +959,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🎒', risco: 'medio',
         requer: null,
         resultados: [
-          { chance: 60, msg: 'A mochila tinha pouca coisa, mas era algo. Você não olha para trás.', efeitos: { estresse: 18 }, loot: [{id:'sucata',qtd:2},{id:'pano',qtd:1}] },
-          { chance: 40, msg: 'Ao pegar a mochila, ele acorda e resiste. A confusão te custa energia.', efeitos: { vida: -12, estresse: 28 } }
+          { chance: 60, msg: 'A mochila tinha pouca coisa, mas era algo. Você não olha para trás.', efeitos: { estresse: 18 }, loot: [{id:'sucata',qtd:2},{id:'pano',qtd:1}], reputacao: -12 },
+          { chance: 40, msg: 'Ao pegar a mochila, ele acorda e resiste. A confusão te custa energia.', efeitos: { vida: -12, estresse: 28 }, reputacao: -15 }
         ]
       },
       {
@@ -968,8 +968,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🚶', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 75, msg: 'Você passa reto. A imagem fica gravada na cabeça.', efeitos: { estresse: 12 } },
-          { chance: 25, msg: 'Você passa reto. Mais tarde ouve um tiro distante. Pode não ser relacionado.', efeitos: { estresse: 20 } }
+          { chance: 75, msg: 'Você passa reto. A imagem fica gravada na cabeça.', efeitos: { estresse: 12 }, reputacao: -5 },
+          { chance: 25, msg: 'Você passa reto. Mais tarde ouve um tiro distante. Pode não ser relacionado.', efeitos: { estresse: 20 }, reputacao: -8 }
         ]
       }
     ]
@@ -985,8 +985,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🤫', risco: 'alto',
         requer: null,
         resultados: [
-          { chance: 55, msg: 'Com cuidado extremo, você pega alguns itens e recua sem fazer barulho.', efeitos: { estresse: 12 }, loot: [{id:'comida',qtd:2},{id:'pilha',qtd:2}] },
-          { chance: 45, msg: 'Ele acorda. Você corre. Sai do local com um corte no braço.', efeitos: { vida: -20, estresse: 32 }, condicao: 'sangramento' }
+          { chance: 55, msg: 'Com cuidado extremo, você pega alguns itens e recua sem fazer barulho.', efeitos: { estresse: 12 }, loot: [{id:'comida',qtd:2},{id:'pilha',qtd:2}], reputacao: -8 },
+          { chance: 45, msg: 'Ele acorda. Você corre. Sai do local com um corte no braço.', efeitos: { vida: -20, estresse: 32 }, condicao: 'sangramento', reputacao: -10 }
         ]
       },
       {
@@ -1094,8 +1094,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🎒', risco: 'medio',
         requer: null,
         resultados: [
-          { chance: 65, msg: 'Você encontra algo útil. Não pensa muito nisso.', efeitos: { estresse: 14 }, loot: [{id:'sucata',qtd:2},{id:'remedio',qtd:1}] },
-          { chance: 35, msg: 'A mochila estava armadilhada. A explosão é pequena mas te joga no chão.', efeitos: { vida: -25, estresse: 32 } }
+          { chance: 65, msg: 'Você encontra algo útil. Não pensa muito nisso.', efeitos: { estresse: 14 }, loot: [{id:'sucata',qtd:2},{id:'remedio',qtd:1}], reputacao: -4 },
+          { chance: 35, msg: 'A mochila estava armadilhada. A explosão é pequena mas te joga no chão.', efeitos: { vida: -25, estresse: 32 }, reputacao: -4 }
         ]
       },
       {
@@ -1112,7 +1112,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🙏', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 100, msg: 'Alguns têm o direito de descansar em paz. Você segue.', efeitos: { estresse: -5 } }
+          { chance: 100, msg: 'Alguns têm o direito de descansar em paz. Você segue.', efeitos: { estresse: -5 }, reputacao: 6 }
         ]
       }
     ]
@@ -1128,8 +1128,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🥫', risco: 'baixo',
         requer: { item: 'comida', qtd: 1 },
         resultados: [
-          { chance: 85, msg: 'O animal aceita e abre passagem. Um acordo tácito.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: -5 } },
-          { chance: 15, msg: 'Ele pega a comida e avança de qualquer jeito. Você corre.', consumir: [{id:'comida',qtd:1}], efeitos: { vida: -14, estresse: 22 } }
+          { chance: 85, msg: 'O animal aceita e abre passagem. Um acordo tácito.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: -5 }, reputacao: 4 },
+          { chance: 15, msg: 'Ele pega a comida e avança de qualquer jeito. Você corre.', consumir: [{id:'comida',qtd:1}], efeitos: { vida: -14, estresse: 22 }, reputacao: 2 }
         ]
       },
       {
@@ -1508,6 +1508,8 @@ let estado = {
   exploracoesZona: {},   // { zona: contagem } — quantas vezes explorou cada local
   respawnTicks: {},      // { zona: ticks desde última exploração } — para recuperação
   placar: { exploracoes: 0, crafts: 0, construcoes: 0 },
+  reputacao: 50,
+  assentamento: { parcelas: [null, null, null, null] },
   ultimoSaque: null,
   mercado: { itens: [], diaGerado: 0, fatorVenda: 1 },
   equipamento: { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null },
@@ -1571,6 +1573,23 @@ function mostrarToast(msg, dur = 2400) {
     t.classList.remove('visivel');
     setTimeout(() => t.classList.add('oculto'), 300);
   }, dur);
+}
+
+function mostrarConfirmacao(msg, onSim, onNao) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal';
+  overlay.style.zIndex = '9999';
+  overlay.innerHTML = `
+    <div class="modal-conteudo" style="max-width:320px;text-align:center">
+      <p style="margin-bottom:16px;font-size:.92rem;color:var(--text-main)">${msg}</p>
+      <div class="modal-acoes" style="justify-content:center;gap:12px">
+        <button class="btn-perigo btn-sm" id="confirm-sim">Sim, descartar</button>
+        <button class="btn-secundario btn-sm" id="confirm-nao">Não</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#confirm-sim').addEventListener('click', () => { overlay.remove(); onSim?.(); });
+  overlay.querySelector('#confirm-nao').addEventListener('click', () => { overlay.remove(); onNao?.(); });
 }
 
 // ============================================================
@@ -1994,11 +2013,16 @@ function abrirModal(item) {
       inputQtd.max   = qtdMax;
       inputQtd.value = Math.min(inputQtd.value || 1, qtdMax);
       const bloqueado = explorando || !temEspaco;
+      const btnGuardarTudo = document.getElementById('modal-btn-guardar-tudo');
       btnGuardar.disabled      = bloqueado;
       btnGuardar.style.opacity = bloqueado ? '0.4' : '1';
       btnGuardar.textContent   = explorando  ? 'Volte primeiro'
                                : !temEspaco  ? 'Depósito cheio'
                                : 'Guardar';
+      if (btnGuardarTudo) {
+        btnGuardarTudo.disabled      = bloqueado;
+        btnGuardarTudo.style.opacity = bloqueado ? '0.4' : '1';
+      }
       inputQtd.disabled      = explorando;
       inputQtd.style.opacity = explorando ? '0.4' : '1';
     }
@@ -2356,15 +2380,13 @@ function wirePainelFogueira() {
 // ── Cisterna ──
 function htmlPainelCisterna() {
   const acum        = estado.cisterna.aguaAcumulada;
-  const filtroOk    = baseTemEstrutura('filtro') && estado.filtroInstalado.diasRestantes > 0;
+  const filtroOk    = estado.filtroInstalado.diasRestantes > 0;
   const diasRestantes = estado.filtroInstalado.diasRestantes;
   const tipoNome    = filtroOk ? '💧 Água Limpa' : '🪣 Água Suja';
   const temFiltroInv = temItem('filtro', 1);
 
   let filtroStatus = '';
-  if (!baseTemEstrutura('filtro')) {
-    filtroStatus = '<p class="painel-cist-info">⚠ Construa o Filtro na base para purificar a água.</p>';
-  } else if (diasRestantes > 0) {
+  if (diasRestantes > 0) {
     filtroStatus = `<p class="painel-cist-info">🧪 Filtro ativo · ${diasRestantes} dia(s) restante(s). Coletando água limpa.</p>`;
   } else {
     filtroStatus = `<p class="painel-cist-info">⚠ Sem filtro instalado. Coletando água suja.
@@ -2392,7 +2414,7 @@ function wirePainelCisterna() {
   document.querySelector('#painel-cisterna .btn-coletar-cisterna')?.addEventListener('click', () => {
     const qtd = estado.cisterna.aguaAcumulada;
     if (qtd <= 0) return;
-    const filtroOk = baseTemEstrutura('filtro') && estado.filtroInstalado.diasRestantes > 0;
+    const filtroOk = estado.filtroInstalado.diasRestantes > 0;
     const itemId   = filtroOk ? 'agua_limpa' : 'agua_suja';
     adicionarItem(ITENS[itemId], qtd);
     estado.cisterna.aguaAcumulada = 0;
@@ -2813,6 +2835,12 @@ function avancarDia() {
   document.getElementById('hdr-dia').textContent = `Dia ${estado.dia}`;
   log(`☀ Dia ${estado.dia}. Você sobreviveu mais uma noite.`, 'log-alerta');
 
+  // Cisterna: acumula 1 unidade por dia
+  if (baseTemEstrutura('cisterna') && estado.cisterna.aguaAcumulada < 5) {
+    estado.cisterna.aguaAcumulada++;
+    renderizarBase();
+  }
+
   // Desgastar filtro instalado
   if (estado.filtroInstalado.diasRestantes > 0) {
     estado.filtroInstalado.diasRestantes--;
@@ -2920,8 +2948,7 @@ function atualizarStatus() {
       if (estado.exploracoesZona[zona] > 0)
         estado.exploracoesZona[zona] = Math.max(0, estado.exploracoesZona[zona] - 1);
     }
-    if (baseTemEstrutura('cisterna') && estado.cisterna.aguaAcumulada < 5)
-      estado.cisterna.aguaAcumulada++;
+    // cisterna: acúmulo movido para avancarDia() — 1 por dia
   }
 
   // ── Transição dia → noite ──
@@ -3041,6 +3068,25 @@ function desequiparSlot(slot) {
   if (!itemId) return;
 
   const itemBase = ITENS[itemId];
+  const jaExiste = estado.inventario.some(i => i.id === itemId);
+  const mochilaCheia = !jaExiste && estado.inventario.length >= estado.capInventario;
+
+  if (mochilaCheia) {
+    mostrarConfirmacao(
+      `🎒 Mochila cheia! Não há espaço para <b>${itemBase?.icone} ${itemBase?.nome}</b>.<br>Deseja descartar o item?`,
+      () => {
+        _reverterEfeitosEquip(itemId);
+        estado.equipamento[slot] = null;
+        log(`🗑 Descartou ao desequipar: ${itemBase?.icone} ${itemBase?.nome}`, 'log-alerta');
+        mostrarToast(`${itemBase?.nome} descartado.`);
+        renderizarEquipamento();
+        renderizarEquipResumo();
+        salvarJogo();
+      }
+    );
+    return;
+  }
+
   _reverterEfeitosEquip(itemId);
   adicionarItem(itemBase, 1);
   estado.equipamento[slot] = null;
@@ -3131,6 +3177,31 @@ function renderizarEquipResumo() {
       .addEventListener('click', e => { e.stopPropagation(); desequiparSlot(slot); });
     el.appendChild(row);
   }
+}
+
+const REP_TIERS = [
+  { min: 0,  max: 20,  label: 'Predador',  cls: 'rep-predador' },
+  { min: 21, max: 40,  label: 'Suspeito',  cls: 'rep-suspeito' },
+  { min: 41, max: 60,  label: 'Neutro',    cls: 'rep-neutro'   },
+  { min: 61, max: 80,  label: 'Solidário', cls: 'rep-solidario'},
+  { min: 81, max: 100, label: 'Líder',     cls: 'rep-lendario' },
+];
+
+function getTier(val) {
+  return REP_TIERS.find(t => val >= t.min && val <= t.max) || REP_TIERS[2];
+}
+
+function renderizarReputacao() {
+  const bar   = document.getElementById('rep-barra-fill');
+  const label = document.getElementById('rep-label');
+  const val   = estado.reputacao ?? 50;
+  const tier  = getTier(val);
+  if (!bar || !label) return;
+  bar.style.width = val + '%';
+  REP_TIERS.forEach(t => { bar.classList.remove(t.cls); label.classList.remove(t.cls); });
+  bar.classList.add(tier.cls);
+  label.classList.add(tier.cls);
+  label.textContent = tier.label;
 }
 
 // ============================================================
@@ -4150,6 +4221,16 @@ function resolverEscolha(eventoId, escolhaIdx) {
     else estado.condicoes[result.condicao] = true;
   }
 
+  // Reputação
+  if (result.reputacao) {
+    const delta = result.reputacao;
+    estado.reputacao = clamp(estado.reputacao + delta, 0, 100);
+    const sinal = delta > 0 ? `+${delta}` : `${delta}`;
+    log(`${delta > 0 ? '⬆' : '⬇'} Reputação ${sinal}`, delta > 0 ? 'log-sucesso' : 'log-alerta');
+    renderizarReputacao();
+    verificarAssentamento();
+  }
+
   // ── Exibir resultado ──
   const resEl = document.getElementById('ev-resultado');
   resEl.textContent = result.msg;
@@ -4482,6 +4563,8 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.segundos           = 0;
   estado.condicoes          = { intoxicado: 0, contundido: false, sangramento: false };
   estado.placar             = { exploracoes: 0, crafts: 0, construcoes: 0 };
+  estado.reputacao          = 50;
+  estado.assentamento       = { parcelas: [null, null, null, null] };
   estado.criado             = true;
 
   adicionarItem(ITENS.comida,    2);
@@ -4521,6 +4604,8 @@ async function iniciarJogo(nome, avatarIdx, traco) {
     renderizarLocais();
     renderizarEquipamento();
     renderizarEquipResumo();
+    renderizarReputacao();
+    verificarAssentamento();
     verificarMercado();
     renderizarMercado();
     iniciarLoop();
@@ -4686,6 +4771,7 @@ function inicializarUI() {
   document.querySelectorAll('.aba-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const aba = btn.dataset.aba;
+      if (btn.classList.contains('aba-bloqueada')) return;
       if (aba === 'base' && estado.exploracao?.ativa) {
         mostrarToast('⚠️ Volte da exploração antes de acessar a Base.');
         return;
@@ -4698,6 +4784,7 @@ function inicializarUI() {
       if (aba === 'bazar') { renderizarBazar(); iniciarAutoRefreshBazar(); }
       else pararAutoRefreshBazar();
       if (aba === 'trabalhos') renderizarTrabalhos();
+      if (aba === 'assentamento') renderizarAssentamento();
     });
   });
 
@@ -4768,6 +4855,13 @@ function inicializarUI() {
     if (itemModalAtual) {
       const qtd = parseInt(document.getElementById('modal-qtd-guardar')?.value) || 1;
       guardarNoDeposito(itemModalAtual.id, qtd);
+    }
+  });
+
+  document.getElementById('modal-btn-guardar-tudo').addEventListener('click', () => {
+    if (itemModalAtual) {
+      const invItem = estado.inventario.find(i => i.id === itemModalAtual.id);
+      if (invItem) guardarNoDeposito(itemModalAtual.id, invItem.qtd);
     }
   });
 
@@ -5397,6 +5491,114 @@ function entregarTrabalho(id) {
   renderizarTrabalhos();
 }
 
+// ============================================================
+// ASSENTAMENTO
+// ============================================================
+
+const ASSENT_ESTRUTURAS = [
+  {
+    id: 'barraco',
+    nome: 'Barraco de Madeira',
+    icone: '🛖',
+    desc: 'Uma moradia simples mas funcional. Abrigo para um sobrevivente.',
+    custo: { madeira: 10, pano: 5, sucata: 4 },
+    capacidade: 1,
+  },
+  {
+    id: 'tenda_refor',
+    nome: 'Tenda Reforçada',
+    icone: '⛺',
+    desc: 'Tenda com estrutura de arame. Mais durável e confortável.',
+    custo: { madeira: 8, pano: 10, arame: 3 },
+    capacidade: 1,
+  },
+  {
+    id: 'cabana',
+    nome: 'Cabana',
+    icone: '🏠',
+    desc: 'Construção sólida de madeira. Oferece mais segurança ao habitante.',
+    custo: { madeira: 20, sucata: 8, arame: 5 },
+    capacidade: 2,
+  },
+];
+
+function verificarAssentamento() {
+  const btn = document.getElementById('aba-btn-assentamento');
+  if (!btn) return;
+  const desbloqueado = (estado.reputacao ?? 50) >= 81;
+  if (desbloqueado && btn.classList.contains('aba-bloqueada')) {
+    btn.classList.remove('aba-bloqueada');
+    log('🏘 Assentamento desbloqueado! Sua reputação como Líder abre novas possibilidades.', 'log-sucesso');
+    mostrarToast('🏘 Assentamento desbloqueado!', 3000);
+  } else if (!desbloqueado) {
+    btn.classList.add('aba-bloqueada');
+  }
+}
+
+function renderizarAssentamento() {
+  const container = document.getElementById('assent-parcelas');
+  if (!container) return;
+
+  const parcelas = estado.assentamento.parcelas;
+  container.innerHTML = '';
+
+  parcelas.forEach((parcela, idx) => {
+    const card = document.createElement('div');
+
+    if (parcela) {
+      const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
+      card.className = 'assent-parcela construida';
+      card.innerHTML = `
+        <span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
+        <span class="assent-parcela-nome">${est?.nome || parcela.tipo}</span>
+        <span class="assent-parcela-desc">${est?.desc || ''}</span>
+        <span class="assent-parcela-habitante">👤 Vago — aguardando habitante</span>
+        <span class="assent-parcela-status">✔ Construída</span>
+      `;
+    } else {
+      card.className = 'assent-parcela';
+      card.innerHTML = `
+        <span class="assent-parcela-nome" style="font-size:.72rem;color:var(--text-dim)">Parcela ${idx + 1}</span>
+        <span class="assent-parcela-desc" style="color:var(--text-dim);font-size:.7rem">Vazia. Escolha uma estrutura para construir.</span>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+          ${ASSENT_ESTRUTURAS.map(e => {
+            const temRecursos = Object.entries(e.custo).every(([id, q]) => temItem(id, q));
+            const custoStr = Object.entries(e.custo).map(([id, q]) => `${q}× ${ITENS[id]?.icone || id}`).join(' ');
+            return `<button class="btn-secundario btn-sm btn-construir-assent"
+              data-idx="${idx}" data-tipo="${e.id}"
+              ${temRecursos ? '' : 'disabled style="opacity:.45"'}
+              title="${e.nome} · ${custoStr}">
+              ${e.icone} ${e.nome} <span style="font-size:.65rem;color:var(--text-dim)">(${custoStr})</span>
+            </button>`;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll('.btn-construir-assent').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx  = parseInt(btn.dataset.idx);
+      const tipo = btn.dataset.tipo;
+      const est  = ASSENT_ESTRUTURAS.find(e => e.id === tipo);
+      if (!est) return;
+
+      for (const [id, q] of Object.entries(est.custo)) {
+        if (!temItem(id, q)) { mostrarToast(`Sem recursos suficientes.`); return; }
+      }
+      for (const [id, q] of Object.entries(est.custo)) removerItem(id, q);
+
+      estado.assentamento.parcelas[idx] = { tipo, habitante: null };
+      log(`🏘 Construiu ${est.icone} ${est.nome} na Parcela ${idx + 1}.`, 'log-sucesso');
+      mostrarToast(`${est.icone} ${est.nome} construída!`);
+      renderizarAssentamento();
+      salvarJogo();
+    });
+  });
+}
+
 function renderizarTrabalhos() {
   atualizarTrabalhosDiarios();
 
@@ -5636,6 +5838,8 @@ function aplicarDadosSave(s) {
   estado.segundos           = s.segundos           || 0;
   estado.condicoes          = { intoxicado: 0, contundido: false, sangramento: false, ...(s.condicoes || {}) };
   estado.placar             = s.placar || { exploracoes: 0, crafts: 0, construcoes: 0 };
+  estado.reputacao          = s.reputacao ?? 50;
+  estado.assentamento       = s.assentamento ?? { parcelas: [null, null, null, null] };
   estado.criado             = true;
   if (s.ultimoSave) {
     const diff = Math.floor((Date.now() - s.ultimoSave) / 1000);
@@ -5664,6 +5868,8 @@ function restaurarUIJogo() {
   renderizarLocais();
   renderizarEquipamento();
   renderizarEquipResumo();
+  renderizarReputacao();
+  verificarAssentamento();
   verificarMercado();
   renderizarMercado();
   atualizarUI();

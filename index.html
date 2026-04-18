@@ -215,6 +215,16 @@
           </div>
         </div>
 
+        <div class="rep-card">
+          <div class="rep-header">
+            <span class="rep-titulo">REPUTAÇÃO</span>
+            <span id="rep-label" class="rep-label">Neutro</span>
+          </div>
+          <div class="rep-barra-bg">
+            <div id="rep-barra-fill" class="rep-barra-fill rep-neutro" style="width:50%"></div>
+          </div>
+        </div>
+
         <div class="avatar-dia-relogio">
           <span id="hdr-dia" class="hdr-dia">Dia 1</span>
           <div id="relogio" class="relogio">
@@ -295,6 +305,7 @@
             <button class="aba-btn" data-aba="mercado">Mercado</button>
             <button class="aba-btn" data-aba="bazar" id="aba-btn-bazar">Barracas</button>
             <button class="aba-btn" data-aba="trabalhos">Trabalhos</button>
+            <button class="aba-btn aba-bloqueada" data-aba="assentamento" id="aba-btn-assentamento">Assentamento</button>
           </nav>
         </div>
 
@@ -814,6 +825,21 @@
 
           </div><!-- fim aba trabalhos -->
 
+          <!-- ── ABA: ASSENTAMENTO ── -->
+          <div class="aba-conteudo" id="aba-assentamento">
+
+            <div class="assent-header sec-bloco">
+              <h3 class="sec-titulo">🏘 ASSENTAMENTO</h3>
+              <p class="assent-subtitulo">Construa moradias para abrigar sobreviventes. Cada estrutura poderá receber um habitante no futuro.</p>
+            </div>
+
+            <div class="sec-bloco">
+              <h4 class="trab-secao-titulo">🏗 Parcelas de Construção</h4>
+              <div id="assent-parcelas" class="assent-grid"></div>
+            </div>
+
+          </div><!-- fim aba assentamento -->
+
         </div><!-- fim abas-wrapper -->
       </section>
 
@@ -860,6 +886,7 @@
           <div id="modal-guardar-grupo" class="modal-guardar-grupo oculto">
             <input id="modal-qtd-guardar" class="modal-qtd-input" type="number" min="1" value="1" />
             <button id="modal-btn-guardar" class="btn-secundario">Guardar</button>
+            <button id="modal-btn-guardar-tudo" class="btn-secundario">Guardar Tudo</button>
           </div>
           <button id="modal-btn-excluir" class="btn-perigo">Descartar</button>
           <button id="modal-btn-fechar" class="btn-secundario">Fechar</button>

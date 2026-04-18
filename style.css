@@ -494,6 +494,54 @@ html, body {
   letter-spacing: .12em;
 }
 
+/* ── BARRA DE REPUTAÇÃO ── */
+.rep-card {
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+.rep-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.rep-titulo {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+}
+.rep-label {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.rep-barra-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rep-barra-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .5s ease, background-color .5s ease;
+}
+.rep-predador  { background: #c0392b; }
+.rep-suspeito  { background: #e67e22; }
+.rep-neutro    { background: #7f8c8d; }
+.rep-solidario { background: #27ae60; }
+.rep-lendario  { background: #f1c40f; }
+
+/* label color matching */
+#rep-label.rep-predador  { color: #c0392b; }
+#rep-label.rep-suspeito  { color: #e67e22; }
+#rep-label.rep-neutro    { color: #7f8c8d; }
+#rep-label.rep-solidario { color: #27ae60; }
+#rep-label.rep-lendario  { color: #f1c40f; }
+
 /* ── DIA + RELÓGIO abaixo do card de avatar ── */
 .avatar-dia-relogio {
   display: flex;
@@ -1198,14 +1246,14 @@ html, body {
 }
 
 .equip-resumo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
 }
 .equip-resumo-item {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   font-size: .75rem;
   color: var(--text-sec);
   padding: 5px 6px;
@@ -1213,6 +1261,7 @@ html, body {
   cursor: default;
   position: relative;
   transition: background .15s;
+  min-width: 0;
 }
 .equip-resumo-item:hover { background: var(--bg-2); color: var(--text-pri); }
 
@@ -1221,7 +1270,7 @@ html, body {
   content: attr(data-tooltip);
   position: absolute;
   left: 0;
-  top: calc(100% + 4px);
+  bottom: calc(100% + 4px);
   z-index: 20;
   background: var(--bg-3);
   border: 1px solid var(--accent-d);
@@ -1231,22 +1280,14 @@ html, body {
   color: var(--text-sec);
   line-height: 1.5;
   white-space: normal;
-  width: 180px;
+  width: 200px;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0,0,0,.4);
 }
 
-.equip-resumo-slot {
-  font-family: var(--font-mono);
-  font-size: .58rem;
-  color: var(--text-dim);
-  letter-spacing: .08em;
-  width: 44px;
-  flex-shrink: 0;
-  text-transform: uppercase;
-}
-.equip-resumo-icone { font-size: 1rem; flex-shrink: 0; }
-.equip-resumo-nome  { flex: 1; font-size: .76rem; font-weight: 600; color: var(--text-pri); }
+.equip-resumo-slot  { display: none; }
+.equip-resumo-icone { font-size: 1.1rem; flex-shrink: 0; }
+.equip-resumo-nome  { flex: 1; font-size: .72rem; font-weight: 600; color: var(--text-pri); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 .equip-resumo-btn-desequipar {
   background: transparent;
@@ -3661,6 +3702,86 @@ html, body {
   color: var(--txt-dim);
   font-style: italic;
   padding: 8px 0;
+}
+
+/* ── ASSENTAMENTO ── */
+.assent-subtitulo {
+  font-size: .78rem;
+  color: var(--text-sec);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.assent-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.assent-parcela {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 110px;
+}
+
+.assent-parcela.construida {
+  border-left: 3px solid var(--accent);
+  background: rgba(42,170,42,.04);
+}
+
+.assent-parcela-icone {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.assent-parcela-nome {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+
+.assent-parcela-desc {
+  font-size: .72rem;
+  color: var(--text-sec);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.assent-parcela-custo {
+  font-size: .68rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.assent-parcela-status {
+  font-size: .7rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  letter-spacing: .04em;
+}
+
+.assent-parcela-habitante {
+  font-size: .7rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.assent-parcela-vazia {
+  border: 2px dashed var(--border);
+  background: transparent;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  opacity: .55;
+  cursor: default;
 }
 
 /* ── RESPONSIVO BÁSICO ── */
