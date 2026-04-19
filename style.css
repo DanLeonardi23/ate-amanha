@@ -513,9 +513,14 @@ html, body {
 }
 .rep-label {
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .65rem;
   font-weight: 700;
-  letter-spacing: .05em;
+  letter-spacing: .06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: #111;
+  background: #7f8c8d;
+  transition: background .5s ease, color .5s ease;
 }
 .rep-barra-bg {
   width: 100%;
@@ -535,12 +540,12 @@ html, body {
 .rep-solidario { background: #27ae60; }
 .rep-lendario  { background: #f1c40f; }
 
-/* label color matching */
-#rep-label.rep-predador  { color: #c0392b; }
-#rep-label.rep-suspeito  { color: #e67e22; }
-#rep-label.rep-neutro    { color: #7f8c8d; }
-#rep-label.rep-solidario { color: #27ae60; }
-#rep-label.rep-lendario  { color: #f1c40f; }
+/* tag badge colors */
+#rep-label.rep-predador  { background: #c0392b; color: #fff; }
+#rep-label.rep-suspeito  { background: #e67e22; color: #111; }
+#rep-label.rep-neutro    { background: #7f8c8d; color: #fff; }
+#rep-label.rep-solidario { background: #27ae60; color: #fff; }
+#rep-label.rep-lendario  { background: #f1c40f; color: #111; }
 
 /* ── DIA + RELÓGIO abaixo do card de avatar ── */
 .avatar-dia-relogio {
@@ -1127,6 +1132,24 @@ html, body {
 .aba-btn.ativa { color: var(--accent-l); border-color: var(--accent); background: rgba(42,170,42,.08); }
 .aba-btn.aba-bloqueada { opacity: .35; cursor: not-allowed; pointer-events: none; }
 .aba-btn.aba-bloqueada::after { content: ' 🔒'; font-size: .6rem; }
+.aba-btn { position: relative; }
+.aba-badge-npc {
+  position: absolute;
+  top: -4px; right: -6px;
+  background: #e55;
+  color: #fff;
+  font-size: .6rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 999px;
+  pointer-events: none;
+  animation: pulse-badge .9s ease-in-out infinite alternate;
+}
+@keyframes pulse-badge {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: .7; transform: scale(1.15); }
+}
 
 .aba-conteudo {
   display: none;
@@ -1562,6 +1585,12 @@ html, body {
 .painel-cist-info, .painel-seg-info { font-size: .74rem; color: var(--text-sec); line-height: 1.5; }
 .painel-seg-acoes { display: flex; gap: 8px; }
 
+.painel-cist-filtro { display: flex; flex-direction: column; gap: 6px; }
+.filtro-slots-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.filtro-slot { font-size: 1.1rem; opacity: .2; transition: opacity .3s; }
+.filtro-slot-ativo { opacity: 1; }
+.filtro-dias-txt { font-size: .72rem; color: var(--accent); font-family: var(--font-mono); margin-left: 4px; }
+
 /* Defesa */
 .defesa-painel { display: flex; flex-direction: column; gap: 10px; }
 .defesa-stat   { display: flex; flex-direction: column; gap: 5px; }
@@ -1652,6 +1681,43 @@ html, body {
 .local-nome     { font-size: .76rem; font-weight: 700; }
 .local-tempo    { font-size: .64rem; color: var(--text-sec); font-family: var(--font-mono); }
 .local-dica-anotacao { color: var(--text-dim); font-style: italic; font-size: .63rem; }
+
+/* ── Setor 3 — Zona Militar ── */
+.setor-militar .setor-titulo { border-bottom-color: rgba(155,42,42,.5); }
+.setor-badge-militar {
+  font-size: .6rem;
+  font-family: var(--font-mono);
+  letter-spacing: .06em;
+  background: rgba(155,42,42,.25);
+  border: 1px solid rgba(200,60,60,.4);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--red-l);
+  margin-left: auto;
+}
+.local-card-militar:not(.local-bloqueado) {
+  border-color: rgba(155,42,42,.4);
+  background: linear-gradient(160deg, var(--bg-2) 70%, rgba(155,42,42,.06));
+}
+.local-card-militar:not(.local-bloqueado):hover {
+  border-color: rgba(200,60,60,.6);
+  box-shadow: 0 4px 16px rgba(155,42,42,.3);
+}
+.local-custo {
+  display: flex;
+  gap: 6px;
+  padding: 4px 7px 3px;
+  flex-wrap: wrap;
+}
+.custo-item {
+  font-size: .62rem;
+  font-family: var(--font-mono);
+  color: #e07b4a;
+  background: rgba(224,123,74,.12);
+  border: 1px solid rgba(224,123,74,.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
 
 .btn-explorar-local { margin: 4px 7px 7px; font-size: .66rem; letter-spacing: .06em; padding: 6px 7px; }
 
@@ -2046,6 +2112,15 @@ html, body {
 .item-slot.item-consumivel { border-left: 2px solid var(--green); }
 .item-slot.item-material   { border-left: 2px solid var(--yellow); }
 .item-slot.item-medicinal  { border-left: 2px solid var(--blue-l); }
+.item-slot.item-slot-raro  {
+  border-color: rgba(241,196,15,.45);
+  border-left: 2px solid #f1c40f;
+  background: rgba(241,196,15,.05);
+}
+.item-slot.item-slot-raro:hover {
+  border-color: rgba(241,196,15,.7);
+  background: rgba(241,196,15,.1);
+}
 
 .inventario-vazio {
   color: var(--text-dim);
@@ -2365,6 +2440,46 @@ html, body {
   border-radius: 3px;
   padding: 1px 4px;
   color: var(--accent);
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.mercado-card-raro {
+  border-color: rgba(241,196,15,.35);
+  background: rgba(241,196,15,.04);
+}
+.mercado-card-equip {
+  border-color: rgba(52,152,219,.35);
+  background: rgba(52,152,219,.04);
+}
+.tag-equip {
+  display: inline-block;
+  font-size: .6rem;
+  font-family: var(--font-mono);
+  letter-spacing: .08em;
+  background: rgba(52,152,219,.15);
+  border: 1px solid rgba(52,152,219,.5);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: #3498db;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.preco-raro {
+  color: #f1c40f;
+  text-shadow: 0 0 8px rgba(241,196,15,.5);
+  font-weight: 700;
+}
+.tag-raro {
+  display: inline-block;
+  font-size: .6rem;
+  font-family: var(--font-mono);
+  letter-spacing: .08em;
+  background: rgba(241,196,15,.15);
+  border: 1px solid rgba(241,196,15,.5);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: #f1c40f;
   vertical-align: middle;
   margin-left: 4px;
 }
@@ -3448,9 +3563,27 @@ html, body {
   gap: 6px;
 }
 
-.cultivo-slot.pronto    { border-color: var(--accent); background: rgba(42,170,42,.06); }
-.cultivo-slot.crescendo { border-color: var(--accent-d); }
-.cultivo-slot.vazio     { border-color: var(--border); opacity: .8; }
+.cultivo-slot.pronto     { border-color: var(--accent); background: rgba(42,170,42,.06); }
+.cultivo-slot.crescendo  { border-color: var(--accent-d); }
+.cultivo-slot.vazio      { border-color: var(--border); opacity: .8; }
+.cultivo-slot.aguardando { border-color: rgba(52,152,219,.4); background: rgba(52,152,219,.04); }
+
+.cultivo-rega-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cultivo-rega-txt {
+  font-size: .72rem;
+  font-family: var(--font-mono);
+  color: #3498db;
+}
+.barra-agua { background: #3498db; }
+.cultivo-sem-agua {
+  font-size: .68rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
 
 .cultivo-slot-num {
   font-size: .62rem;
@@ -3782,6 +3915,117 @@ html, body {
   gap: 6px;
   opacity: .55;
   cursor: default;
+}
+
+/* ── NPC ASSENTAMENTO ── */
+.assent-npc-pendente {
+  grid-column: 1 / -1;
+  border: 1px solid rgba(241,196,15,.5);
+  background: rgba(241,196,15,.05);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn .3s ease;
+}
+.npc-pend-header {}
+.npc-pend-titulo {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  color: #f1c40f;
+}
+.npc-pend-corpo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.npc-pend-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(241,196,15,.4);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.npc-pend-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+.npc-pend-nome {
+  font-family: var(--font-mono);
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+.npc-pend-hab {
+  font-size: .68rem;
+  color: #f1c40f;
+  font-family: var(--font-mono);
+  letter-spacing: .05em;
+}
+.npc-pend-descricao {
+  font-size: .72rem;
+  color: var(--text-sec);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+.npc-pend-habilidade {
+  font-size: .68rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.npc-pend-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+/* Parcela com habitante */
+.assent-parcela-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.assent-habitante-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(42,170,42,.06);
+  border-radius: 6px;
+  padding: 8px;
+}
+.assent-npc-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-d);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.assent-npc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.assent-npc-nome {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text-pri);
+}
+.assent-npc-hab {
+  font-size: .65rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.assent-npc-status {
+  font-size: .62rem;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 /* ── RESPONSIVO BÁSICO ── */

@@ -251,7 +251,17 @@ const ITENS = {
   remedio_exp:    { id: 'remedio_exp',    nome: 'Medicamento Experimental', icone: '🧬', tipo: 'raro',   efeitos: { vida: 50, estresse: -20 }, desc: 'Rótulo apagado. Embalagem hospitalar. Alto risco, alto retorno.' },
   colar_id:       { id: 'colar_id',       nome: 'Placa de Identificação Militar', icone: '🪖', tipo: 'raro', desc: 'Dog tag. Nome, número de série, tipo sanguíneo. De quem era isso?' },
   motor_arranque:    { id: 'motor_arranque',    nome: 'Motor de Arranque',       icone: '⚙️',  tipo: 'raro',       desc: 'Peça automotiva pesada, ainda funcional. Alguém, em algum lugar, paga caro por isso.' },
+  bateria_automotiva:{ id: 'bateria_automotiva', nome: 'Bateria Automotiva',      icone: '🔋', tipo: 'raro',       desc: 'Bateria de veículo militar — 12V, 90Ah, ainda com carga. O item mais valioso que você já segurou.' },
   ursinho:           { id: 'ursinho',           nome: 'Ursinho de Pelúcia',      icone: '🧸', tipo: 'raro',       desc: 'Manchado, um olho faltando. Para uma criança, ainda vale o mundo.' },
+
+  // ── Itens Setor 3 — Zona Militar ──
+  municao:           { id: 'municao',           nome: 'Munição .308',            icone: '🔩', tipo: 'raro',       desc: 'Caixinha lacrada. Calibre rifle. Ninguém descarta algo assim por acaso.' },
+  radio_militar:     { id: 'radio_militar',     nome: 'Rádio Militar',           icone: '📻', tipo: 'raro',       desc: 'Criptografado, robusto, ainda operacional. Quem tem comunicação tem poder.' },
+  colete_balistico:  { id: 'colete_balistico',  nome: 'Colete Balístico',        icone: '🛡️',  tipo: 'raro',       desc: 'Placas de cerâmica intactas. Nível III. Feito para guerra — e sobrou da guerra.' },
+  capacete_tatico:   { id: 'capacete_tatico',   nome: 'Capacete Tático',         icone: '🪖', tipo: 'raro',       desc: 'Kevlar e aço. Viseira rachada mas estrutura perfeita. Melhor do que nada — muito melhor.' },
+  farda_militar:     { id: 'farda_militar',     nome: 'Farda de Combate',        icone: '🥋', tipo: 'raro',       desc: 'Camuflagem desbotada, bolsos por toda parte. Ainda assusta quem não sabe que está vazia.' },
+  planta_instalacao: { id: 'planta_instalacao', nome: 'Planta da Instalação',    icone: '📐', tipo: 'raro',       desc: 'Planta baixa da base militar. Rotas, salas, depósitos. Informação tem preço.' },
+  anotacao_setor3:   { id: 'anotacao_setor3',   nome: 'Rota para o Setor 3',     icone: '🗺️', tipo: 'anotacao',   localId: 'setor3', lore: '"Instalação militar a uns 30 km. Alojamentos, garagem, cemitério — tudo ainda de pé. Tem equipamento, peças e coisas que as pessoas deixaram para trás. Mas a jornada é longa. Leve comida e água. Não entre com fome. Não entre com sede."', revelaLocal: { nome: 'Setor 3 — 3 locais desbloqueados', perigo: 'alto', tempo: '120s', icone: '🪖' } },
 
   // Equipamentos de proteção
   capacete:          { id: 'capacete',          nome: 'Capacete Industrial',     icone: '⛑️',  tipo: 'ferramenta', desc: 'Plástico duro, alça ajustável. Não foi feito para guerra, mas serve.' },
@@ -473,6 +483,23 @@ const ITENS_EQUIPAVEIS = {
     desc: '+5% de chance de loot em explorações.'
   },
 
+  // ── Equipamentos militares (Setor 3) ──
+  colete_balistico: {
+    slot: 'peito',
+    efeitos: { vidaDecayMulti: 0.70, vidaMaxBonus: 15 },
+    desc: '-30% de dano recebido e +15 de vida máxima. Proteção de combate real.'
+  },
+  capacete_tatico: {
+    slot: 'cabeca',
+    efeitos: { vidaDecayMulti: 0.80, eventoChanceMult: 0.88 },
+    desc: '-20% de dano recebido e -12% de eventos negativos.'
+  },
+  farda_militar: {
+    slot: 'pernas',
+    efeitos: { vidaMaxBonus: 5, lootBonus: 0.08 },
+    desc: '+5 de vida máxima e +8% de chance de loot em explorações.'
+  },
+
   // Ferramentas como equipamento
   lanterna: {
     slot: 'acessorio',
@@ -540,6 +567,47 @@ const DEPOSITO_CUSTOS = [
   { madeira: 15, sucata: 12, arame: 6 },           // L5
 ];
 
+// Faixas de preço diário [min, max] — volatilidade diária, sem fatorVenda global
+// Itens raros e equipáveis usam essa tabela
+const RAROS_VARIACAO = {
+  // ── Itens raros ──
+  faca_tatica:       [8,   45],
+  machado:           [10,  50],
+  relogio_ouro:      [12,  80],
+  joias:             [8,   65],
+  camera:            [6,   55],
+  binoculo:          [15,  70],
+  pen_drive:         [20,  110],
+  doc_classificado:  [25,  130],
+  whisky_fino:       [10,  60],
+  remedio_exp:       [15,  75],
+  colar_id:          [5,   40],
+  revolver:          [18,  95],
+  motor_arranque:    [20,  85],
+  ursinho:           [2,   50],
+  // ── Itens militares (Setor 3) ──
+  bateria_automotiva:[150, 400],
+  municao:           [15,  70],
+  radio_militar:     [20,  90],
+  colete_balistico:  [30, 120],
+  capacete_tatico:   [25, 100],
+  farda_militar:     [15,  65],
+  planta_instalacao: [40, 150],
+  // ── Equipamentos ──
+  lanca:             [3,   18],
+  arco:              [5,   22],
+  faca:              [2,   12],
+  capacete:          [4,   20],
+  capuz:             [3,   15],
+  colete:            [8,   30],
+  jaqueta_couro:     [6,   25],
+  luvas_trabalho:    [3,   18],
+  calcas_reforcadas: [5,   22],
+  botas_trabalho:    [4,   20],
+  lanterna:          [5,   25],
+  tocha:             [2,   12],
+};
+
 // Preço de venda de cada item (em Pilhas Velhas). Itens ausentes não são vendáveis.
 // Preços base de venda (itens brutos / encontrados / comprados)
 // Preços de venda base (itens brutos/encontrados). Multiplicados pelo fatorVenda do dia.
@@ -578,15 +646,24 @@ const VENDA_PRECOS = {
   revolver:      30,
   remedio_exp:   32,
   pen_drive:     36,
-  canhamo:         6,
-  erva_medicinal: 10,
-  abobora:         7,
+  canhamo:        22,
+  erva_medicinal: 38,
+  abobora:        28,
   semente_canhamo: 1,
   semente_erva:    2,
   semente_abobora: 2,
   joias:         38,
   relogio_ouro:  45,
   doc_classificado: 50,
+  motor_arranque:     40,
+  ursinho:            15,
+  bateria_automotiva: 200,
+  municao:        25,
+  radio_militar:  35,
+  colete_balistico: 50,
+  capacete_tatico:  45,
+  farda_militar:    30,
+  planta_instalacao: 60,
 };
 
 /**
@@ -597,6 +674,10 @@ const VENDA_PRECOS = {
  */
 function getPrecoVenda(itemId) {
   const fator = estado?.mercado?.fatorVenda ?? 1;
+
+  // Itens raros: preço diário com alta volatilidade (gerado em gerarEstoqueMercado)
+  const precoRaro = estado?.mercado?.precosRaros?.[itemId];
+  if (precoRaro != null) return precoRaro;
 
   // Itens craftados: soma dos ingredientes + bônus fixo, com fator do dia
   const receita = (typeof RECEITAS !== 'undefined' ? RECEITAS : []).find(r => r.id === itemId)
@@ -697,10 +778,13 @@ const RECEITAS = [
 const CUSTO_BANCADA = { sucata: 8, pano: 3 };
 
 const CULTIVO_CONFIG = {
-  semente_canhamo: { nome: 'Cânhamo',       itemId: 'canhamo',        qtd: 2, dias: 2, icone: '🌾' },
-  semente_erva:    { nome: 'Erva Medicinal', itemId: 'erva_medicinal', qtd: 1, dias: 3, icone: '🍃' },
-  semente_abobora: { nome: 'Abóbora',        itemId: 'abobora',        qtd: 2, dias: 2, icone: '🎃' },
+  semente_canhamo: { nome: 'Cânhamo',       itemId: 'canhamo',        qtd: 2, dias: 2, icone: '🌾', aguaNecessaria: 1 },
+  semente_erva:    { nome: 'Erva Medicinal', itemId: 'erva_medicinal', qtd: 1, dias: 3, icone: '🍃', aguaNecessaria: 2 },
+  semente_abobora: { nome: 'Abóbora',        itemId: 'abobora',        qtd: 2, dias: 2, icone: '🎃', aguaNecessaria: 3 },
 };
+
+// Tipos de água aceitos para regar
+const AGUA_REGA = ['agua_limpa', 'agua_suja'];
 
 // ============================================================
 // DADOS: RECEITAS DA FOGUEIRA
@@ -831,6 +915,7 @@ const LOOT_TABLE = {
     { ...ITENS.calcas_reforcadas,    peso: 6,  qtd: [1,1] },
     { ...ITENS.catalogo_ferramentas, peso: 12, qtd: [1,1] },
     { ...ITENS.madeira,   peso: 8,  qtd: [1,2] },
+    { ...ITENS.anotacao_setor3,      peso: 5,  qtd: [1,1] },
   ],
   silo: [
     { ...ITENS.comida,    peso: 55, qtd: [2,5] },
@@ -842,6 +927,46 @@ const LOOT_TABLE = {
     { ...ITENS.semente_canhamo,  peso: 18, qtd: [1,2] },
     { ...ITENS.semente_erva,     peso: 14, qtd: [1,1] },
     { ...ITENS.semente_abobora,  peso: 18, qtd: [1,2] },
+    { ...ITENS.anotacao_setor3,  peso: 6,  qtd: [1,1] },
+  ],
+  // ── Setor 3 — Zona Militar (3 sub-locais) ──
+  alojamento_militar: [
+    { ...ITENS.farda_militar,    peso: 22, qtd: [1,1] },
+    { ...ITENS.colete_balistico, peso: 14, qtd: [1,1] },
+    { ...ITENS.capacete_tatico,  peso: 14, qtd: [1,1] },
+    { ...ITENS.luvas_trabalho,   peso: 12, qtd: [1,1] },
+    { ...ITENS.botas_trabalho,   peso: 12, qtd: [1,1] },
+    { ...ITENS.agua_limpa,       peso: 20, qtd: [1,2] },
+    { ...ITENS.remedio,          peso: 14, qtd: [1,2] },
+    { ...ITENS.kit_raro,         peso: 8,  qtd: [1,1] },
+    { ...ITENS.municao,          peso: 18, qtd: [1,2] },
+    { ...ITENS.revolver,         peso: 6,  qtd: [1,1] },
+    { ...ITENS.faca_tatica,      peso: 10, qtd: [1,1] },
+    { ...ITENS.radio_militar,    peso: 8,  qtd: [1,1] },
+    { ...ITENS.pano,             peso: 10, qtd: [1,2] },
+  ],
+  garagem_militar: [
+    { ...ITENS.motor_arranque,    peso: 28, qtd: [1,1] },
+    { ...ITENS.sucata,            peso: 35, qtd: [2,4] },
+    { ...ITENS.arame,             peso: 28, qtd: [1,3] },
+    { ...ITENS.pilha,             peso: 12, qtd: [1,2] },
+    { ...ITENS.faca,              peso: 12, qtd: [1,1] },
+    { ...ITENS.madeira,           peso: 10, qtd: [1,2] },
+    { ...ITENS.botas_trabalho,    peso: 8,  qtd: [1,1] },
+    { ...ITENS.planta_instalacao, peso: 6,  qtd: [1,1] },
+    { ...ITENS.bateria_automotiva,peso: 3,  qtd: [1,1] },
+  ],
+  cemiterio_militar: [
+    { ...ITENS.joias,         peso: 22, qtd: [1,1] },
+    { ...ITENS.ursinho,       peso: 18, qtd: [1,1] },
+    { ...ITENS.colar_id,      peso: 20, qtd: [1,1] },
+    { ...ITENS.relogio_ouro,  peso: 12, qtd: [1,1] },
+    { ...ITENS.whisky_fino,   peso: 8,  qtd: [1,1] },
+    { ...ITENS.doc_classificado, peso: 6, qtd: [1,1] },
+    { ...ITENS.comida,        peso: 14, qtd: [1,2] },
+    { ...ITENS.pano,          peso: 15, qtd: [1,2] },
+    { ...ITENS.remedio,       peso: 10, qtd: [1,1] },
+    { ...ITENS.planta_instalacao, peso: 5, qtd: [1,1] },
   ],
 };
 
@@ -926,6 +1051,24 @@ const LOGS_ZONA = {
     explorando:['Você abre cada armário com cuidado, sem encostar nas chapas metálicas.', 'Baterias pesadas. Você leva o que consegue carregar sem forçar a coluna.', 'Um chiado elétrico do nada. Você recua. Para. Respira. Continua.', 'Metal cortante em todo canto. Você move devagar, de olho no chão.'],
     retorno:   ['Você sai pelo mesmo caminho que entrou — sem atalhos aqui.', 'Arranhões novos, mas nada sério. Poderia ter sido pior.', 'A subestação some atrás de você. Você não pretende voltar tão cedo.'],
   },
+  alojamento_militar: {
+    saida:     ['Instalação militar. 30 km de provisões. A jornada começa agora.', 'Portões de concreto no horizonte. Você calculou o que vai precisar.', 'Você sai equipado. Os alojamentos podem ter sobrado alguma coisa.'],
+    chegada:   ['Beliche enfileirados, armários abertos, tudo revirado — mas não tudo levado.', 'Cheiro de mofo e pólvora velha. Alguém dormiu aqui. Faz tempo.', 'Corredor comprido de quartos. Você começa pelo primeiro e vai abrindo um por um.'],
+    explorando:['Armários de farda ainda fechados. Você força a trava.', 'Beliche com cobertor dobrado. Alguém foi treinado para dobrar cobertores até o fim.', 'Uma arma esquecida sob o colchão. Acontece mais do que parece.', 'Cantina vazia, mas o depósito nos fundos ainda tem alguma coisa.'],
+    retorno:   ['Você sai pela rota de fuga marcada no mapa. Ninguém te segue.', 'Jornada de volta. Cansado, mas com o que veio buscar.', 'A instalação fica para trás. Você não olha para trás.'],
+  },
+  garagem_militar: {
+    saida:     ['Garagem da instalação. Pesada, escura, e cheia de metal.', 'Você vai buscar peças. O que está lá dentro vai além de sucata comum.', 'Veículos parados, motores que nunca voltarão a ligar. Mas as peças ainda servem.'],
+    chegada:   ['Jipes enfileirados com capôs abertos. Oficina de campo — e não foi esvaziada direito.', 'Cheiro de graxa e diesel velho. As ferramentas ainda penduradas nas paredes.', 'Uma caminhonete tática no fundo. Rodas murchas, lataria intacta. Você vai direto para o motor.'],
+    explorando:['Você retira o motor de arranque com cuidado — ainda está funcional.', 'Caixas de peças sobre bancadas. A maioria inútil. Mas nem toda.', 'Um painel elétrico aberto. Fios cortados. Alguém tinha pressa.', 'Bateria grande presa sob o capô. Você puxa com força. Cede.'],
+    retorno:   ['Carga pesada nas costas. Cada passo de volta é deliberado.', 'Você sai pela lateral da garagem. Rua interna vazia. Bom sinal.', 'A garagem fica para trás. Tem mais lá dentro — quando você tiver forças.'],
+  },
+  cemiterio_militar: {
+    saida:     ['Cemitério da instalação. Você vai mesmo assim.', 'Lápides alinhadas até onde a vista alcança. O silêncio aqui é diferente.', 'Você leva provisões e respeito. Ninguém abandona um lugar assim sem deixar algo para trás.'],
+    chegada:   ['Cruzes de ferro enferrujadas. Nomes apagados pelo tempo e pela chuva.', 'O vento não faz barulho aqui. É o tipo de silêncio que pesa.', 'Flores plásticas sobre algumas lápides. Alguém ainda vem aqui.'],
+    explorando:['Oferendas deixadas — joias, brinquedos, garrafas. Você pega com cuidado.', 'Uma placa de identificação caída no chão. Você a recolhe sem ler o nome.', 'Um ursinho apoiado contra uma lápide. Pequeno, sujo, mas inteiro.', 'Você não faz barulho. Não sabe bem por quê, mas não consegue fazer barulho aqui.'],
+    retorno:   ['Você sai em silêncio. Sem correr.', 'De volta à rota principal. O cemitério some atrás dos muros.', 'Você carrega o que encontrou e tenta não pensar de onde veio.'],
+  },
   silo: {
     saida:     ['Os silos de grãos no limite da zona industrial. Longe de tudo.', 'Lugar isolado, mas é isso que torna seguro. Relativamente.', 'Você pega o caminho mais longo — passa despercebido por aqui.'],
     chegada:   ['Cilindros enormes de aço contra o céu cinza. Escala humana zero.', 'Porta do silo cede com um rangido longo. Você espera. Nada reage.', 'Penumbra e cheiro de grão fermentado. Você respira pela boca.'],
@@ -994,7 +1137,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🔙', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 100, msg: 'Você contorna pelo corredor lateral. Perde tempo mas chega inteiro.', efeitos: { estresse: 6 } }
+          { chance: 100, msg: 'Você contorna pelo corredor lateral. Perde tempo mas chega inteiro.', efeitos: { estresse: 6 }, reputacao: 3 }
         ]
       }
     ]
@@ -1052,7 +1195,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🚶', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 100, msg: 'Você dá a volta pelo corredor lateral. Chega ao destino por um caminho mais longo.', efeitos: { estresse: 5 } }
+          { chance: 100, msg: 'Você dá a volta pelo corredor lateral. Chega ao destino por um caminho mais longo.', efeitos: { estresse: 5 }, reputacao: 3 }
         ]
       }
     ]
@@ -1103,8 +1246,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🔍', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 80, msg: 'Com cuidado, você identifica e evita a armadilha. Pega o que tinha de útil.', efeitos: { estresse: 8 }, loot: [{id:'sucata',qtd:1},{id:'pano',qtd:1}] },
-          { chance: 20, msg: 'Nada de útil. Você respeita o silêncio e segue.', efeitos: { estresse: 4 } }
+          { chance: 80, msg: 'Com cuidado, você identifica e evita a armadilha. Pega o que tinha de útil.', efeitos: { estresse: 8 }, loot: [{id:'sucata',qtd:1},{id:'pano',qtd:1}], reputacao: 3 },
+          { chance: 20, msg: 'Nada de útil. Você respeita o silêncio e segue.', efeitos: { estresse: 4 }, reputacao: 3 }
         ]
       },
       {
@@ -1138,7 +1281,7 @@ const EVENTOS_ESCOLHA = [
         requer: null,
         resultados: [
           { chance: 50, msg: 'O animal recua. Você passa rapidamente.', efeitos: { estresse: 10 } },
-          { chance: 50, msg: 'O barulho o provoca ainda mais. Você leva uma mordida antes de escapar.', efeitos: { vida: -18, estresse: 26 }, condicao: 'sangramento' }
+          { chance: 50, msg: 'O barulho o provoca ainda mais. Você leva uma mordida antes de escapar.', efeitos: { vida: -18, estresse: 26 }, condicao: 'sangramento', reputacao: -3 }
         ]
       },
       {
@@ -1146,7 +1289,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🔙', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 100, msg: 'Você recua sem perder o contato visual. O animal não persegue.', efeitos: { estresse: 8 } }
+          { chance: 100, msg: 'Você recua sem perder o contato visual. O animal não persegue.', efeitos: { estresse: 8 }, reputacao: 3 }
         ]
       }
     ]
@@ -1222,8 +1365,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🤝', risco: 'baixo',
         requer: { item: 'comida', qtd: 1 },
         resultados: [
-          { chance: 90, msg: 'Troca feita. Eles abrem passagem sem problemas.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: 5 } },
-          { chance: 10, msg: 'Após a troca, um deles pede mais. Você recusa e segue na pressão.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: 22 } }
+          { chance: 90, msg: 'Troca feita. Eles abrem passagem sem problemas.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: 5 }, reputacao: 5 },
+          { chance: 10, msg: 'Após a troca, um deles pede mais. Você recusa e segue na pressão.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: 22 }, reputacao: 3 }
         ]
       },
       {
@@ -1231,8 +1374,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🏃', risco: 'alto',
         requer: null,
         resultados: [
-          { chance: 40, msg: 'Você finge aceitar, espera a abertura e sai em disparada. Eles ficam pra trás.', efeitos: { estresse: 16 } },
-          { chance: 60, msg: 'Eles percebem antes. A briga é curta mas dolorosa.', efeitos: { vida: -26, estresse: 32 }, condicao: 'sangramento' }
+          { chance: 40, msg: 'Você finge aceitar, espera a abertura e sai em disparada. Eles ficam pra trás.', efeitos: { estresse: 16 }, reputacao: -8 },
+          { chance: 60, msg: 'Eles percebem antes. A briga é curta mas dolorosa.', efeitos: { vida: -26, estresse: 32 }, condicao: 'sangramento', reputacao: -10 }
         ]
       },
       {
@@ -1240,7 +1383,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🔙', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 100, msg: 'Você vira e vai por outro caminho. Perda de tempo, mas seguro.', efeitos: { estresse: 8 } }
+          { chance: 100, msg: 'Você vira e vai por outro caminho. Perda de tempo, mas seguro.', efeitos: { estresse: 8 }, reputacao: 2 }
         ]
       }
     ]
@@ -1256,7 +1399,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🥫', risco: 'baixo',
         requer: { item: 'comida', qtd: 1 },
         resultados: [
-          { chance: 100, msg: 'Você deixa os mantimentos sem dizer nada. Ela para de chorar quando você sai.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: -18 } }
+          { chance: 100, msg: 'Você deixa os mantimentos sem dizer nada. Ela para de chorar quando você sai.', consumir: [{id:'comida',qtd:1}], efeitos: { estresse: -18 }, reputacao: 12 }
         ]
       },
       {
@@ -1264,8 +1407,8 @@ const EVENTOS_ESCOLHA = [
         icone: '🔍', risco: 'medio',
         requer: null,
         resultados: [
-          { chance: 40, msg: 'Você encontra a mãe dela, inconsciente mas viva. Ela acorda. A gratidão é real.', efeitos: { estresse: -20 }, loot: [{id:'remedio',qtd:1}] },
-          { chance: 60, msg: 'Não havia ninguém. Você volta, deixa o que tem e segue. O peso fica.', efeitos: { estresse: 18 } }
+          { chance: 40, msg: 'Você encontra a mãe dela, inconsciente mas viva. Ela acorda. A gratidão é real.', efeitos: { estresse: -20 }, loot: [{id:'remedio',qtd:1}], reputacao: 15 },
+          { chance: 60, msg: 'Não havia ninguém. Você volta, deixa o que tem e segue. O peso fica.', efeitos: { estresse: 18 }, reputacao: 8 }
         ]
       },
       {
@@ -1273,7 +1416,7 @@ const EVENTOS_ESCOLHA = [
         icone: '🚶', risco: 'baixo',
         requer: null,
         resultados: [
-          { chance: 100, msg: 'Você continua. O choro vai sumindo conforme você se afasta.', efeitos: { estresse: 28 } }
+          { chance: 100, msg: 'Você continua. O choro vai sumindo conforme você se afasta.', efeitos: { estresse: 28 }, reputacao: -15 }
         ]
       }
     ]
@@ -1483,6 +1626,9 @@ const nomesZona = {
   fabrica_textil:     'Fábrica Têxtil',
   subestacao:         'Subestação Elétrica',
   silo:               'Silo de Grãos',
+  alojamento_militar: 'Alojamento Militar',
+  garagem_militar:    'Garagem Militar',
+  cemiterio_militar:  'Cemitério Militar',
 };
 
 // ============================================================
@@ -1509,7 +1655,7 @@ let estado = {
   respawnTicks: {},      // { zona: ticks desde última exploração } — para recuperação
   placar: { exploracoes: 0, crafts: 0, construcoes: 0 },
   reputacao: 50,
-  assentamento: { parcelas: [null, null, null, null] },
+  assentamento: { parcelas: [null, null, null, null], npcPendente: null, ultimoEventoNpc: 0 },
   ultimoSaque: null,
   mercado: { itens: [], diaGerado: 0, fatorVenda: 1 },
   equipamento: { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null },
@@ -1575,7 +1721,7 @@ function mostrarToast(msg, dur = 2400) {
   }, dur);
 }
 
-function mostrarConfirmacao(msg, onSim, onNao) {
+function mostrarConfirmacao(msg, onSim, onNao, { labelSim = 'Sim, descartar', labelNao = 'Não', clsSim = 'btn-perigo' } = {}) {
   const overlay = document.createElement('div');
   overlay.className = 'modal';
   overlay.style.zIndex = '9999';
@@ -1583,8 +1729,8 @@ function mostrarConfirmacao(msg, onSim, onNao) {
     <div class="modal-conteudo" style="max-width:320px;text-align:center">
       <p style="margin-bottom:16px;font-size:.92rem;color:var(--text-main)">${msg}</p>
       <div class="modal-acoes" style="justify-content:center;gap:12px">
-        <button class="btn-perigo btn-sm" id="confirm-sim">Sim, descartar</button>
-        <button class="btn-secundario btn-sm" id="confirm-nao">Não</button>
+        <button class="${clsSim} btn-sm" id="confirm-sim">${labelSim}</button>
+        <button class="btn-secundario btn-sm" id="confirm-nao">${labelNao}</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -1853,16 +1999,24 @@ function renderizarLocais() {
     const perigoEl     = card.querySelector('.local-perigo');
 
     if (desbloqueado && anotacao?.revelaLocal) {
-      const rl = anotacao.revelaLocal;
+      // Preferir atributos data-reveal-* do próprio card (permite múltiplos cards por anotação)
+      const rl = {
+        nome:   card.dataset.revealNome  || `${anotacao.revelaLocal.icone} ${anotacao.revelaLocal.nome}`,
+        perigo: card.dataset.revealPerigo|| anotacao.revelaLocal.perigo,
+        tempo:  card.dataset.revealTempo || anotacao.revelaLocal.tempo,
+      };
       card.classList.remove('local-bloqueado');
       if (imgEl)    imgEl.classList.remove('local-img-blur');
-      if (nomeEl)   nomeEl.textContent = `${rl.icone} ${rl.nome}`;
+      if (nomeEl)   nomeEl.textContent = rl.nome;
       if (tempoEl)  tempoEl.textContent = `⏱ ${rl.tempo}`;
       if (perigoEl) {
         const cls = { 'baixo': 'perigo-baixo', 'medio': 'perigo-medio', 'alto': 'perigo-alto' }[rl.perigo] || 'perigo-medio';
         perigoEl.className = `local-perigo ${cls}`;
         perigoEl.textContent = { 'baixo': 'Baixo risco', 'medio': 'Médio risco', 'alto': 'Alto risco' }[rl.perigo];
       }
+      // Mostrar custo de provisões para zonas especiais
+      const custoEl = card.querySelector('.local-custo');
+      if (custoEl) custoEl.classList.remove('oculto');
       if (btn) {
         btn.disabled        = false;
         btn.style.opacity   = '1';
@@ -2071,11 +2225,12 @@ function renderizarInventario() {
   for (const item of estado.inventario) {
     const sel = craftSelecionado && craftSelecionado.item.id === item.id;
     const div = document.createElement('div');
-    div.className = `item-slot item-${item.tipo}${sel ? ' item-craft-selecionado' : ''}`;
+    const ehRaro = item.tipo === 'raro';
+    div.className = `item-slot item-${item.tipo}${sel ? ' item-craft-selecionado' : ''}${ehRaro ? ' item-slot-raro' : ''}`;
     div.innerHTML = `
       <span class="item-icone">${item.icone}</span>
       <div class="item-info">
-        <div class="item-nome">${item.nome}</div>
+        <div class="item-nome">${item.nome}${ehRaro ? ' <span class="tag-raro">raro</span>' : ''}</div>
         <div class="item-qtd">×${item.qtd} <span class="item-dica">· clique para opções</span></div>
       </div>
     `;
@@ -2379,15 +2534,32 @@ function wirePainelFogueira() {
 
 // ── Cisterna ──
 function htmlPainelCisterna() {
-  const acum        = estado.cisterna.aguaAcumulada;
-  const filtroOk    = estado.filtroInstalado.diasRestantes > 0;
+  const acum          = estado.cisterna.aguaAcumulada;
+  const filtroOk      = estado.filtroInstalado.diasRestantes > 0;
   const diasRestantes = estado.filtroInstalado.diasRestantes;
-  const tipoNome    = filtroOk ? '💧 Água Limpa' : '🪣 Água Suja';
-  const temFiltroInv = temItem('filtro', 1);
+  const qtdFiltros    = estado.filtroInstalado.quantidade || 0;
+  const tipoNome      = filtroOk ? '💧 Água Limpa' : '🪣 Água Suja';
+  const temFiltroInv  = temItem('filtro', 1);
+  const podeInstalar  = temFiltroInv && qtdFiltros < 3;
+
+  const slotsHtml = [0, 1, 2].map(i =>
+    `<span class="filtro-slot ${i < qtdFiltros ? 'filtro-slot-ativo' : ''}">🧪</span>`
+  ).join('');
 
   let filtroStatus = '';
-  if (diasRestantes > 0) {
-    filtroStatus = `<p class="painel-cist-info">🧪 Filtro ativo · ${diasRestantes} dia(s) restante(s). Coletando água limpa.</p>`;
+  if (filtroOk) {
+    filtroStatus = `
+      <div class="painel-cist-filtro">
+        <div class="filtro-slots-row">${slotsHtml}
+          <span class="filtro-dias-txt">${diasRestantes} dia(s) restante(s)</span>
+        </div>
+        ${podeInstalar
+          ? '<button class="btn-secundario btn-sm btn-instalar-filtro">+ Instalar mais um filtro</button>'
+          : qtdFiltros >= 3
+            ? '<span style="font-size:.72rem;color:var(--text-dim)">Máximo de 3 filtros instalados.</span>'
+            : '<span style="font-size:.72rem;color:var(--text-dim)">Sem filtro no inventário.</span>'
+        }
+      </div>`;
   } else {
     filtroStatus = `<p class="painel-cist-info">⚠ Sem filtro instalado. Coletando água suja.
       ${temFiltroInv
@@ -2427,11 +2599,15 @@ function wirePainelCisterna() {
 
   document.querySelector('#painel-cisterna .btn-instalar-filtro')?.addEventListener('click', () => {
     if (!temItem('filtro', 1)) { mostrarToast('Sem filtro no inventário.'); return; }
+    if ((estado.filtroInstalado.quantidade || 0) >= 3) { mostrarToast('Máximo de 3 filtros instalados.'); return; }
     removerItem('filtro', 1);
-    const dias = randInt(1, 3);
-    estado.filtroInstalado.diasRestantes = dias;
-    log(`🧪 Filtro instalado! Durará ${dias} dia(s).`, 'log-sucesso');
-    mostrarToast(`🧪 Filtro instalado · ${dias} dia(s)`);
+    const dias = randInt(3, 4);
+    estado.filtroInstalado.diasRestantes = (estado.filtroInstalado.diasRestantes || 0) + dias;
+    estado.filtroInstalado.quantidade    = (estado.filtroInstalado.quantidade    || 0) + 1;
+    const total = estado.filtroInstalado.diasRestantes;
+    const qtd   = estado.filtroInstalado.quantidade;
+    log(`🧪 Filtro instalado! (${qtd}/3) — Total: ${total} dia(s) restante(s).`, 'log-sucesso');
+    mostrarToast(`🧪 Filtro ${qtd}/3 · ${total} dia(s) no total`);
     salvarJogo();
     renderizarBase();
     abrirPainelBase('cisterna');
@@ -2466,6 +2642,23 @@ function htmlPainelCultivo() {
         <button class="btn-sucesso btn-sm btn-colher" data-slot="${i}">🌾 Colher</button>
       </div>`;
     }
+    if (!slot.regada) {
+      const pctAgua = Math.round((slot.aguaAtual / slot.aguaNecessaria) * 100);
+      const temAgua = AGUA_REGA.some(id => temItem(id, 1));
+      return `<div class="cultivo-slot aguardando">
+        <span class="cultivo-slot-num">Slot ${i + 1}</span>
+        <span class="cultivo-planta-icone">${slot.icone}</span>
+        <span class="cultivo-planta-nome">${slot.nome} — aguardando rega</span>
+        <div class="cultivo-rega-info">
+          <span class="cultivo-rega-txt">💧 ${slot.aguaAtual} / ${slot.aguaNecessaria}</span>
+          <div class="barra-bg"><div class="barra barra-agua" style="width:${pctAgua}%"></div></div>
+        </div>
+        <button class="btn-primario btn-sm btn-regar" data-slot="${i}" ${temAgua ? '' : 'disabled style="opacity:.45"'}>
+          💧 Regar
+        </button>
+        ${!temAgua ? '<span class="cultivo-sem-agua">Sem água na mochila.</span>' : ''}
+      </div>`;
+    }
     const pct = ((slot.diasTotal - slot.diasRestantes) / slot.diasTotal) * 100;
     return `<div class="cultivo-slot crescendo">
       <span class="cultivo-slot-num">Slot ${i + 1}</span>
@@ -2492,10 +2685,43 @@ function wirePainelCultivo() {
         sementeId: id, nome: cfg.nome, itemId: cfg.itemId,
         qtd: cfg.qtd, icone: cfg.icone,
         diasRestantes: cfg.dias, diasTotal: cfg.dias,
+        aguaNecessaria: cfg.aguaNecessaria, aguaAtual: 0, regada: false,
         pronto: false, diasEspera: 0
       };
-      log(`🌱 Plantou ${ITENS[id].nome} no Slot ${i + 1}. Colheita em ${cfg.dias} dia(s).`, 'log-sucesso');
+      log(`🌱 Plantou ${ITENS[id].nome} no Slot ${i + 1}. Regue ${cfg.aguaNecessaria}× para iniciar o crescimento.`, 'log-sucesso');
       mostrarToast(`🌱 ${cfg.nome} plantado!`);
+      salvarJogo();
+      renderizarBase();
+      abrirPainelBase('cultivo');
+    });
+  });
+
+  document.querySelectorAll('#painel-cultivo .btn-regar').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i    = parseInt(btn.dataset.slot);
+      const slot = estado.cultivo.slots[i];
+      if (!slot || slot.regada) return;
+
+      // Ordem de consumo: suja → limpa (preserva a melhor)
+      const tipoAgua = temItem('agua_suja',  1) ? 'agua_suja'
+                     : temItem('agua_limpa', 1) ? 'agua_limpa'
+                     : null;
+      if (!tipoAgua) { mostrarToast('Sem água na mochila.'); return; }
+
+      removerItem(tipoAgua, 1);
+      slot.aguaAtual++;
+      const nomeAgua = tipoAgua === 'agua_limpa' ? 'Água Limpa' : 'Água Suja';
+
+      if (slot.aguaAtual >= slot.aguaNecessaria) {
+        slot.regada = true;
+        log(`🌱 Slot ${i + 1}: ${slot.nome} foi regada! Crescimento começa agora (${slot.diasRestantes} dia(s)).`, 'log-sucesso');
+        mostrarToast(`🌱 ${slot.nome} regada! Crescimento iniciado.`);
+      } else {
+        const faltam = slot.aguaNecessaria - slot.aguaAtual;
+        log(`💧 Regou ${slot.nome} com ${nomeAgua}. Faltam ${faltam}× para iniciar o crescimento.`, 'log-sistema');
+        mostrarToast(`💧 ${slot.nome}: ${slot.aguaAtual}/${slot.aguaNecessaria}`);
+      }
+
       salvarJogo();
       renderizarBase();
       abrirPainelBase('cultivo');
@@ -2845,6 +3071,7 @@ function avancarDia() {
   if (estado.filtroInstalado.diasRestantes > 0) {
     estado.filtroInstalado.diasRestantes--;
     if (estado.filtroInstalado.diasRestantes === 0) {
+      estado.filtroInstalado.quantidade = 0;
       log('🧪 O filtro de água se esgotou. A cisterna voltará a coletar água suja.', 'log-alerta');
       mostrarToast('🧪 Filtro esgotado!');
     } else {
@@ -2865,6 +3092,11 @@ function avancarDia() {
         }
         return { ...slot, diasEspera: slot.diasEspera + 1 };
       }
+      // Sem rega suficiente: não conta dias, apenas avisa
+      if (!slot.regada) {
+        log(`💧 Slot ${i + 1}: ${slot.nome} aguarda rega (${slot.aguaAtual}/${slot.aguaNecessaria}).`, 'log-alerta');
+        return slot;
+      }
       const dias = slot.diasRestantes - 1;
       if (dias <= 0) {
         log(`🌾 ${slot.nome} está pronta para colher! (Slot ${i + 1})`, 'log-sucesso');
@@ -2876,10 +3108,17 @@ function avancarDia() {
     renderizarBase();
   }
 
+  // NPCs do assentamento trabalham
+  if (baseTemEstrutura('cultivo') || estado.assentamento.parcelas.some(p => p?.habitante)) {
+    estado.assentamento.parcelas.forEach(p => { if (p?.habitante) trabalharNpc(p); });
+  }
+
+  // Evento de NPC pedindo abrigo
+  gerarEventoNpc();
+
   verificarMercado();
   processarSaqueNoturno();
-  // Novos trabalhos disponíveis a cada dia
-  estado.trabalhos.diaGerado = 0; // força regeneração ao abrir a aba
+  estado.trabalhos.diaGerado = 0;
 }
 
 function atualizarStatus() {
@@ -3033,28 +3272,37 @@ function equiparItem(itemId) {
   const itemBase = ITENS[itemId];
   if (!itemBase) return;
 
-  // Verificar se tem o item na mochila
-  if (!temItem(itemId, 1)) {
-    mostrarToast('Item não encontrado na mochila.');
-    return;
-  }
+  if (!temItem(itemId, 1)) { mostrarToast('Item não encontrado na mochila.'); return; }
 
-  // Desequipar o que estava no slot (devolver à mochila e reverter efeitos)
-  if (estado.equipamento[slot]) {
-    const anterior = estado.equipamento[slot];
+  const anterior = estado.equipamento[slot];
+
+  if (anterior) {
+    // Troca: remove o novo da mochila e substitui no slot pelo anterior — sem checar capacidade
     _reverterEfeitosEquip(anterior);
-    adicionarItem(ITENS[anterior], 1);
-    log(`↩ Desequipou: ${ITENS[anterior]?.icone} ${ITENS[anterior]?.nome}`, 'log-sistema');
+    const invIdx = estado.inventario.findIndex(i => i.id === itemId);
+    if (invIdx !== -1) {
+      // Substitui o novo pelo anterior diretamente na mesma posição
+      const anteriorBase = ITENS[anterior];
+      const jaTemAnterior = estado.inventario.find(i => i.id === anterior);
+      if (jaTemAnterior) {
+        jaTemAnterior.qtd++;
+        estado.inventario.splice(invIdx, 1);
+      } else {
+        estado.inventario[invIdx] = { id: anterior, nome: anteriorBase.nome, icone: anteriorBase.icone, tipo: anteriorBase.tipo, qtd: 1 };
+      }
+    }
+    log(`↩ Trocou: ${ITENS[anterior]?.icone} ${ITENS[anterior]?.nome} → ${itemBase.icone} ${itemBase.nome}`, 'log-sistema');
+  } else {
+    removerItem(itemId, 1);
   }
 
-  // Remover da mochila e equipar
-  removerItem(itemId, 1);
   estado.equipamento[slot] = itemId;
   _aplicarEfeitosEquip(itemId);
 
   log(`⚔️ Equipou: ${itemBase.icone} ${itemBase.nome} [${SLOT_LABELS[slot]}]`, 'log-sucesso');
   mostrarToast(`⚔️ ${itemBase.nome} equipado!`);
 
+  renderizarInventario();
   renderizarEquipamento();
   renderizarEquipResumo();
   salvarJogo();
@@ -3268,7 +3516,13 @@ function gerarEstoqueMercado() {
     };
   });
 
-  estado.mercado = { itens: escolhas, diaGerado: estado.dia, fatorVenda };
+  // Preços voláteis para itens raros — nova rolagem a cada dia
+  const precosRaros = {};
+  for (const [id, [min, max]] of Object.entries(RAROS_VARIACAO)) {
+    precosRaros[id] = randInt(min, max);
+  }
+
+  estado.mercado = { itens: escolhas, diaGerado: estado.dia, fatorVenda, precosRaros };
 
   const tendVenda = fatorVenda >= 1.1 ? '📈 Mercado favorável para vender hoje!'
                   : fatorVenda <= 0.85 ? '📉 Mercado desfavorável — preços de compra baixos hoje.'
@@ -3452,17 +3706,30 @@ function renderizarMercado() {
         RECEITAS.find(r => r.id === entrada.id) ||
         RECEITAS_FOGUEIRA.find(r => r.id === entrada.id)
       );
+      const isRaro  = item.tipo === 'raro';
+      const isEquip = !!(ITENS_EQUIPAVEIS[entrada.id]);
+      const temVariacao = !!(RAROS_VARIACAO[entrada.id]);
+      const faixaTxt = temVariacao
+        ? ` · faixa: ${RAROS_VARIACAO[entrada.id][0]}–${RAROS_VARIACAO[entrada.id][1]} 🔋`
+        : '';
+      const badgeExtra = isCraftado
+        ? ' <span class="tag-craftado">craftado</span>'
+        : isRaro
+          ? ' <span class="tag-raro">raro</span>'
+          : isEquip
+            ? ' <span class="tag-equip">equip</span>'
+            : '';
 
       const card = document.createElement('div');
-      card.className = 'mercado-card';
+      card.className = 'mercado-card' + (isRaro ? ' mercado-card-raro' : isEquip ? ' mercado-card-equip' : '');
 
       card.innerHTML = `
         <span class="mercado-item-icone">${item.icone}</span>
         <div class="mercado-item-info">
-          <span class="mercado-item-nome">${item.nome}${isCraftado ? ' <span class="tag-craftado">craftado</span>' : ''}</span>
-          <span class="mercado-item-tipo">${item.tipo} · ×${entrada.qtd} na mochila</span>
+          <span class="mercado-item-nome">${item.nome}${badgeExtra}</span>
+          <span class="mercado-item-tipo">${item.tipo} · ×${entrada.qtd} na mochila${faixaTxt}</span>
         </div>
-        <span class="mercado-preco${isCraftado ? ' preco-craftado' : ''}">${preco} 🔋</span>
+        <span class="mercado-preco${isCraftado ? ' preco-craftado' : ''}${isRaro || isEquip ? ' preco-raro' : ''}">${preco} 🔋</span>
         <button class="btn-vender btn-secundario" data-id="${entrada.id}">Vender 1</button>
       `;
 
@@ -3556,8 +3823,10 @@ function processarSaqueNoturno() {
 
   // Jogador ausente: calcular chance de saque
   const seg = calcularSeguranca();
+  const npcSeguranca = estado.assentamento.parcelas.filter(p => p?.habitante?.habilidade === 'seguranca').length;
+  const chanceFinal  = Math.max(0.02, seg.chanceSaque - npcSeguranca * 0.12);
 
-  if (Math.random() > seg.chanceSaque) {
+  if (Math.random() > chanceFinal) {
     // Noite tranquila mesmo sem o jogador
     if (Math.random() < 0.3) {
       log('🌙 A noite passou sem incidentes. O depósito está intacto.', 'log-sistema');
@@ -3733,11 +4002,44 @@ const IMAGENS_ZONA = {
   fabrica_textil:     'img/locais/local08.png',
   subestacao:         'img/locais/local09.png',
   silo:               'img/locais/local10.png',
+  alojamento_militar: 'img/locais/local11.png',
+  garagem_militar:    'img/locais/local12.png',
+  cemiterio_militar:  'img/locais/local13.png',
 };
+
+const CUSTO_SETOR3 = { comida: 2, agua_limpa: 2 };
 
 function iniciarExploracao() {
   if (estado.exploracao.ativa) return;
   if (estado.stats.vida <= 15) { mostrarToast('⚠️ Vida muito baixa para explorar!'); return; }
+
+  // Setor 3 exige provisões para a jornada
+  const ZONAS_SETOR3 = ['alojamento_militar', 'garagem_militar', 'cemiterio_militar'];
+  if (ZONAS_SETOR3.includes(zonaAtual.zona)) {
+    const temComida    = temItem('comida',    CUSTO_SETOR3.comida);
+    const temAgua      = temItem('agua_limpa', CUSTO_SETOR3.agua_limpa);
+    if (!temComida || !temAgua) {
+      mostrarToast(`⚠️ Jornada exige ${CUSTO_SETOR3.comida}× Comida e ${CUSTO_SETOR3.agua_limpa}× Água Limpa.`);
+      return;
+    }
+    mostrarConfirmacao(
+      `🪖 Setor 3 — Jornada Longa<br><br>Esta missão consome:<br>🍖 ${CUSTO_SETOR3.comida}× Comida &nbsp; 💧 ${CUSTO_SETOR3.agua_limpa}× Água Limpa<br><br>Deseja partir?`,
+      () => {
+        removerItem('comida',    CUSTO_SETOR3.comida);
+        removerItem('agua_limpa', CUSTO_SETOR3.agua_limpa);
+        log(`🎒 Provisões consumidas para a jornada ao Setor 3.`, 'log-alerta');
+        _executarInicioExploracao();
+      },
+      null,
+      { labelSim: '🚶 Partir', labelNao: 'Cancelar', clsSim: 'btn-primario' }
+    );
+    return;
+  }
+
+  _executarInicioExploracao();
+}
+
+function _executarInicioExploracao() {
 
   const durTotal = zonaAtual.duracao; // tempo total em segundos
   // Divide o tempo: metade para ida, 5s fixos para exploração, metade para volta
@@ -4441,9 +4743,8 @@ function gameOver() {
   document.getElementById('go-nota').textContent        = nota;
 
   // Avatar
-  const n = String((estado.personagem.avatar || 0) + 1).padStart(2, '0');
   document.getElementById('go-avatar').innerHTML =
-    `<img src="img/chars/char${n}.png" alt="Avatar" class="go-avatar-img" />`;
+    `<img src="${charPath((estado.personagem.avatar || 0) + 1)}" alt="Avatar" class="go-avatar-img" />`;
 
   mostrarTela('tela-gameover');
 
@@ -4484,8 +4785,7 @@ function inicializarCriacao() {
     if (!imgEl) return;
     imgEl.classList.add('trocando');
     setTimeout(() => {
-      const n = String(idx + 1).padStart(2, '0');
-      imgEl.src = `img/chars/char${n}.png`;
+      imgEl.src = charPath(idx + 1);
       imgEl.alt = `Avatar ${idx + 1}`;
       if (numEl) numEl.textContent = `${String(idx + 1).padStart(2,'0')} / ${TOTAL_AVATARES}`;
       imgEl.classList.remove('trocando');
@@ -4549,7 +4849,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.tatica             = 'furtivo';
   estado.deposito           = { nivel: 0, itens: [] };
   estado.cisterna           = { aguaAcumulada: 0 };
-  estado.filtroInstalado    = { diasRestantes: 0 };
+  estado.filtroInstalado    = { diasRestantes: 0, quantidade: 0 };
   estado.cultivo            = { slots: [null, null, null] };
   estado.seguranca          = { armadilhasInstaladas: 0 };
   estado.locaisDesbloqueados = [];
@@ -4564,7 +4864,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.condicoes          = { intoxicado: 0, contundido: false, sangramento: false };
   estado.placar             = { exploracoes: 0, crafts: 0, construcoes: 0 };
   estado.reputacao          = 50;
-  estado.assentamento       = { parcelas: [null, null, null, null] };
+  estado.assentamento       = { parcelas: [null, null, null, null], npcPendente: null, ultimoEventoNpc: 0 };
   estado.criado             = true;
 
   adicionarItem(ITENS.comida,    2);
@@ -4575,8 +4875,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
 
   // Avatar: usa imagem do char
   const avatarEl = document.getElementById('hdr-avatar');
-  const n = String(avatarIdx + 1).padStart(2, '0');
-  avatarEl.innerHTML = `<img src="img/chars/char${n}.png" alt="Avatar" class="pc-avatar-img" />`;
+  avatarEl.innerHTML = `<img src="${charPath(avatarIdx + 1)}" alt="Avatar" class="pc-avatar-img" />`;
   document.getElementById('hdr-nome').textContent  = nome;
   document.getElementById('hdr-traco').textContent = `${td.icone} ${td.nome}`;
   document.getElementById('hdr-dia').textContent   = 'Dia 1';
@@ -4637,7 +4936,8 @@ function montarDadosSave() {
     ultimoSaque: estado.ultimoSaque, mercado: estado.mercado,
     equipamento: estado.equipamento, trabalhos: estado.trabalhos,
     dia: estado.dia, segundos: estado.segundos, condicoes: estado.condicoes,
-    placar: estado.placar, ultimoSave: Date.now()
+    placar: estado.placar, reputacao: estado.reputacao, assentamento: estado.assentamento,
+    ultimoSave: Date.now()
   };
 }
 
@@ -5187,6 +5487,7 @@ const TRABALHOS_POOL = [
     desc: 'Estou reforçando meu abrigo antes do inverno. Preciso de sucata rápido — pago bem.',
     entrega: [{ id: 'sucata', qtd: 20 }],
     recompensa: { tipo: 'pilha', qtd: 18 },
+    reputacao: 3,
   },
   {
     id: 'trab_remedios',
@@ -5196,6 +5497,7 @@ const TRABALHOS_POOL = [
     desc: 'Estamos sem analgésicos. Toda doação salva alguém. Pago o que tenho.',
     entrega: [{ id: 'remedio', qtd: 8 }],
     recompensa: { tipo: 'pilha', qtd: 22 },
+    reputacao: 10,
   },
   {
     id: 'trab_motor',
@@ -5205,6 +5507,7 @@ const TRABALHOS_POOL = [
     desc: 'Tenho um gerador quase pronto. Só falta o motor de arranque. Você acha, eu pago.',
     entrega: [{ id: 'motor_arranque', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 40 },
+    reputacao: 4,
   },
   {
     id: 'trab_ursinho',
@@ -5214,6 +5517,7 @@ const TRABALHOS_POOL = [
     desc: 'Minha filha não dorme desde o colapso. Se você achar um ursinho de pelúcia — qualquer um — pago o que for.',
     entrega: [{ id: 'ursinho', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 35 },
+    reputacao: 12,
   },
   {
     id: 'trab_agua',
@@ -5223,6 +5527,7 @@ const TRABALHOS_POOL = [
     desc: 'São 30 pessoas sem água limpa há dois dias. Qualquer quantidade ajuda.',
     entrega: [{ id: 'agua_limpa', qtd: 6 }],
     recompensa: { tipo: 'item', itens: [{ id: 'remedio', qtd: 3 }, { id: 'atadura', qtd: 3 }] },
+    reputacao: 12,
   },
   {
     id: 'trab_comida',
@@ -5232,6 +5537,7 @@ const TRABALHOS_POOL = [
     desc: 'Cuido de um grupo de idosos que não conseguem mais explorar. Preciso de comida.',
     entrega: [{ id: 'comida', qtd: 10 }],
     recompensa: { tipo: 'item', itens: [{ id: 'pilha', qtd: 8 }, { id: 'sucata', qtd: 6 }] },
+    reputacao: 12,
   },
   {
     id: 'trab_pano',
@@ -5241,6 +5547,7 @@ const TRABALHOS_POOL = [
     desc: 'Sem algodão, sem gaze — usamos trapos mesmo. Preciso de bastante.',
     entrega: [{ id: 'pano', qtd: 12 }],
     recompensa: { tipo: 'item', itens: [{ id: 'kit', qtd: 1 }, { id: 'remedio', qtd: 2 }] },
+    reputacao: 8,
   },
   {
     id: 'trab_madeira',
@@ -5250,6 +5557,7 @@ const TRABALHOS_POOL = [
     desc: 'Vamos fechar a entrada da rua. Precisamos de madeira para as barricadas.',
     entrega: [{ id: 'madeira', qtd: 15 }],
     recompensa: { tipo: 'pilha', qtd: 14 },
+    reputacao: 6,
   },
   {
     id: 'trab_sementes',
@@ -5259,6 +5567,7 @@ const TRABALHOS_POOL = [
     desc: 'Estamos montando uma horta comunitária. Qualquer semente serve — abóbora, erva, o que tiver.',
     entrega: [{ id: 'semente_abobora', qtd: 3 }],
     recompensa: { tipo: 'item', itens: [{ id: 'comida', qtd: 4 }, { id: 'agua_limpa', qtd: 2 }] },
+    reputacao: 8,
   },
   {
     id: 'trab_kit',
@@ -5268,6 +5577,7 @@ const TRABALHOS_POOL = [
     desc: 'Nossa patrulha ficou sem kit. Saímos de novo amanhã — precisamos antes disso.',
     entrega: [{ id: 'kit', qtd: 3 }],
     recompensa: { tipo: 'pilha', qtd: 28 },
+    reputacao: 8,
   },
   {
     id: 'trab_pilhas',
@@ -5277,6 +5587,7 @@ const TRABALHOS_POOL = [
     desc: 'O único rádio que ainda capta frequências está morrendo. Preciso de baterias para mantê-lo funcionando.',
     entrega: [{ id: 'pilha', qtd: 10 }],
     recompensa: { tipo: 'item', itens: [{ id: 'remedio', qtd: 2 }, { id: 'comida', qtd: 3 }] },
+    reputacao: 7,
   },
   {
     id: 'trab_arame',
@@ -5286,6 +5597,7 @@ const TRABALHOS_POOL = [
     desc: 'Consigo montar uma cerca de baixa voltagem — só preciso de arame suficiente.',
     entrega: [{ id: 'arame', qtd: 8 }],
     recompensa: { tipo: 'pilha', qtd: 16 },
+    reputacao: 5,
   },
 
   // ── Trabalhos com itens comuns ──
@@ -5297,6 +5609,7 @@ const TRABALHOS_POOL = [
     desc: 'Minha equipe está saindo em patrulha amanhã de madrugada. Precisamos de ataduras para o kit de campo.',
     entrega: [{ id: 'atadura', qtd: 6 }],
     recompensa: { tipo: 'pilha', qtd: 20 },
+    reputacao: 7,
   },
   {
     id: 'trab_agua_suja',
@@ -5306,6 +5619,7 @@ const TRABALHOS_POOL = [
     desc: 'Preciso encher o tanque de resfriamento. Água suja serve — o processo filtra tudo depois.',
     entrega: [{ id: 'agua_suja', qtd: 8 }],
     recompensa: { tipo: 'item', itens: [{ id: 'sucata', qtd: 10 }, { id: 'arame', qtd: 4 }] },
+    reputacao: 3,
   },
   {
     id: 'trab_carvao',
@@ -5315,6 +5629,7 @@ const TRABALHOS_POOL = [
     desc: 'Três casos de intoxicação esta semana. Preciso de carvão ativado antes que piore.',
     entrega: [{ id: 'carvao_ativado', qtd: 4 }],
     recompensa: { tipo: 'item', itens: [{ id: 'kit', qtd: 2 }, { id: 'pilha', qtd: 8 }] },
+    reputacao: 10,
   },
   {
     id: 'trab_lanterna',
@@ -5324,6 +5639,7 @@ const TRABALHOS_POOL = [
     desc: 'Nosso vigia noturno ficou sem lanterna. Sem iluminação, não consegue fazer ronda.',
     entrega: [{ id: 'lanterna', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 18 },
+    reputacao: 6,
   },
   {
     id: 'trab_faca',
@@ -5333,6 +5649,7 @@ const TRABALHOS_POOL = [
     desc: 'A minha quebrou na última saída. Sem uma faca decente não consigo trazer comida para o grupo.',
     entrega: [{ id: 'faca', qtd: 1 }],
     recompensa: { tipo: 'item', itens: [{ id: 'comida', qtd: 5 }, { id: 'agua_limpa', qtd: 3 }] },
+    reputacao: 6,
   },
   {
     id: 'trab_sopa',
@@ -5342,6 +5659,7 @@ const TRABALHOS_POOL = [
     desc: 'Os feridos no acampamento precisam de algo quente e fácil de digerir. Sopa, o que tiver.',
     entrega: [{ id: 'sopa', qtd: 3 }],
     recompensa: { tipo: 'pilha', qtd: 24 },
+    reputacao: 10,
   },
 
   // ── Trabalhos com itens raros ──
@@ -5353,6 +5671,7 @@ const TRABALHOS_POOL = [
     desc: 'O conselho precisa de algo para intimidar sem precisar usar. Um revólver, mesmo sem munição, resolve.',
     entrega: [{ id: 'revolver', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 55 },
+    reputacao: 2,
     raro: true,
   },
   {
@@ -5363,6 +5682,7 @@ const TRABALHOS_POOL = [
     desc: 'Tenho uma negociação difícil com outro grupo. Um relógio de ouro na mesa muda o tom da conversa.',
     entrega: [{ id: 'relogio_ouro', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 50 },
+    reputacao: 3,
     raro: true,
   },
   {
@@ -5373,6 +5693,7 @@ const TRABALHOS_POOL = [
     desc: 'Não pergunta o motivo. Preciso de joias antes do anoitecer. Pago bem, não conto para ninguém.',
     entrega: [{ id: 'joias', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 45 },
+    reputacao: 2,
     raro: true,
   },
   {
@@ -5383,6 +5704,7 @@ const TRABALHOS_POOL = [
     desc: 'Ouvi dizer que você pode ter encontrado um pen drive militar. Tenho equipamento para abrir — e divido o que encontrar.',
     entrega: [{ id: 'pen_drive', qtd: 1 }],
     recompensa: { tipo: 'item', itens: [{ id: 'pilha', qtd: 30 }, { id: 'remedio_exp', qtd: 1 }] },
+    reputacao: 3,
     raro: true,
   },
   {
@@ -5393,6 +5715,7 @@ const TRABALHOS_POOL = [
     desc: 'Estamos montando um posto de observação no telhado. Binóculo militar é essencial para vigiar as rotas.',
     entrega: [{ id: 'binoculo', qtd: 1 }],
     recompensa: { tipo: 'pilha', qtd: 42 },
+    reputacao: 5,
     raro: true,
   },
   {
@@ -5403,6 +5726,7 @@ const TRABALHOS_POOL = [
     desc: 'Completei 60 anos hoje. Sobrevivi ao colapso, à doença, à fome. Se você tiver um whisky de qualidade, pago qualquer coisa.',
     entrega: [{ id: 'whisky_fino', qtd: 1 }],
     recompensa: { tipo: 'item', itens: [{ id: 'pilha', qtd: 25 }, { id: 'kit_avancado', qtd: 1 }] },
+    reputacao: 4,
     raro: true,
   },
 ];
@@ -5482,6 +5806,14 @@ function entregarTrabalho(id) {
     recTxt = rec.itens.map(r => `${ITENS[r.id]?.icone} ${ITENS[r.id]?.nome} ×${r.qtd}`).join(', ');
   }
 
+  // Reputação
+  if (trabalho.reputacao) {
+    estado.reputacao = clamp(estado.reputacao + trabalho.reputacao, 0, 100);
+    log(`⬆ Reputação +${trabalho.reputacao}`, 'log-sucesso');
+    renderizarReputacao();
+    verificarAssentamento();
+  }
+
   // Remover dos aceitos
   estado.trabalhos.aceitos = estado.trabalhos.aceitos.filter(t => t.id !== id);
 
@@ -5522,6 +5854,135 @@ const ASSENT_ESTRUTURAS = [
   },
 ];
 
+// ── Pool de NPCs ──
+const NPCS_POOL = [
+  { id: 'npc_1',  charId: 1,  genero: 'M', nome: 'Ana',    habilidade: 'coletor',    desc: 'Olhos cansados mas firmes. Carrega uma mochila surrada e um olhar que já viu demais.' },
+  { id: 'npc_2',  charId: 2,  genero: 'H', nome: 'Lucas',  habilidade: 'medico',     desc: 'Bracelete de hospital no pulso. Mãos limpas demais para esse mundo.' },
+  { id: 'npc_3',  charId: 3,  genero: 'M', nome: 'Diana',  habilidade: 'mecanica',   desc: 'Manchas de graxa que nunca saem. Fala pouco, conserta muito.' },
+  { id: 'npc_4',  charId: 4,  genero: 'M', nome: 'Sofia',  habilidade: 'cultivadora',desc: 'Sementes nos bolsos. Acredita que plantar é um ato de fé.' },
+  { id: 'npc_5',  charId: 5,  genero: 'H', nome: 'Tião',   habilidade: 'explorador', desc: 'Cicatriz no queixo, sorriso fácil. Já conhece cada rua destruída desta cidade.' },
+  { id: 'npc_6',  charId: 6,  genero: 'H', nome: 'Vitor',  habilidade: 'coletor',    desc: 'Voz calma que tranquiliza os outros. Perdeu tudo, mas não perdeu o juízo.' },
+  { id: 'npc_7',  charId: 7,  genero: 'M', nome: 'Brenda', habilidade: 'seguranca',  desc: 'Postura firme, olhar preciso. Não fala sobre o que fazia antes.' },
+  { id: 'npc_8',  charId: 8,  genero: 'H', nome: 'Carlos', habilidade: 'medico',     desc: 'Passo rápido, atenção total. Cuida dos outros antes de cuidar de si.' },
+  { id: 'npc_9',  charId: 9,  genero: 'M', nome: 'Rafa',   habilidade: 'mecanica',   desc: 'Ferramentas penduradas no cinto. Resolve qualquer problema com sucata e tempo.' },
+  { id: 'npc_10', charId: 10, genero: 'H', nome: 'Nando',  habilidade: 'cultivador', desc: 'Terra sob as unhas que ele não esconde. As plantas crescem onde ele passa.' },
+  { id: 'npc_11', charId: 11, genero: 'M', nome: 'Zara',   habilidade: 'exploradora',desc: 'Binóculo no pescoço, mapa na cabeça. Sabe onde tudo está — e como chegar lá.' },
+  { id: 'npc_12', charId: 12, genero: 'H', nome: 'Davi',   habilidade: 'seguranca',  desc: 'Olhar que não pede licença. Ninguém entra no assentamento sem que ele saiba.' },
+];
+
+const HAB_INFO = {
+  coletor:    { label: 'Coletor(a)',   icone: '🎒', desc: 'Traz comida e água todo dia.' },
+  medico:     { label: 'Médico(a)',    icone: '⚕️',  desc: 'Encontra remédios e ataduras nas rondas.' },
+  medica:     { label: 'Médico(a)',    icone: '⚕️',  desc: 'Encontra remédios e ataduras nas rondas.' },
+  mecanico:   { label: 'Mecânico(a)', icone: '🔧', desc: 'Recolhe sucata e arame diariamente.' },
+  mecanica:   { label: 'Mecânico(a)', icone: '🔧', desc: 'Recolhe sucata e arame diariamente.' },
+  cultivador: { label: 'Cultivador(a)',icone: '🌱', desc: 'Cuida das plantas e traz sementes.' },
+  cultivadora:{ label: 'Cultivador(a)',icone: '🌱', desc: 'Cuida das plantas e traz sementes.' },
+  explorador: { label: 'Explorador(a)',icone: '🗺️', desc: 'Vasculha a área e acha itens incomuns.' },
+  exploradora:{ label: 'Explorador(a)',icone: '🗺️', desc: 'Vasculha a área e acha itens incomuns.' },
+  seguranca:  { label: 'Segurança',   icone: '🛡️',  desc: 'Patrulha o assentamento e reduz saques.' },
+};
+
+const CHARS_GENERO = {
+  1:'M', 2:'H', 3:'M', 4:'M', 5:'H',
+  6:'H', 7:'M', 8:'H', 9:'M', 10:'H',
+  11:'M', 12:'H'
+};
+
+function charPath(charId) {
+  const n   = String(charId).padStart(2, '0');
+  const gen = CHARS_GENERO[charId] || 'H';
+  return `img/chars/char${n}${gen}.png`;
+}
+
+function npcDisponivel(npc) {
+  const avatarJogador = (estado.personagem?.avatar ?? 0) + 1;
+  if (npc.charId === avatarJogador) return false;
+  return !estado.assentamento.parcelas.some(p => p?.habitante?.id === npc.id);
+}
+
+function gerarEventoNpc() {
+  const assent = estado.assentamento;
+  const temVaga = assent.parcelas.some(p => p && !p.habitante);
+  if (!temVaga) return;
+  if (assent.npcPendente) return;
+  const diasDesde = estado.dia - (assent.ultimoEventoNpc || 0);
+  if (diasDesde < 3) return;
+  if (Math.random() > 0.35) return;
+
+  const disponiveis = NPCS_POOL.filter(npcDisponivel);
+  if (!disponiveis.length) return;
+
+  assent.npcPendente = disponiveis[randInt(0, disponiveis.length - 1)];
+  log(`🚪 Um sobrevivente apareceu pedindo abrigo. Acesse o Assentamento.`, 'log-alerta');
+  mostrarToast('🚪 Sobrevivente pedindo abrigo!', 3500);
+  atualizarBadgeAssentamento();
+}
+
+function atualizarBadgeAssentamento() {
+  const btn = document.getElementById('aba-btn-assentamento');
+  if (!btn) return;
+  const temPendente = !!estado.assentamento?.npcPendente;
+  let badge = btn.querySelector('.aba-badge-npc');
+  if (temPendente) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'aba-badge-npc';
+      badge.textContent = '!';
+      btn.appendChild(badge);
+    }
+  } else {
+    badge?.remove();
+  }
+}
+
+function trabalharNpc(parcela) {
+  const npc = parcela.habitante;
+  if (!npc) return;
+  switch (npc.habilidade) {
+    case 'coletor':
+      if (Math.random() < 0.7) {
+        const item = Math.random() < 0.5 ? ITENS.comida : ITENS.agua_suja;
+        adicionarItem(item, 1);
+        log(`🎒 ${npc.nome} trouxe ${item.icone} ${item.nome}.`, 'log-sucesso');
+      }
+      break;
+    case 'medica':
+      if (Math.random() < 0.55) {
+        const item = Math.random() < 0.6 ? ITENS.atadura : ITENS.remedio;
+        adicionarItem(item, 1);
+        log(`⚕️ ${npc.nome} encontrou ${item.icone} ${item.nome}.`, 'log-sucesso');
+      }
+      break;
+    case 'mecanico':
+      if (Math.random() < 0.65) {
+        const item = Math.random() < 0.6 ? ITENS.sucata : ITENS.arame;
+        adicionarItem(item, randInt(1, 2));
+        log(`🔧 ${npc.nome} recolheu ${item.icone} ${item.nome}.`, 'log-sucesso');
+      }
+      break;
+    case 'cultivadora':
+      if (Math.random() < 0.45) {
+        const sementes = [ITENS.semente_canhamo, ITENS.semente_erva, ITENS.semente_abobora];
+        const item = sementes[randInt(0, sementes.length - 1)];
+        adicionarItem(item, 1);
+        log(`🌱 ${npc.nome} trouxe ${item.icone} ${item.nome}.`, 'log-sucesso');
+      }
+      break;
+    case 'explorador':
+      if (Math.random() < 0.40) {
+        const achados = [ITENS.pilha, ITENS.faca, ITENS.remedio, ITENS.pano, ITENS.bebida];
+        const item = achados[randInt(0, achados.length - 1)];
+        adicionarItem(item, 1);
+        log(`🗺️ ${npc.nome} achou ${item.icone} ${item.nome} em exploração.`, 'log-sucesso');
+      }
+      break;
+    case 'seguranca':
+      // Efeito passivo — tratado em processarSaqueNoturno
+      break;
+  }
+}
+
 function verificarAssentamento() {
   const btn = document.getElementById('aba-btn-assentamento');
   if (!btn) return;
@@ -5539,22 +6000,86 @@ function renderizarAssentamento() {
   const container = document.getElementById('assent-parcelas');
   if (!container) return;
 
-  const parcelas = estado.assentamento.parcelas;
+  const assent  = estado.assentamento;
+  const parcelas = assent.parcelas;
   container.innerHTML = '';
 
+  // ── Card NPC pendente ──
+  if (assent.npcPendente) {
+    const npc = assent.npcPendente;
+    const hab = HAB_INFO[npc.habilidade] || {};
+    const cardNpc = document.createElement('div');
+    cardNpc.className = 'assent-npc-pendente';
+    cardNpc.innerHTML = `
+      <div class="npc-pend-header">
+        <span class="npc-pend-titulo">🚪 Sobrevivente pedindo abrigo</span>
+      </div>
+      <div class="npc-pend-corpo">
+        <img src="${charPath(npc.charId)}" class="npc-pend-avatar" alt="${npc.nome}" />
+        <div class="npc-pend-info">
+          <span class="npc-pend-nome">${npc.nome}</span>
+          <span class="npc-pend-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
+          <span class="npc-pend-descricao">${npc.desc}</span>
+          <span class="npc-pend-habilidade">${hab.desc || ''}</span>
+        </div>
+      </div>
+      <div class="npc-pend-acoes">
+        <button class="btn-primario btn-sm btn-aceitar-npc">✔ Aceitar</button>
+        <button class="btn-secundario btn-sm btn-recusar-npc">✖ Recusar</button>
+      </div>
+    `;
+    container.appendChild(cardNpc);
+
+    cardNpc.querySelector('.btn-aceitar-npc').addEventListener('click', () => {
+      const vaga = assent.parcelas.findIndex(p => p && !p.habitante);
+      if (vaga === -1) { mostrarToast('Nenhuma vaga disponível. Construa uma moradia primeiro.'); return; }
+      assent.parcelas[vaga].habitante = { id: npc.id, nome: npc.nome, charId: npc.charId, habilidade: npc.habilidade };
+      assent.npcPendente      = null;
+      assent.ultimoEventoNpc  = estado.dia;
+      atualizarBadgeAssentamento();
+      log(`🏘 ${npc.nome} foi aceito e se mudou para a Parcela ${vaga + 1}.`, 'log-sucesso');
+      mostrarToast(`🏘 ${npc.nome} entrou no assentamento!`, 3000);
+      salvarJogo();
+      renderizarAssentamento();
+    });
+
+    cardNpc.querySelector('.btn-recusar-npc').addEventListener('click', () => {
+      assent.npcPendente     = null;
+      assent.ultimoEventoNpc = estado.dia;
+      atualizarBadgeAssentamento();
+      log(`🚪 Você recusou ${npc.nome}. Ele seguiu seu caminho.`, 'log-sistema');
+      salvarJogo();
+      renderizarAssentamento();
+    });
+  }
+
+  // ── Parcelas ──
   parcelas.forEach((parcela, idx) => {
     const card = document.createElement('div');
 
     if (parcela) {
       const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
+      const npc = parcela.habitante;
+      const hab = npc ? (HAB_INFO[npc.habilidade] || {}) : null;
       card.className = 'assent-parcela construida';
-      card.innerHTML = `
-        <span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
-        <span class="assent-parcela-nome">${est?.nome || parcela.tipo}</span>
-        <span class="assent-parcela-desc">${est?.desc || ''}</span>
-        <span class="assent-parcela-habitante">👤 Vago — aguardando habitante</span>
-        <span class="assent-parcela-status">✔ Construída</span>
-      `;
+      card.innerHTML = npc
+        ? `<div class="assent-parcela-header">
+             <span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
+             <span class="assent-parcela-nome">${est?.nome}</span>
+           </div>
+           <div class="assent-habitante-card">
+             <img src="${charPath(npc.charId)}" class="assent-npc-avatar" alt="${npc.nome}" />
+             <div class="assent-npc-info">
+               <span class="assent-npc-nome">${npc.nome}</span>
+               <span class="assent-npc-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
+               <span class="assent-npc-status">✔ Trabalhando</span>
+             </div>
+           </div>
+           <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="margin-top:6px;width:100%;color:var(--perigo,#e55)">🚪 Expulsar</button>`
+        : `<span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
+           <span class="assent-parcela-nome">${est?.nome}</span>
+           <span class="assent-parcela-habitante">👤 Vago — aguardando habitante</span>
+           <span class="assent-parcela-status">✔ Construída</span>`;
     } else {
       card.className = 'assent-parcela';
       card.innerHTML = `
@@ -5578,18 +6103,35 @@ function renderizarAssentamento() {
     container.appendChild(card);
   });
 
+  container.querySelectorAll('.btn-expulsar-npc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const parcela = estado.assentamento.parcelas[idx];
+      if (!parcela?.habitante) return;
+      const nome = parcela.habitante.nome;
+      mostrarConfirmacao(
+        `Expulsar ${nome} do assentamento?`,
+        () => {
+          parcela.habitante = null;
+          log(`🚪 ${nome} foi expulso do assentamento.`, 'log-sistema');
+          mostrarToast(`🚪 ${nome} saiu.`);
+          salvarJogo();
+          renderizarAssentamento();
+        }
+      );
+    });
+  });
+
   container.querySelectorAll('.btn-construir-assent').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx  = parseInt(btn.dataset.idx);
       const tipo = btn.dataset.tipo;
       const est  = ASSENT_ESTRUTURAS.find(e => e.id === tipo);
       if (!est) return;
-
       for (const [id, q] of Object.entries(est.custo)) {
         if (!temItem(id, q)) { mostrarToast(`Sem recursos suficientes.`); return; }
       }
       for (const [id, q] of Object.entries(est.custo)) removerItem(id, q);
-
       estado.assentamento.parcelas[idx] = { tipo, habitante: null };
       log(`🏘 Construiu ${est.icone} ${est.nome} na Parcela ${idx + 1}.`, 'log-sucesso');
       mostrarToast(`${est.icone} ${est.nome} construída!`);
@@ -5823,8 +6365,15 @@ function aplicarDadosSave(s) {
   estado.tatica             = s.tatica             || 'furtivo';
   estado.deposito           = s.deposito           || { nivel: 0, itens: [] };
   estado.cisterna           = s.cisterna           || { aguaAcumulada: 0 };
-  estado.filtroInstalado    = s.filtroInstalado    || { diasRestantes: 0 };
+  estado.filtroInstalado    = s.filtroInstalado    || { diasRestantes: 0, quantidade: 0 };
+  if (estado.filtroInstalado.quantidade === undefined) estado.filtroInstalado.quantidade = estado.filtroInstalado.diasRestantes > 0 ? 1 : 0;
   estado.cultivo            = s.cultivo            || { slots: [null, null, null] };
+  // Retrocompatibilidade: slots sem campo de rega tratados como já regados
+  estado.cultivo.slots = estado.cultivo.slots.map(slot => {
+    if (!slot) return null;
+    if (slot.regada === undefined) return { ...slot, regada: true, aguaAtual: slot.aguaNecessaria || 1, aguaNecessaria: slot.aguaNecessaria || 1 };
+    return slot;
+  });
   estado.seguranca          = s.seguranca          || { armadilhasInstaladas: 0 };
   estado.locaisDesbloqueados = s.locaisDesbloqueados || [];
   estado.capInventario      = s.capInventario      || 10;
@@ -5839,7 +6388,9 @@ function aplicarDadosSave(s) {
   estado.condicoes          = { intoxicado: 0, contundido: false, sangramento: false, ...(s.condicoes || {}) };
   estado.placar             = s.placar || { exploracoes: 0, crafts: 0, construcoes: 0 };
   estado.reputacao          = s.reputacao ?? 50;
-  estado.assentamento       = s.assentamento ?? { parcelas: [null, null, null, null] };
+  estado.assentamento       = s.assentamento ?? { parcelas: [null, null, null, null], npcPendente: null, ultimoEventoNpc: 0 };
+  if (!estado.assentamento.npcPendente)     estado.assentamento.npcPendente     = null;
+  if (!estado.assentamento.ultimoEventoNpc) estado.assentamento.ultimoEventoNpc = 0;
   estado.criado             = true;
   if (s.ultimoSave) {
     const diff = Math.floor((Date.now() - s.ultimoSave) / 1000);
@@ -5853,8 +6404,7 @@ function restaurarUIJogo() {
   const p  = estado.personagem;
   const td = TRACOS[p.traco];
   const avatarElR = document.getElementById('hdr-avatar');
-  const nR = String((p.avatar || 0) + 1).padStart(2, '0');
-  avatarElR.innerHTML = `<img src="img/chars/char${nR}.png" alt="Avatar" class="pc-avatar-img" />`;
+  avatarElR.innerHTML = `<img src="${charPath((p.avatar || 0) + 1)}" alt="Avatar" class="pc-avatar-img" />`;
   document.getElementById('hdr-nome').textContent  = p.nome;
   document.getElementById('hdr-traco').textContent = `${td.icone} ${td.nome}`;
   document.getElementById('hdr-dia').textContent   = `Dia ${estado.dia}`;
@@ -5870,6 +6420,7 @@ function restaurarUIJogo() {
   renderizarEquipResumo();
   renderizarReputacao();
   verificarAssentamento();
+  atualizarBadgeAssentamento();
   verificarMercado();
   renderizarMercado();
   atualizarUI();
