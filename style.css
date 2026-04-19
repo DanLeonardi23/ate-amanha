@@ -3929,6 +3929,10 @@ html, body {
   gap: 10px;
   animation: fadeIn .3s ease;
 }
+.assent-cobranca {
+  border-color: rgba(231,76,60,.5) !important;
+  background: rgba(231,76,60,.05) !important;
+}
 .npc-pend-header {}
 .npc-pend-titulo {
   font-family: var(--font-mono);
@@ -4026,6 +4030,53 @@ html, body {
   font-size: .62rem;
   color: var(--text-dim);
   font-style: italic;
+}
+.assent-npc-foco {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.assent-npc-foco-label {
+  font-size: .65rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.sel-foco-npc {
+  flex: 1;
+  font-size: .68rem;
+  background: var(--bg-card);
+  color: var(--text-sec);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.assent-npc-itens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.assent-npc-acoes {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.assent-npc-acoes .btn-sm {
+  flex: 1;
+}
+.assent-npc-item-tag {
+  font-size: .65rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--text-sec);
 }
 
 /* ── RESPONSIVO BÁSICO ── */

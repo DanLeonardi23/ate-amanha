@@ -1821,9 +1821,9 @@ function podeCraftar(r) {
  *  - 2º clique em outro → tenta combinação
  */
 function clicarItemMochila(item, el) {
-  // Item equipável e sem craft pendente → equipa direto
+  // Item equipável → abre modal para o jogador escolher
   if (!craftSelecionado && getSlotItem(item.id)) {
-    equiparItem(item.id);
+    abrirModal(item);
     return;
   }
 
@@ -2180,6 +2180,14 @@ function abrirModal(item) {
       inputQtd.disabled      = explorando;
       inputQtd.style.opacity = explorando ? '0.4' : '1';
     }
+  }
+
+  // Botão Equipar — visível apenas para itens equipáveis; esconde Usar nesses casos
+  const btnEquipar = document.getElementById('modal-btn-equipar');
+  if (btnEquipar) {
+    const equipavel = !!getSlotItem(item.id);
+    btnEquipar.classList.toggle('oculto', !equipavel);
+    btnUsar.classList.toggle('oculto', equipavel);
   }
 
   document.getElementById('modal-item').classList.remove('oculto');
@@ -2601,13 +2609,12 @@ function wirePainelCisterna() {
     if (!temItem('filtro', 1)) { mostrarToast('Sem filtro no inventário.'); return; }
     if ((estado.filtroInstalado.quantidade || 0) >= 3) { mostrarToast('Máximo de 3 filtros instalados.'); return; }
     removerItem('filtro', 1);
-    const dias = randInt(3, 4);
-    estado.filtroInstalado.diasRestantes = (estado.filtroInstalado.diasRestantes || 0) + dias;
-    estado.filtroInstalado.quantidade    = (estado.filtroInstalado.quantidade    || 0) + 1;
-    const total = estado.filtroInstalado.diasRestantes;
-    const qtd   = estado.filtroInstalado.quantidade;
-    log(`🧪 Filtro instalado! (${qtd}/3) — Total: ${total} dia(s) restante(s).`, 'log-sucesso');
-    mostrarToast(`🧪 Filtro ${qtd}/3 · ${total} dia(s) no total`);
+    const DIAS_POR_FILTRO = 5;
+    const novaQtd = (estado.filtroInstalado.quantidade || 0) + 1;
+    estado.filtroInstalado.quantidade    = novaQtd;
+    estado.filtroInstalado.diasRestantes = DIAS_POR_FILTRO * novaQtd;
+    log(`🧪 Filtro instalado! (${novaQtd}/3) — ${novaQtd} filtro(s) × ${DIAS_POR_FILTRO} dias = ${estado.filtroInstalado.diasRestantes} dia(s).`, 'log-sucesso');
+    mostrarToast(`🧪 ${novaQtd}/3 filtros · ${estado.filtroInstalado.diasRestantes} dia(s)`);
     salvarJogo();
     renderizarBase();
     abrirPainelBase('cisterna');
@@ -3112,6 +3119,9 @@ function avancarDia() {
   if (baseTemEstrutura('cultivo') || estado.assentamento.parcelas.some(p => p?.habitante)) {
     estado.assentamento.parcelas.forEach(p => { if (p?.habitante) trabalharNpc(p); });
   }
+
+  // Cobranças de NPCs
+  verificarPagamentosNpc();
 
   // Evento de NPC pedindo abrigo
   gerarEventoNpc();
@@ -4220,7 +4230,8 @@ function atualizarBarraJornada() {
     if (trilha)     { trilha.style.width = '0%'; trilha.classList.remove('fase-explorando'); }
     if (trilhaWrap) trilhaWrap.classList.remove('fase-explorando');
     if (personEl) {
-      personEl.classList.remove('voltando', 'fase-ida', 'fase-volta', 'fase-explorando');
+      // Mantém voltando/fase-volta para o ícone não virar antes de chegar — só reseta em finalizarExploracao
+      personEl.classList.remove('fase-ida', 'fase-explorando');
     }
     if (destinoImg) destinoImg.classList.remove('ativa');
   }
@@ -5165,6 +5176,10 @@ function inicializarUI() {
     }
   });
 
+  document.getElementById('modal-btn-equipar').addEventListener('click', () => {
+    if (itemModalAtual) { equiparItem(itemModalAtual.id); fecharModal(); }
+  });
+
   document.getElementById('modal-btn-excluir').addEventListener('click', () => {
     if (itemModalAtual) descartarItem(itemModalAtual.id);
   });
@@ -5901,6 +5916,22 @@ function npcDisponivel(npc) {
   return !estado.assentamento.parcelas.some(p => p?.habitante?.id === npc.id);
 }
 
+function verificarPagamentosNpc() {
+  estado.assentamento.parcelas.forEach(parcela => {
+    const npc = parcela?.habitante;
+    if (!npc) return;
+    if (npc.pagamentoPendente) return; // já tem cobrança pendente
+    if (npc.estadoNpc === 'parado') return;
+    if (!npc.diaPagamento) { npc.diaPagamento = estado.dia + 5; return; }
+    if (estado.dia >= npc.diaPagamento) {
+      npc.pagamentoPendente = randInt(10, 40);
+      log(`🔋 ${npc.nome} está na porta pedindo pagamento pelos serviços.`, 'log-alerta');
+      mostrarToast(`🔋 ${npc.nome} quer ser pago!`, 3000);
+      atualizarBadgeAssentamento();
+    }
+  });
+}
+
 function gerarEventoNpc() {
   const assent = estado.assentamento;
   const temVaga = assent.parcelas.some(p => p && !p.habitante);
@@ -5922,7 +5953,8 @@ function gerarEventoNpc() {
 function atualizarBadgeAssentamento() {
   const btn = document.getElementById('aba-btn-assentamento');
   if (!btn) return;
-  const temPendente = !!estado.assentamento?.npcPendente;
+  const temPendente = !!estado.assentamento?.npcPendente
+    || estado.assentamento?.parcelas.some(p => p?.habitante?.pagamentoPendente);
   let badge = btn.querySelector('.aba-badge-npc');
   if (temPendente) {
     if (!badge) {
@@ -5936,51 +5968,53 @@ function atualizarBadgeAssentamento() {
   }
 }
 
+const HAB_ITENS = {
+  coletor:    ['comida', 'agua_suja'],
+  medico:     ['atadura', 'remedio'],
+  mecanico:   ['sucata', 'arame'],
+  cultivador: ['semente_canhamo', 'semente_erva', 'semente_abobora'],
+  explorador: ['pilha', 'faca', 'remedio', 'pano', 'bebida'],
+};
+
+const HAB_CHANCE = { coletor: 0.7, medico: 0.55, mecanico: 0.65, cultivador: 0.45, explorador: 0.40 };
+
+function habCanonica(h) {
+  if (h === 'medica')      return 'medico';
+  if (h === 'mecanica')    return 'mecanico';
+  if (h === 'cultivadora') return 'cultivador';
+  if (h === 'exploradora') return 'explorador';
+  return h;
+}
+
 function trabalharNpc(parcela) {
   const npc = parcela.habitante;
   if (!npc) return;
-  switch (npc.habilidade) {
-    case 'coletor':
-      if (Math.random() < 0.7) {
-        const item = Math.random() < 0.5 ? ITENS.comida : ITENS.agua_suja;
-        adicionarItem(item, 1);
-        log(`🎒 ${npc.nome} trouxe ${item.icone} ${item.nome}.`, 'log-sucesso');
-      }
-      break;
-    case 'medica':
-      if (Math.random() < 0.55) {
-        const item = Math.random() < 0.6 ? ITENS.atadura : ITENS.remedio;
-        adicionarItem(item, 1);
-        log(`⚕️ ${npc.nome} encontrou ${item.icone} ${item.nome}.`, 'log-sucesso');
-      }
-      break;
-    case 'mecanico':
-      if (Math.random() < 0.65) {
-        const item = Math.random() < 0.6 ? ITENS.sucata : ITENS.arame;
-        adicionarItem(item, randInt(1, 2));
-        log(`🔧 ${npc.nome} recolheu ${item.icone} ${item.nome}.`, 'log-sucesso');
-      }
-      break;
-    case 'cultivadora':
-      if (Math.random() < 0.45) {
-        const sementes = [ITENS.semente_canhamo, ITENS.semente_erva, ITENS.semente_abobora];
-        const item = sementes[randInt(0, sementes.length - 1)];
-        adicionarItem(item, 1);
-        log(`🌱 ${npc.nome} trouxe ${item.icone} ${item.nome}.`, 'log-sucesso');
-      }
-      break;
-    case 'explorador':
-      if (Math.random() < 0.40) {
-        const achados = [ITENS.pilha, ITENS.faca, ITENS.remedio, ITENS.pano, ITENS.bebida];
-        const item = achados[randInt(0, achados.length - 1)];
-        adicionarItem(item, 1);
-        log(`🗺️ ${npc.nome} achou ${item.icone} ${item.nome} em exploração.`, 'log-sucesso');
-      }
-      break;
-    case 'seguranca':
-      // Efeito passivo — tratado em processarSaqueNoturno
-      break;
+  if (!npc.itensColetados) npc.itensColetados = [];
+  if (npc.estadoNpc === 'parado') return;
+  if ((npc.estadoNpc || 'idle') !== 'buscando') return;
+  if (estado.dia <= (npc.diaInicio || 0)) return;
+
+  const hab = habCanonica(npc.habilidade);
+  const itensDisponiveis = HAB_ITENS[hab];
+  if (!itensDisponiveis) { npc.estadoNpc = 'idle'; return; }
+
+  const numColetas = randInt(1, 3);
+  for (let c = 0; c < numColetas; c++) {
+    const itemId = (npc.foco && itensDisponiveis.includes(npc.foco))
+      ? npc.foco
+      : itensDisponiveis[randInt(0, itensDisponiveis.length - 1)];
+    const item = ITENS[itemId];
+    if (!item) continue;
+    const qtd = hab === 'mecanico' ? randInt(1, 2) : 1;
+    const existente = npc.itensColetados.find(i => i.id === itemId);
+    if (existente) existente.qtd += qtd;
+    else npc.itensColetados.push({ id: itemId, qtd });
   }
+
+  npc.estadoNpc = 'pronto';
+  const totalColetado = npc.itensColetados.reduce((s, i) => s + i.qtd, 0);
+  log(`📦 ${npc.nome} voltou com ${totalColetado} item(ns)!`, 'log-sucesso');
+  mostrarToast(`📦 ${npc.nome} voltou com itens!`, 2500);
 }
 
 function verificarAssentamento() {
@@ -6033,7 +6067,7 @@ function renderizarAssentamento() {
     cardNpc.querySelector('.btn-aceitar-npc').addEventListener('click', () => {
       const vaga = assent.parcelas.findIndex(p => p && !p.habitante);
       if (vaga === -1) { mostrarToast('Nenhuma vaga disponível. Construa uma moradia primeiro.'); return; }
-      assent.parcelas[vaga].habitante = { id: npc.id, nome: npc.nome, charId: npc.charId, habilidade: npc.habilidade };
+      assent.parcelas[vaga].habitante = { id: npc.id, nome: npc.nome, charId: npc.charId, habilidade: npc.habilidade, estadoNpc: 'idle', foco: null, itensColetados: [], diaInicio: null, diaPagamento: estado.dia + 5, pagamentoPendente: null };
       assent.npcPendente      = null;
       assent.ultimoEventoNpc  = estado.dia;
       atualizarBadgeAssentamento();
@@ -6053,6 +6087,55 @@ function renderizarAssentamento() {
     });
   }
 
+  // ── Cards de cobrança de NPCs ──
+  parcelas.forEach((parcela, idx) => {
+    const npc = parcela?.habitante;
+    if (!npc?.pagamentoPendente) return;
+    const hab = HAB_INFO[habCanonica(npc.habilidade)] || {};
+    const temBateria = temItem('pilha', npc.pagamentoPendente);
+    const cardPag = document.createElement('div');
+    cardPag.className = 'assent-npc-pendente assent-cobranca';
+    cardPag.innerHTML = `
+      <img src="${charPath(npc.charId)}" class="npc-pend-avatar" alt="${npc.nome}" />
+      <div class="npc-pend-info">
+        <span class="npc-pend-nome">${npc.nome}</span>
+        <span class="npc-pend-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
+        <span class="npc-pend-desc">🔋 Cobra <strong>${npc.pagamentoPendente}× Bateria</strong> pelos serviços desta semana.</span>
+      </div>
+      <div class="npc-pend-acoes">
+        <button class="btn-pagar-npc btn-primario btn-sm" data-idx="${idx}" ${temBateria ? '' : 'disabled style="opacity:.4"'}>
+          🔋 Pagar (${npc.pagamentoPendente}×)
+        </button>
+        <button class="btn-recusar-pagamento btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">
+          ✖ Recusar
+        </button>
+      </div>
+    `;
+    container.appendChild(cardPag);
+
+    cardPag.querySelector('.btn-pagar-npc').addEventListener('click', () => {
+      if (!temItem('pilha', npc.pagamentoPendente)) { mostrarToast('Sem baterias suficientes.'); return; }
+      removerItem('pilha', npc.pagamentoPendente);
+      log(`🔋 Você pagou ${npc.pagamentoPendente}× Bateria para ${npc.nome}.`, 'log-sucesso');
+      mostrarToast(`✅ ${npc.nome} continua trabalhando!`);
+      npc.pagamentoPendente = null;
+      npc.diaPagamento = estado.dia + 5;
+      atualizarBadgeAssentamento();
+      salvarJogo();
+      renderizarAssentamento();
+    });
+
+    cardPag.querySelector('.btn-recusar-pagamento').addEventListener('click', () => {
+      npc.pagamentoPendente = null;
+      npc.estadoNpc = 'parado';
+      log(`⛔ ${npc.nome} parou de trabalhar por falta de pagamento.`, 'log-alerta');
+      mostrarToast(`⛔ ${npc.nome} parou de trabalhar.`);
+      atualizarBadgeAssentamento();
+      salvarJogo();
+      renderizarAssentamento();
+    });
+  });
+
   // ── Parcelas ──
   parcelas.forEach((parcela, idx) => {
     const card = document.createElement('div');
@@ -6062,6 +6145,51 @@ function renderizarAssentamento() {
       const npc = parcela.habitante;
       const hab = npc ? (HAB_INFO[npc.habilidade] || {}) : null;
       card.className = 'assent-parcela construida';
+      const npcEstado = npc?.estadoNpc || 'idle';
+      const totalItens = npc?.itensColetados?.reduce((s, i) => s + i.qtd, 0) || 0;
+      const habKey = npc ? habCanonica(npc.habilidade) : null;
+      const opcoesHab = habKey ? (HAB_ITENS[habKey] || []) : [];
+      const isSeguranca = habKey === 'seguranca';
+
+      const focoSelect = (opcoesHab.length && !isSeguranca)
+        ? `<div class="assent-npc-foco">
+             <span class="assent-npc-foco-label">🎯 Foco:</span>
+             <select class="sel-foco-npc" data-idx="${idx}" ${npcEstado !== 'idle' ? 'disabled' : ''}>
+               <option value="" ${!npc.foco ? 'selected' : ''}>Aleatório</option>
+               ${opcoesHab.map(id => {
+                 const it = ITENS[id];
+                 return `<option value="${id}" ${npc.foco === id ? 'selected' : ''}>${it?.icone || ''} ${it?.nome || id}</option>`;
+               }).join('')}
+             </select>
+           </div>`
+        : '';
+
+      const itensGuardados = (npcEstado === 'pronto' && npc.itensColetados?.length)
+        ? `<div class="assent-npc-itens">
+             ${npc.itensColetados.map(i => {
+               const it = ITENS[i.id];
+               return `<span class="assent-npc-item-tag">${it?.icone || ''} ${it?.nome || i.id} ×${i.qtd}</span>`;
+             }).join('')}
+           </div>`
+        : '';
+
+      const statusTexto = isSeguranca
+        ? '🛡️ Patrulhando o assentamento'
+        : npcEstado === 'parado'   ? '⛔ Parado — pagamento recusado'
+        : npcEstado === 'buscando' ? '🔍 Em busca... (aguarde o próximo dia)'
+        : npcEstado === 'pronto'   ? `✅ Voltou com itens! (${totalItens} coletado(s))`
+        : '💤 Aguardando ordem';
+
+      const acoes = isSeguranca
+        ? ''
+        : npcEstado === 'parado'
+          ? `<span style="font-size:.65rem;color:var(--perigo,#e55)">Pague o débito para reativar.</span>`
+          : npcEstado === 'idle'
+            ? `<button class="btn-iniciar-npc btn-primario btn-sm" data-idx="${idx}">▶ Iniciar</button>`
+            : npcEstado === 'buscando'
+              ? `<button class="btn-sm btn-secundario" disabled style="opacity:.4;flex:1">⏳ Em busca...</button>`
+              : `<button class="btn-recolher-npc btn-primario btn-sm" data-idx="${idx}">📥 Coletar</button>`;
+
       card.innerHTML = npc
         ? `<div class="assent-parcela-header">
              <span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
@@ -6072,10 +6200,15 @@ function renderizarAssentamento() {
              <div class="assent-npc-info">
                <span class="assent-npc-nome">${npc.nome}</span>
                <span class="assent-npc-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
-               <span class="assent-npc-status">✔ Trabalhando</span>
+               <span class="assent-npc-status">${statusTexto}</span>
              </div>
            </div>
-           <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="margin-top:6px;width:100%;color:var(--perigo,#e55)">🚪 Expulsar</button>`
+           ${focoSelect}
+           ${itensGuardados}
+           <div class="assent-npc-acoes">
+             ${acoes}
+             <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">🚪 Dispensar</button>
+           </div>`
         : `<span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
            <span class="assent-parcela-nome">${est?.nome}</span>
            <span class="assent-parcela-habitante">👤 Vago — aguardando habitante</span>
@@ -6103,6 +6236,53 @@ function renderizarAssentamento() {
     container.appendChild(card);
   });
 
+  container.querySelectorAll('.btn-iniciar-npc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const npc = estado.assentamento.parcelas[idx]?.habitante;
+      if (!npc || npc.estadoNpc !== 'idle') return;
+      npc.estadoNpc = 'buscando';
+      npc.diaInicio = estado.dia;
+      const focoLabel = npc.foco ? (ITENS[npc.foco]?.nome || npc.foco) : 'item aleatório';
+      log(`🔍 ${npc.nome} saiu em busca de ${focoLabel}.`, 'log-sistema');
+      mostrarToast(`🔍 ${npc.nome} está em busca!`);
+      salvarJogo();
+      renderizarAssentamento();
+    });
+  });
+
+  container.querySelectorAll('.btn-recolher-npc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const parcela = estado.assentamento.parcelas[idx];
+      const npc = parcela?.habitante;
+      if (!npc?.itensColetados?.length) return;
+      npc.itensColetados.forEach(i => {
+        const it = ITENS[i.id];
+        if (it) adicionarItem(it, i.qtd);
+      });
+      log(`📥 Você recolheu os itens de ${npc.nome}.`, 'log-sucesso');
+      mostrarToast(`📥 Itens de ${npc.nome} recolhidos!`);
+      npc.itensColetados = [];
+      npc.estadoNpc = 'idle';
+      salvarJogo();
+      renderizarInventario();
+      renderizarAssentamento();
+    });
+  });
+
+  container.querySelectorAll('.sel-foco-npc').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const idx = parseInt(sel.dataset.idx);
+      const npc = estado.assentamento.parcelas[idx]?.habitante;
+      if (!npc) return;
+      npc.foco = sel.value || null;
+      const label = sel.value ? (ITENS[sel.value]?.nome || sel.value) : 'aleatório';
+      mostrarToast(`🎯 ${npc.nome} vai focar em ${label}.`);
+      salvarJogo();
+    });
+  });
+
   container.querySelectorAll('.btn-expulsar-npc').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.idx);
@@ -6110,10 +6290,10 @@ function renderizarAssentamento() {
       if (!parcela?.habitante) return;
       const nome = parcela.habitante.nome;
       mostrarConfirmacao(
-        `Expulsar ${nome} do assentamento?`,
+        `Dispensar ${nome} do assentamento?`,
         () => {
           parcela.habitante = null;
-          log(`🚪 ${nome} foi expulso do assentamento.`, 'log-sistema');
+          log(`🚪 ${nome} foi dispensado do assentamento.`, 'log-sistema');
           mostrarToast(`🚪 ${nome} saiu.`);
           salvarJogo();
           renderizarAssentamento();
