@@ -5872,14 +5872,14 @@ const ASSENT_ESTRUTURAS = [
 // ── Pool de NPCs ──
 const NPCS_POOL = [
   { id: 'npc_1',  charId: 1,  genero: 'M', nome: 'Ana',    habilidade: 'coletor',    desc: 'Olhos cansados mas firmes. Carrega uma mochila surrada e um olhar que já viu demais.' },
-  { id: 'npc_2',  charId: 2,  genero: 'H', nome: 'Lucas',  habilidade: 'medico',     desc: 'Bracelete de hospital no pulso. Mãos limpas demais para esse mundo.' },
+  { id: 'npc_2',  charId: 9,  genero: 'H', nome: 'Rafa',   habilidade: 'medico',     desc: 'Bracelete de hospital no pulso. Mãos limpas demais para esse mundo.' },
   { id: 'npc_3',  charId: 3,  genero: 'M', nome: 'Diana',  habilidade: 'mecanica',   desc: 'Manchas de graxa que nunca saem. Fala pouco, conserta muito.' },
   { id: 'npc_4',  charId: 4,  genero: 'M', nome: 'Sofia',  habilidade: 'cultivadora',desc: 'Sementes nos bolsos. Acredita que plantar é um ato de fé.' },
   { id: 'npc_5',  charId: 5,  genero: 'H', nome: 'Tião',   habilidade: 'explorador', desc: 'Cicatriz no queixo, sorriso fácil. Já conhece cada rua destruída desta cidade.' },
   { id: 'npc_6',  charId: 6,  genero: 'H', nome: 'Vitor',  habilidade: 'coletor',    desc: 'Voz calma que tranquiliza os outros. Perdeu tudo, mas não perdeu o juízo.' },
   { id: 'npc_7',  charId: 7,  genero: 'M', nome: 'Brenda', habilidade: 'seguranca',  desc: 'Postura firme, olhar preciso. Não fala sobre o que fazia antes.' },
   { id: 'npc_8',  charId: 8,  genero: 'H', nome: 'Carlos', habilidade: 'medico',     desc: 'Passo rápido, atenção total. Cuida dos outros antes de cuidar de si.' },
-  { id: 'npc_9',  charId: 9,  genero: 'M', nome: 'Rafa',   habilidade: 'mecanica',   desc: 'Ferramentas penduradas no cinto. Resolve qualquer problema com sucata e tempo.' },
+  { id: 'npc_9',  charId: 2,  genero: 'M', nome: 'Lucas',  habilidade: 'mecanica',   desc: 'Ferramentas penduradas no cinto. Resolve qualquer problema com sucata e tempo.' },
   { id: 'npc_10', charId: 10, genero: 'H', nome: 'Nando',  habilidade: 'cultivador', desc: 'Terra sob as unhas que ele não esconde. As plantas crescem onde ele passa.' },
   { id: 'npc_11', charId: 11, genero: 'M', nome: 'Zara',   habilidade: 'exploradora',desc: 'Binóculo no pescoço, mapa na cabeça. Sabe onde tudo está — e como chegar lá.' },
   { id: 'npc_12', charId: 12, genero: 'H', nome: 'Davi',   habilidade: 'seguranca',  desc: 'Olhar que não pede licença. Ninguém entra no assentamento sem que ele saiba.' },
