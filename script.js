@@ -3120,6 +3120,15 @@ function avancarDia() {
     estado.assentamento.parcelas.forEach(p => { if (p?.habitante) trabalharNpc(p); });
   }
 
+  // Médicos no Posto Médico curam o jogador passivamente
+  estado.assentamento.parcelas.forEach(p => {
+    if (p?.tipo === 'posto_medico' && p?.habitante && habCanonica(p.habitante.habilidade) === 'medico' && p.habitante.estadoNpc !== 'parado') {
+      const cura = randInt(10, 20);
+      estado.stats.vida = Math.min(estado.stats.vidaMax, estado.stats.vida + cura);
+      log(`⚕️ ${p.habitante.nome} cuidou de você durante a noite. +${cura} de vida.`, 'log-sucesso');
+    }
+  });
+
   // Cobranças de NPCs
   verificarPagamentosNpc();
 
@@ -3833,8 +3842,11 @@ function processarSaqueNoturno() {
 
   // Jogador ausente: calcular chance de saque
   const seg = calcularSeguranca();
-  const npcSeguranca = estado.assentamento.parcelas.filter(p => p?.habitante?.habilidade === 'seguranca').length;
-  const chanceFinal  = Math.max(0.02, seg.chanceSaque - npcSeguranca * 0.12);
+  const reducaoSeg = estado.assentamento.parcelas.reduce((acc, p) => {
+    if (!p?.habitante || p.habitante.habilidade !== 'seguranca' || p.habitante.estadoNpc === 'parado') return acc;
+    return acc + (p.tipo === 'torre_vigilancia' ? 0.20 : 0.12);
+  }, 0);
+  const chanceFinal  = Math.max(0.02, seg.chanceSaque - reducaoSeg);
 
   if (Math.random() > chanceFinal) {
     // Noite tranquila mesmo sem o jogador
@@ -5846,7 +5858,7 @@ const ASSENT_ESTRUTURAS = [
   {
     id: 'barraco',
     nome: 'Barraco de Madeira',
-    icone: '🛖',
+    icone: '🏚️',
     desc: 'Uma moradia simples mas funcional. Abrigo para um sobrevivente.',
     custo: { madeira: 10, pano: 5, sucata: 4 },
     capacidade: 1,
@@ -5866,6 +5878,33 @@ const ASSENT_ESTRUTURAS = [
     desc: 'Construção sólida de madeira. Oferece mais segurança ao habitante.',
     custo: { madeira: 20, sucata: 8, arame: 5 },
     capacidade: 2,
+  },
+  {
+    id: 'estufa',
+    nome: 'Estufa',
+    icone: '🌿',
+    desc: 'Ambiente controlado para cultivo. Cultivadores produzem mais sementes e dispensam o uso de sementes do inventário.',
+    custo: { madeira: 15, pano: 8, arame: 6 },
+    capacidade: 1,
+    bonus_hab: 'cultivador',
+  },
+  {
+    id: 'posto_medico',
+    nome: 'Posto Médico',
+    icone: '⚕️',
+    desc: 'Espaço equipado para cuidados médicos. Médicos aqui curam o jogador passivamente todo dia (+10-20 de vida).',
+    custo: { madeira: 12, sucata: 10, atadura: 5 },
+    capacidade: 1,
+    bonus_hab: 'medico',
+  },
+  {
+    id: 'torre_vigilancia',
+    nome: 'Torre de Vigilância',
+    icone: '🗼',
+    desc: 'Ponto elevado de observação. Vigilantes aqui reduzem a chance de saque em 20% (vs 12% no assentamento comum).',
+    custo: { madeira: 25, sucata: 12, arame: 8 },
+    capacidade: 1,
+    bonus_hab: 'seguranca',
   },
 ];
 
@@ -5998,14 +6037,15 @@ function trabalharNpc(parcela) {
   const itensDisponiveis = HAB_ITENS[hab];
   if (!itensDisponiveis) { npc.estadoNpc = 'idle'; return; }
 
-  const numColetas = randInt(1, 3);
+  const emEstufa = parcela.tipo === 'estufa' && hab === 'cultivador';
+  const numColetas = emEstufa ? randInt(2, 4) : randInt(1, 3);
   for (let c = 0; c < numColetas; c++) {
     const itemId = (npc.foco && itensDisponiveis.includes(npc.foco))
       ? npc.foco
       : itensDisponiveis[randInt(0, itensDisponiveis.length - 1)];
     const item = ITENS[itemId];
     if (!item) continue;
-    const qtd = hab === 'mecanico' ? randInt(1, 2) : 1;
+    const qtd = hab === 'mecanico' ? randInt(1, 2) : emEstufa ? randInt(1, 2) : 1;
     const existente = npc.itensColetados.find(i => i.id === itemId);
     if (existente) existente.qtd += qtd;
     else npc.itensColetados.push({ id: itemId, qtd });
@@ -6065,8 +6105,20 @@ function renderizarAssentamento() {
     container.appendChild(cardNpc);
 
     cardNpc.querySelector('.btn-aceitar-npc').addEventListener('click', () => {
-      const vaga = assent.parcelas.findIndex(p => p && !p.habitante);
-      if (vaga === -1) { mostrarToast('Nenhuma vaga disponível. Construa uma moradia primeiro.'); return; }
+      const habNpc = habCanonica(npc.habilidade);
+      const vaga = assent.parcelas.findIndex(p => {
+        if (!p || p.habitante) return false;
+        const est = ASSENT_ESTRUTURAS.find(e => e.id === p.tipo);
+        return !est?.bonus_hab || est.bonus_hab === habNpc;
+      });
+      if (vaga === -1) {
+        const vagaOcupada = assent.parcelas.some(p => p && !p.habitante);
+        const msg = vagaOcupada
+          ? `Nenhuma moradia compatível com a aptidão de ${npc.nome} (${habNpc}). Construa uma estrutura adequada.`
+          : 'Nenhuma vaga disponível. Construa uma moradia primeiro.';
+        mostrarToast(msg, 3500);
+        return;
+      }
       assent.parcelas[vaga].habitante = { id: npc.id, nome: npc.nome, charId: npc.charId, habilidade: npc.habilidade, estadoNpc: 'idle', foco: null, itensColetados: [], diaInicio: null, diaPagamento: estado.dia + 5, pagamentoPendente: null };
       assent.npcPendente      = null;
       assent.ultimoEventoNpc  = estado.dia;
@@ -6174,10 +6226,12 @@ function renderizarAssentamento() {
         : '';
 
       const statusTexto = isSeguranca
-        ? '🛡️ Patrulhando o assentamento'
+        ? (parcela.tipo === 'torre_vigilancia' ? '🗼 Em vigilância na torre (-20% saques)' : '🛡️ Patrulhando o assentamento (-12% saques)')
         : npcEstado === 'parado'   ? '⛔ Parado — pagamento recusado'
         : npcEstado === 'buscando' ? '🔍 Em busca... (aguarde o próximo dia)'
         : npcEstado === 'pronto'   ? `✅ Voltou com itens! (${totalItens} coletado(s))`
+        : (habKey === 'medico' && parcela.tipo === 'posto_medico') ? '⚕️ Cura passiva ativa — aguardando ordem'
+        : (habKey === 'cultivador' && parcela.tipo === 'estufa') ? '🌿 Estufa ativa — aguardando ordem'
         : '💤 Aguardando ordem';
 
       const acoes = isSeguranca
@@ -6208,11 +6262,15 @@ function renderizarAssentamento() {
            <div class="assent-npc-acoes">
              ${acoes}
              <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">🚪 Dispensar</button>
+             <button class="btn-sm btn-secundario" disabled style="opacity:.35;font-size:.65rem" title="Dispense o habitante antes de demolir">🔨</button>
            </div>`
         : `<span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
            <span class="assent-parcela-nome">${est?.nome}</span>
            <span class="assent-parcela-habitante">👤 Vago — aguardando habitante</span>
-           <span class="assent-parcela-status">✔ Construída</span>`;
+           <span class="assent-parcela-status">✔ Construída</span>
+           <div style="margin-top:6px;text-align:right">
+             <button class="btn-demolir-assent btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55);font-size:.65rem">🔨 Demolir</button>
+           </div>`;
     } else {
       card.className = 'assent-parcela';
       card.innerHTML = `
@@ -6295,6 +6353,25 @@ function renderizarAssentamento() {
           parcela.habitante = null;
           log(`🚪 ${nome} foi dispensado do assentamento.`, 'log-sistema');
           mostrarToast(`🚪 ${nome} saiu.`);
+          salvarJogo();
+          renderizarAssentamento();
+        }
+      );
+    });
+  });
+
+  container.querySelectorAll('.btn-demolir-assent').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const parcela = estado.assentamento.parcelas[idx];
+      if (!parcela) return;
+      const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
+      mostrarConfirmacao(
+        `Demolir ${est?.nome || 'esta construção'}? A parcela voltará a ficar vazia.`,
+        () => {
+          estado.assentamento.parcelas[idx] = null;
+          log(`🔨 ${est?.nome || 'Construção'} demolida. Parcela ${idx + 1} liberada.`, 'log-sistema');
+          mostrarToast(`🔨 Construção demolida.`);
           salvarJogo();
           renderizarAssentamento();
         }
