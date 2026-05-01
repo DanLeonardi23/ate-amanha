@@ -3961,7 +3961,7 @@ function atualizarDefesaUI() {
   const el = document.getElementById('defesa-estruturas');
   if (el) {
     const estruturas = [
-      { id: '_seguranca', icone: '🪤', nome: `Segurança (${estado.seguranca.armadilhasInstaladas} armadilhas)`, efeito: '−50% itens roubados por armadilha instalada', ativo: estado.seguranca.armadilhasInstaladas > 0 },
+      { id: '_seguranca', icone: '🚨', nome: `Segurança (${estado.seguranca.armadilhasInstaladas} armadilhas)`, efeito: '−50% itens roubados por armadilha instalada', ativo: estado.seguranca.armadilhasInstaladas > 0 },
       { id: '_deposito',            icone: '📦', nome: 'Depósito',             efeito: '−10% chance (menos visível)', ativo: estado.deposito.nivel > 0 },
       { id: 'fogueira',             icone: '🔥', nome: 'Fogueira',             efeito: '⚠️ +8% risco (ilumina o local)' },
       { id: 'bancada',              icone: '🔨', nome: 'Bancada de Trabalho',  efeito: '+10 segurança (organização)' },
@@ -5091,6 +5091,18 @@ const audio = {
 
 function inicializarUI() {
   // ── Abas ──
+  // ── Sub-abas (Base e futuras) ──
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.sub-aba-btn');
+    if (!btn) return;
+    const painel = btn.closest('.aba-conteudo');
+    if (!painel) return;
+    painel.querySelectorAll('.sub-aba-btn').forEach(b => b.classList.remove('ativa'));
+    painel.querySelectorAll('.sub-aba-painel').forEach(p => p.classList.add('oculto'));
+    btn.classList.add('ativa');
+    document.getElementById(btn.dataset.sub)?.classList.remove('oculto');
+  });
+
   document.querySelectorAll('.aba-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const aba = btn.dataset.aba;
@@ -6196,100 +6208,141 @@ function renderizarAssentamento() {
       const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
       const npc = parcela.habitante;
       const hab = npc ? (HAB_INFO[npc.habilidade] || {}) : null;
-      card.className = 'assent-parcela construida';
       const npcEstado = npc?.estadoNpc || 'idle';
       const totalItens = npc?.itensColetados?.reduce((s, i) => s + i.qtd, 0) || 0;
       const habKey = npc ? habCanonica(npc.habilidade) : null;
       const opcoesHab = habKey ? (HAB_ITENS[habKey] || []) : [];
       const isSeguranca = habKey === 'seguranca';
 
-      const focoSelect = (opcoesHab.length && !isSeguranca)
-        ? `<div class="assent-npc-foco">
-             <span class="assent-npc-foco-label">🎯 Foco:</span>
-             <select class="sel-foco-npc" data-idx="${idx}" ${npcEstado !== 'idle' ? 'disabled' : ''}>
-               <option value="" ${!npc.foco ? 'selected' : ''}>Aleatório</option>
-               ${opcoesHab.map(id => {
-                 const it = ITENS[id];
-                 return `<option value="${id}" ${npc.foco === id ? 'selected' : ''}>${it?.icone || ''} ${it?.nome || id}</option>`;
-               }).join('')}
-             </select>
-           </div>`
-        : '';
-
-      const itensGuardados = (npcEstado === 'pronto' && npc.itensColetados?.length)
-        ? `<div class="assent-npc-itens">
-             ${npc.itensColetados.map(i => {
-               const it = ITENS[i.id];
-               return `<span class="assent-npc-item-tag">${it?.icone || ''} ${it?.nome || i.id} ×${i.qtd}</span>`;
-             }).join('')}
-           </div>`
-        : '';
+      // Expandir automaticamente se precisa de atenção
+      const autoExpand = npcEstado === 'pronto' || npcEstado === 'parado';
 
       const statusTexto = isSeguranca
-        ? (parcela.tipo === 'torre_vigilancia' ? '🗼 Em vigilância na torre (-20% saques)' : '🛡️ Patrulhando o assentamento (-12% saques)')
-        : npcEstado === 'parado'   ? '⛔ Parado — pagamento recusado'
-        : npcEstado === 'buscando' ? '🔍 Em busca... (aguarde o próximo dia)'
-        : npcEstado === 'pronto'   ? `✅ Voltou com itens! (${totalItens} coletado(s))`
-        : (habKey === 'medico' && parcela.tipo === 'posto_medico') ? '⚕️ Cura passiva ativa — aguardando ordem'
-        : (habKey === 'cultivador' && parcela.tipo === 'estufa') ? '🌿 Estufa ativa — aguardando ordem'
-        : '💤 Aguardando ordem';
+        ? (parcela.tipo === 'torre_vigilancia' ? '🗼 Torre (-20% saques)' : '🛡️ Patrulhando (-12% saques)')
+        : npcEstado === 'parado'   ? '⛔ Parado'
+        : npcEstado === 'buscando' ? '🔍 Em busca...'
+        : npcEstado === 'pronto'   ? `✅ Itens prontos (${totalItens})`
+        : (habKey === 'medico' && parcela.tipo === 'posto_medico') ? '⚕️ Cura passiva'
+        : (habKey === 'cultivador' && parcela.tipo === 'estufa') ? '🌿 Estufa ativa'
+        : '💤 Aguardando';
 
-      const acoes = isSeguranca
-        ? ''
-        : npcEstado === 'parado'
-          ? `<span style="font-size:.65rem;color:var(--perigo,#e55)">Pague o débito para reativar.</span>`
-          : npcEstado === 'idle'
-            ? `<button class="btn-iniciar-npc btn-primario btn-sm" data-idx="${idx}">▶ Iniciar</button>`
-            : npcEstado === 'buscando'
-              ? `<button class="btn-sm btn-secundario" disabled style="opacity:.4;flex:1">⏳ Em busca...</button>`
-              : `<button class="btn-recolher-npc btn-primario btn-sm" data-idx="${idx}">📥 Coletar</button>`;
+      const dotClass = npcEstado === 'pronto' ? 'dot-verde'
+        : npcEstado === 'buscando' ? 'dot-amarelo'
+        : npcEstado === 'parado'   ? 'dot-vermelho'
+        : isSeguranca              ? 'dot-azul'
+        : 'dot-cinza';
 
-      card.innerHTML = npc
-        ? `<div class="assent-parcela-header">
-             <span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
-             <span class="assent-parcela-nome">${est?.nome}</span>
-           </div>
-           <div class="assent-habitante-card">
-             <img src="${charPath(npc.charId)}" class="assent-npc-avatar" alt="${npc.nome}" />
-             <div class="assent-npc-info">
-               <span class="assent-npc-nome">${npc.nome}</span>
-               <span class="assent-npc-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
-               <span class="assent-npc-status">${statusTexto}</span>
-             </div>
-           </div>
-           ${focoSelect}
-           ${itensGuardados}
-           <div class="assent-npc-acoes">
-             ${acoes}
-             <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">🚪 Dispensar</button>
-             <button class="btn-sm btn-secundario" disabled style="opacity:.35;font-size:.65rem" title="Dispense o habitante antes de demolir">🔨</button>
-           </div>`
-        : `<span class="assent-parcela-icone">${est?.icone || '🏠'}</span>
-           <span class="assent-parcela-nome">${est?.nome}</span>
-           <span class="assent-parcela-habitante">👤 Vago — aguardando habitante</span>
-           <span class="assent-parcela-status">✔ Construída</span>
-           <div style="margin-top:6px;text-align:right">
-             <button class="btn-demolir-assent btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55);font-size:.65rem">🔨 Demolir</button>
-           </div>`;
+      card.className = `assent-parcela construida${autoExpand ? ' expandido' : ''}`;
+
+      if (npc) {
+        const focoSelect = (opcoesHab.length && !isSeguranca)
+          ? `<div class="assent-npc-foco">
+               <span class="assent-npc-foco-label">🎯 Foco:</span>
+               <select class="sel-foco-npc" data-idx="${idx}" ${npcEstado !== 'idle' ? 'disabled' : ''}>
+                 <option value="" ${!npc.foco ? 'selected' : ''}>Aleatório</option>
+                 ${opcoesHab.map(id => {
+                   const it = ITENS[id];
+                   return `<option value="${id}" ${npc.foco === id ? 'selected' : ''}>${it?.icone || ''} ${it?.nome || id}</option>`;
+                 }).join('')}
+               </select>
+             </div>`
+          : '';
+
+        const itensGuardados = (npcEstado === 'pronto' && npc.itensColetados?.length)
+          ? `<div class="assent-npc-itens">
+               ${npc.itensColetados.map(i => {
+                 const it = ITENS[i.id];
+                 return `<span class="assent-npc-item-tag">${it?.icone || ''} ${it?.nome || i.id} ×${i.qtd}</span>`;
+               }).join('')}
+             </div>`
+          : '';
+
+        const acoes = isSeguranca
+          ? ''
+          : npcEstado === 'parado'
+            ? `<span style="font-size:.65rem;color:var(--perigo,#e55)">Pague o débito para reativar.</span>`
+            : npcEstado === 'idle'
+              ? `<button class="btn-iniciar-npc btn-primario btn-sm" data-idx="${idx}">▶ Iniciar</button>`
+              : npcEstado === 'buscando'
+                ? `<button class="btn-sm btn-secundario" disabled style="opacity:.4;flex:1">⏳ Em busca...</button>`
+                : `<button class="btn-recolher-npc btn-primario btn-sm" data-idx="${idx}">📥 Coletar</button>`;
+
+        card.innerHTML = `
+          <div class="assent-compacto-row btn-toggle-assent" data-idx="${idx}">
+            <span class="assent-parcela-icone" style="font-size:1.1rem">${est?.icone || '🏠'}</span>
+            <img src="${charPath(npc.charId)}" class="assent-avatar-mini" alt="${npc.nome}" />
+            <div style="flex:1;min-width:0">
+              <span class="assent-npc-nome" style="font-size:.8rem">${npc.nome}</span>
+              <span style="font-size:.68rem;color:var(--text-dim);display:block">${hab.icone || ''} ${statusTexto}</span>
+            </div>
+            <span class="assent-dot ${dotClass}"></span>
+            <span class="assent-toggle-icone">▼</span>
+          </div>
+          <div class="assent-npc-detalhe">
+            <div class="assent-habitante-card">
+              <img src="${charPath(npc.charId)}" class="assent-npc-avatar" alt="${npc.nome}" />
+              <div class="assent-npc-info">
+                <span class="assent-npc-nome">${npc.nome}</span>
+                <span class="assent-npc-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
+                <span class="assent-npc-status">${statusTexto}</span>
+              </div>
+            </div>
+            ${focoSelect}
+            ${itensGuardados}
+            <div class="assent-npc-acoes">
+              ${acoes}
+              <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">🚪 Dispensar</button>
+              <button class="btn-sm btn-secundario" disabled style="opacity:.35;font-size:.65rem" title="Dispense o habitante antes de demolir">🔨</button>
+            </div>
+          </div>`;
+      } else {
+        card.innerHTML = `
+          <div class="assent-compacto-row btn-toggle-assent" data-idx="${idx}">
+            <span class="assent-parcela-icone" style="font-size:1.1rem">${est?.icone || '🏠'}</span>
+            <div style="flex:1">
+              <span style="font-size:.8rem;font-weight:700">${est?.nome}</span>
+              <span style="font-size:.68rem;color:var(--text-dim);display:block">👤 Vago</span>
+            </div>
+            <span class="assent-toggle-icone">▼</span>
+          </div>
+          <div class="assent-npc-detalhe">
+            <span class="assent-parcela-status" style="font-size:.72rem;color:var(--text-dim)">✔ Construída — aguardando habitante</span>
+            <div style="margin-top:6px;text-align:right">
+              <button class="btn-demolir-assent btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55);font-size:.65rem">🔨 Demolir</button>
+            </div>
+          </div>`;
+      }
     } else {
       card.className = 'assent-parcela';
+      const custoStr = e => Object.entries(e.custo).map(([id, q]) => `${q}× ${ITENS[id]?.icone || id}`).join(' ');
       card.innerHTML = `
-        <span class="assent-parcela-nome" style="font-size:.72rem;color:var(--text-dim)">Parcela ${idx + 1}</span>
-        <span class="assent-parcela-desc" style="color:var(--text-dim);font-size:.7rem">Vazia. Escolha uma estrutura para construir.</span>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
-          ${ASSENT_ESTRUTURAS.map(e => {
-            const temRecursos = Object.entries(e.custo).every(([id, q]) => temItem(id, q));
-            const custoStr = Object.entries(e.custo).map(([id, q]) => `${q}× ${ITENS[id]?.icone || id}`).join(' ');
-            return `<button class="btn-secundario btn-sm btn-construir-assent"
-              data-idx="${idx}" data-tipo="${e.id}"
-              ${temRecursos ? '' : 'disabled style="opacity:.45"'}
-              title="${e.nome} · ${custoStr}">
-              ${e.icone} ${e.nome} <span style="font-size:.65rem;color:var(--text-dim)">(${custoStr})</span>
-            </button>`;
-          }).join('')}
+        <div class="assent-compacto-row btn-toggle-assent" data-idx="${idx}">
+          <span style="font-size:1rem">🏗</span>
+          <div style="flex:1">
+            <span style="font-size:.8rem;font-weight:700;color:var(--text-dim)">Parcela ${idx + 1}</span>
+            <span style="font-size:.68rem;color:var(--text-dim);display:block">Vazia — toque para construir</span>
+          </div>
+          <span class="assent-toggle-icone">▼</span>
         </div>
-      `;
+        <div class="assent-npc-detalhe">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${ASSENT_ESTRUTURAS.map(e => {
+              const temRecursos = Object.entries(e.custo).every(([id, q]) => temItem(id, q));
+              return `<button class="btn-secundario btn-sm btn-construir-assent"
+                data-idx="${idx}" data-tipo="${e.id}"
+                ${temRecursos ? '' : 'disabled style="opacity:.45"'}
+                title="${e.nome} · ${custoStr(e)}">
+                ${e.icone} ${e.nome} <span style="font-size:.65rem;color:var(--text-dim)">(${custoStr(e)})</span>
+              </button>`;
+            }).join('')}
+          </div>
+        </div>`;
     }
+
+    // Toggle expand/collapse
+    card.querySelector('.btn-toggle-assent')?.addEventListener('click', () => {
+      card.classList.toggle('expandido');
+    });
 
     container.appendChild(card);
   });

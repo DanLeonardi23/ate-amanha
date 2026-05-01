@@ -316,168 +316,153 @@
           <!-- ── ABA: BASE ── -->
           <div class="aba-conteudo" id="aba-base">
 
-            <!-- MAPA VISUAL DA BASE -->
-            <div class="base-mapa-wrapper">
-              <div class="base-mapa-label">ACAMPAMENTO · ZONA SEGURA</div>
-              <div class="base-mapa" id="base-mapa">
+            <!-- Sub-abas da Base -->
+            <nav class="sub-abas-nav">
+              <button class="sub-aba-btn ativa" data-sub="sub-base-est">🏗 Estruturas</button>
+              <button class="sub-aba-btn" data-sub="sub-base-proj">⚒ Projetos</button>
+              <button class="sub-aba-btn" data-sub="sub-base-dep">📦 Depósito</button>
+              <button class="sub-aba-btn" data-sub="sub-base-def">🛡 Defesa</button>
+            </nav>
 
-                <!-- Linha 1: Abrigo + Bancada -->
-                <div class="base-slot slot-abrigo"
-                     data-id="abrigo"
-                     data-nome="Abrigo"
-                     data-custo='{"sucata":5,"madeira":5,"pano":5}'>
-                  <span class="slot-icone">⛺</span>
-                  <span class="slot-nome">Abrigo</span>
-                  <span class="slot-sub slot-custo">5🔩 · 5🪵 · 5🧻</span>
-                  <span class="slot-desc">Protege do frio e dos perigos. Base de tudo.</span>
+            <!-- Sub-aba: Estruturas -->
+            <div class="sub-aba-painel" id="sub-base-est">
+
+              <div class="base-mapa-wrapper">
+                <div class="base-mapa-label">ACAMPAMENTO · ZONA SEGURA</div>
+                <div class="base-mapa" id="base-mapa">
+
+                  <div class="base-slot slot-fogueira"
+                       data-id="fogueira" data-painel="fogueira"
+                       data-nome="Fogueira"
+                       data-requer="abrigo"
+                       data-custo='{"madeira":5,"pilha":1}'>
+                    <span class="slot-icone">🔥</span>
+                    <span class="slot-nome">Fogueira</span>
+                    <span class="slot-sub slot-custo">5🪵 · 1🔋</span>
+                    <span class="slot-desc">Cozinhe alimentos para melhorar seus efeitos.</span>
+                  </div>
+
+                  <div class="base-slot slot-cisterna"
+                       data-id="cisterna" data-painel="cisterna"
+                       data-nome="Cisterna"
+                       data-requer="abrigo"
+                       data-custo='{"madeira":5,"pano":2,"arame":2}'>
+                    <span class="slot-icone">💧</span>
+                    <span class="slot-nome">Cisterna</span>
+                    <span class="slot-sub slot-custo">5🪵 · 2🧻 · 2〰️</span>
+                    <span class="slot-desc">Acumula água da chuva. Potencializada pelo Filtro.</span>
+                  </div>
+
+                  <div class="base-slot slot-cultivo"
+                       data-id="cultivo" data-painel="cultivo"
+                       data-nome="Área de Cultivo"
+                       data-requer="abrigo"
+                       data-custo='{"madeira":5,"pano":2}'>
+                    <span class="slot-icone">🌱</span>
+                    <span class="slot-nome">Cultivo</span>
+                    <span class="slot-sub slot-custo">5🪵 · 2🧻</span>
+                    <span class="slot-desc">Plante até 3 culturas simultâneas. Sementes na Mata.</span>
+                  </div>
+
+                  <div class="base-slot slot-seguranca"
+                       data-id="seguranca" data-painel="seguranca"
+                       data-nome="Segurança"
+                       data-requer="bancada"
+                       data-custo='{"armadilha":2}'>
+                    <span class="slot-icone">🚨</span>
+                    <span class="slot-nome">Segurança</span>
+                    <span class="slot-sub slot-custo">2🪤 · requer Bancada</span>
+                    <span class="slot-desc">Instale armadilhas e defesas perimetrais para proteger a base.</span>
+                  </div>
+
+                </div><!-- fim base-mapa -->
+              </div><!-- fim base-mapa-wrapper -->
+
+              <div id="base-tooltip" class="base-tooltip oculto">
+                <span class="base-tooltip-nome" id="btt-nome">—</span>
+                <span class="base-tooltip-desc" id="btt-desc">—</span>
+                <span class="base-tooltip-custo" id="btt-custo">—</span>
+                <div class="base-tooltip-acoes">
+                  <button class="btn-primario btn-sm" id="btt-btn-construir">Construir</button>
+                  <button class="btn-secundario btn-sm" id="btt-btn-fechar">✕</button>
                 </div>
+              </div>
 
-                <div class="base-slot slot-bancada"
-                     data-id="bancada" data-painel="bancada"
-                     data-nome="Bancada de Trabalho"
-                     data-requer="abrigo"
-                     data-custo='{"sucata":8,"pano":3}'>
-                  <span class="slot-icone">🔨</span>
-                  <span class="slot-nome">Bancada</span>
-                  <span class="slot-sub slot-custo">8🔩 · 3🧻</span>
-                  <span class="slot-desc">Crafting avançado de ferramentas e armas.</span>
-                </div>
+              <div id="sec-fogueira" class="sec-bloco sec-estrutura oculto">
+                <h3 class="sec-titulo">🔥 FOGUEIRA</h3>
+                <div id="painel-fogueira"></div>
+              </div>
 
-                <!-- Linha 2: Fogueira + Cisterna -->
-                <div class="base-slot slot-fogueira"
-                     data-id="fogueira" data-painel="fogueira"
-                     data-nome="Fogueira"
-                     data-requer="abrigo"
-                     data-custo='{"madeira":5,"pilha":1}'>
-                  <span class="slot-icone">🔥</span>
-                  <span class="slot-nome">Fogueira</span>
-                  <span class="slot-sub slot-custo">5🪵 · 1🔋</span>
-                  <span class="slot-desc">Cozinhe alimentos para melhorar seus efeitos.</span>
-                </div>
+              <div id="sec-cisterna" class="sec-bloco sec-estrutura oculto">
+                <h3 class="sec-titulo">💧 CISTERNA</h3>
+                <div id="painel-cisterna"></div>
+              </div>
 
-                <div class="base-slot slot-cisterna"
-                     data-id="cisterna" data-painel="cisterna"
-                     data-nome="Cisterna"
-                     data-requer="abrigo"
-                     data-custo='{"madeira":5,"pano":2,"arame":2}'>
-                  <span class="slot-icone">🪣</span>
-                  <span class="slot-nome">Cisterna</span>
-                  <span class="slot-sub slot-custo">5🪵 · 2🧻 · 2〰️</span>
-                  <span class="slot-desc">Acumula água da chuva. Potencializada pelo Filtro.</span>
-                </div>
+              <div id="sec-cultivo" class="sec-bloco sec-estrutura oculto">
+                <h3 class="sec-titulo">🌱 CULTIVO</h3>
+                <div id="painel-cultivo"></div>
+              </div>
 
-                <!-- Linha 3: Filtro + Depósito -->
-                <div class="base-slot slot-cultivo"
-                     data-id="cultivo" data-painel="cultivo"
-                     data-nome="Área de Cultivo"
-                     data-requer="abrigo"
-                     data-custo='{"madeira":5,"pano":2}'>
-                  <span class="slot-icone">🌱</span>
-                  <span class="slot-nome">Cultivo</span>
-                  <span class="slot-sub slot-custo">5🪵 · 2🧻</span>
-                  <span class="slot-desc">Plante até 3 culturas simultâneas. Sementes na Mata.</span>
-                </div>
+              <div id="sec-seguranca" class="sec-bloco sec-estrutura oculto">
+                <h3 class="sec-titulo">🚨 SEGURANÇA</h3>
+                <div id="painel-seguranca"></div>
+              </div>
 
-                <div class="base-slot slot-deposito" id="mapa-slot-deposito" data-painel="deposito">
-                  <span class="slot-icone">📦</span>
-                  <span class="slot-nome">Depósito</span>
-                  <span class="slot-sub" id="mapa-deposito-nivel">Não construído</span>
-                  <span class="slot-desc">Armazena itens fora da mochila.</span>
-                </div>
+            </div><!-- fim sub-aba Estruturas -->
 
-                <!-- Linha 4: Segurança (span full) -->
-                <div class="base-slot slot-seguranca"
-                     data-id="seguranca" data-painel="seguranca"
-                     data-nome="Segurança"
-                     data-requer="bancada"
-                     data-custo='{"armadilha":2}'>
-                  <span class="slot-icone">🪤</span>
-                  <span class="slot-nome">Segurança</span>
-                  <span class="slot-sub slot-custo">2🪤 · requer Bancada</span>
-                  <span class="slot-desc">Instale armadilhas e defesas perimetrais para proteger a base.</span>
-                </div>
-
-              </div><!-- fim base-mapa -->
-            </div><!-- fim base-mapa-wrapper -->
-
-            <!-- Tooltip de construção (slot não construído) -->
-            <div id="base-tooltip" class="base-tooltip oculto">
-              <span class="base-tooltip-nome" id="btt-nome">—</span>
-              <span class="base-tooltip-desc" id="btt-desc">—</span>
-              <span class="base-tooltip-custo" id="btt-custo">—</span>
-              <div class="base-tooltip-acoes">
-                <button class="btn-primario btn-sm" id="btt-btn-construir">Construir</button>
-                <button class="btn-secundario btn-sm" id="btt-btn-fechar">✕</button>
+            <!-- Sub-aba: Projetos -->
+            <div class="sub-aba-painel oculto" id="sub-base-proj">
+              <div class="sec-bloco">
+                <h3 class="sec-titulo">PROJETOS</h3>
+                <div id="lista-receitas" class="lista-receitas"></div>
               </div>
             </div>
 
-            <!-- Seções das estruturas construídas (ocultas até serem construídas) -->
-            <div id="sec-fogueira" class="sec-bloco sec-estrutura oculto">
-              <h3 class="sec-titulo">🔥 FOGUEIRA</h3>
-              <div id="painel-fogueira"></div>
-            </div>
-
-            <div id="sec-cisterna" class="sec-bloco sec-estrutura oculto">
-              <h3 class="sec-titulo">🪣 CISTERNA</h3>
-              <div id="painel-cisterna"></div>
-            </div>
-
-            <div id="sec-cultivo" class="sec-bloco sec-estrutura oculto">
-              <h3 class="sec-titulo">🌱 CULTIVO</h3>
-              <div id="painel-cultivo"></div>
-            </div>
-
-            <div class="sec-bloco">
-              <h3 class="sec-titulo">PROJETOS</h3>
-              <div id="lista-receitas" class="lista-receitas"></div>
-            </div>
-
-            <div class="sec-bloco">
-              <h3 class="sec-titulo">DEPÓSITO</h3>
-              <div id="deposito-painel"><!-- renderizado via JS --></div>
-            </div>
-
-            <div id="sec-seguranca" class="sec-bloco sec-estrutura oculto">
-              <h3 class="sec-titulo">🪤 SEGURANÇA</h3>
-              <div id="painel-seguranca"></div>
-            </div>
-
-            <div class="sec-bloco">
-              <h3 class="sec-titulo">DEFESA</h3>
-              <div class="defesa-painel">
-
-                <div class="defesa-stat">
-                  <div class="status-label">
-                    <span>Nível de segurança</span>
-                    <span id="val-seguranca" class="status-val">Crítico</span>
-                  </div>
-                  <div class="barra-bg">
-                    <div class="barra" id="barra-seguranca" style="width:5%;background:var(--red-l)"></div>
-                  </div>
-                </div>
-
-                <div class="defesa-stat">
-                  <div class="status-label">
-                    <span>Chance de saque esta noite</span>
-                    <span id="val-chance-saque" class="status-val defesa-alerta">—</span>
-                  </div>
-                </div>
-
-                <div id="defesa-estruturas" class="defesa-estruturas">
-                  <!-- populado via JS -->
-                </div>
-
-                <p class="defesa-dica" id="defesa-dica-txt">
-                  Sem proteção. Qualquer grupo de pilhadores pode invadir à noite.
-                </p>
-
-                <div id="ultimo-saque" class="ultimo-saque oculto">
-                  <span class="ultimo-saque-label">Último ataque</span>
-                  <span id="ultimo-saque-txt" class="ultimo-saque-desc">—</span>
-                </div>
-
+            <!-- Sub-aba: Depósito -->
+            <div class="sub-aba-painel oculto" id="sub-base-dep">
+              <div class="sec-bloco">
+                <h3 class="sec-titulo">DEPÓSITO</h3>
+                <div id="deposito-painel"><!-- renderizado via JS --></div>
               </div>
             </div>
+
+            <!-- Sub-aba: Defesa -->
+            <div class="sub-aba-painel oculto" id="sub-base-def">
+              <div class="sec-bloco">
+                <h3 class="sec-titulo">DEFESA</h3>
+                <div class="defesa-painel">
+
+                  <div class="defesa-stat">
+                    <div class="status-label">
+                      <span>Nível de segurança</span>
+                      <span id="val-seguranca" class="status-val">Crítico</span>
+                    </div>
+                    <div class="barra-bg">
+                      <div class="barra" id="barra-seguranca" style="width:5%;background:var(--red-l)"></div>
+                    </div>
+                  </div>
+
+                  <div class="defesa-stat">
+                    <div class="status-label">
+                      <span>Chance de saque esta noite</span>
+                      <span id="val-chance-saque" class="status-val defesa-alerta">—</span>
+                    </div>
+                  </div>
+
+                  <div id="defesa-estruturas" class="defesa-estruturas"></div>
+
+                  <p class="defesa-dica" id="defesa-dica-txt">
+                    Sem proteção. Qualquer grupo de pilhadores pode invadir à noite.
+                  </p>
+
+                  <div id="ultimo-saque" class="ultimo-saque oculto">
+                    <span class="ultimo-saque-label">Último ataque</span>
+                    <span id="ultimo-saque-txt" class="ultimo-saque-desc">—</span>
+                  </div>
+
+                </div>
+              </div>
+            </div><!-- fim sub-aba Defesa -->
 
           </div><!-- fim aba base -->
 

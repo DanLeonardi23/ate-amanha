@@ -1376,10 +1376,8 @@ html, body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-areas:
-    "abrigo    bancada"
     "fogueira  cisterna"
-    "filtro    deposito"
-    "seguranca seguranca";
+    "cultivo   seguranca";
   gap: 2px;
   background:
     repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(42,170,42,.03) 19px, rgba(42,170,42,.03) 20px),
@@ -1408,17 +1406,10 @@ html, body {
   box-sizing: border-box;
 }
 
-.slot-abrigo    { grid-area: abrigo;    cursor: default; }
-.slot-bancada   { grid-area: bancada; }
 .slot-fogueira  { grid-area: fogueira; }
 .slot-cisterna  { grid-area: cisterna; }
-.slot-filtro    { grid-area: filtro; }
-.slot-deposito  { grid-area: deposito; }
-.slot-seguranca { grid-area: seguranca; flex-direction: row; gap: 12px; min-height: 56px; justify-content: flex-start; padding: 10px 16px; }
-.slot-seguranca .slot-icone { font-size: 1.3rem; }
-.slot-seguranca .slot-nome  { font-size: .75rem; }
-.slot-seguranca .slot-sub,
-.slot-seguranca .slot-desc  { display: none; }
+.slot-cultivo   { grid-area: cultivo; }
+.slot-seguranca { grid-area: seguranca; }
 
 .slot-icone {
   font-size: 1.6rem;
@@ -3860,7 +3851,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 110px;
 }
 
 .assent-parcela.construida {
@@ -3929,6 +3919,77 @@ html, body {
   gap: 10px;
   animation: fadeIn .3s ease;
 }
+/* ── Sub-abas ── */
+.sub-abas-nav {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.sub-aba-btn {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: .7rem;
+  font-family: var(--font-mono);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: var(--trans);
+  white-space: nowrap;
+}
+.sub-aba-btn:hover { color: var(--text-sec); border-color: var(--accent); }
+.sub-aba-btn.ativa { background: rgba(42,170,42,.1); color: var(--accent-l); border-color: var(--accent); }
+.sub-aba-painel { display: flex; flex-direction: column; gap: 14px; }
+.sub-aba-painel.oculto { display: none; }
+
+/* ── Cards compactos do assentamento ── */
+.assent-parcela {
+  min-height: unset;
+}
+.assent-compacto-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.assent-compacto-row:hover { opacity: .85; }
+.assent-avatar-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+.assent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-verde    { background: #4c4; }
+.dot-amarelo  { background: #cc4; }
+.dot-vermelho { background: #e55; }
+.dot-azul     { background: #4af; }
+.dot-cinza    { background: var(--text-dim); }
+.assent-toggle-icone {
+  font-size: .65rem;
+  color: var(--text-dim);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.assent-npc-detalhe {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.assent-parcela.expandido .assent-npc-detalhe { display: flex; }
+.assent-parcela.expandido .assent-toggle-icone { transform: rotate(180deg); }
+
 .assent-cobranca {
   border-color: rgba(231,76,60,.5) !important;
   background: rgba(231,76,60,.05) !important;
