@@ -1,50 +1,10 @@
 -- ============================================================
--- ATÉ AMANHÃ — Schema Supabase
--- Execute no SQL Editor do seu projeto Supabase
+-- ATÉ AMANHÃ — Migração de segurança do Bazar (2026-10-08)
+-- Colar inteiro no SQL Editor do Supabase e clicar em Run.
+-- Tudo roda numa transação: se der erro, nada é aplicado.
 -- ============================================================
 
--- ── Saves dos jogadores ──────────────────────────────────────
-create table if not exists saves (
-  user_id    uuid references auth.users(id) on delete cascade primary key,
-  data       jsonb not null default '{}',
-  updated_at timestamptz default now()
-);
-
-alter table saves enable row level security;
-
-create policy "Leitura própria" on saves
-  for select using (auth.uid() = user_id);
-
-create policy "Inserção própria" on saves
-  for insert with check (auth.uid() = user_id);
-
-create policy "Atualização própria" on saves
-  for update using (auth.uid() = user_id);
-
-
--- ── Bazar global entre jogadores ─────────────────────────────
-create table if not exists bazar (
-  id            uuid default gen_random_uuid() primary key,
-  vendedor_id   uuid references auth.users(id) on delete cascade not null,
-  vendedor_nome text not null default 'Anônimo',
-  item_id       text not null,
-  item_nome     text not null,
-  item_icone    text not null default '📦',
-  qtd           int  not null default 1 check (qtd > 0),
-  preco         int  not null check (preco > 0),
-  criado_em     timestamptz default now()
-);
-
-alter table bazar enable row level security;
-
-create policy "Qualquer autenticado pode ler o bazar" on bazar
-  for select to authenticated using (true);
-
-create policy "Vendedor insere próprio anúncio" on bazar
-  for insert to authenticated with check (auth.uid() = vendedor_id);
-
-create policy "Vendedor remove próprio anúncio" on bazar
-  for delete to authenticated using (auth.uid() = vendedor_id);
+begin;
 
 -- Validação dos campos de texto (defesa contra HTML/JS injetado por clientes).
 -- Remove anúncios antigos que violariam as regras antes de aplicá-las.
@@ -182,3 +142,6 @@ on conflict (user_id) do update
 
 update saves set data = data - 'pilhas_pendentes'
  where data ? 'pilhas_pendentes';
+
+
+commit;

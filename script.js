@@ -129,9 +129,13 @@ async function sbAnunciarBazar(itemId, itemNome, itemIcone, qtd, preco) {
 
 async function sbRetirarAnuncio(listingId) {
   const sb = getSB();
-  if (!sb || !_sbUser) return false;
-  const { error } = await sb.from('bazar').delete().eq('id', listingId).eq('vendedor_id', _sbUser.id);
-  return !error;
+  if (!sb || !_sbUser) return { ok: false, erro: 'Offline' };
+  // .select() devolve as linhas apagadas: vazio = anúncio já foi comprado por outro jogador
+  const { data, error } = await sb.from('bazar').delete()
+    .eq('id', listingId).eq('vendedor_id', _sbUser.id).select('id');
+  if (error) return { ok: false, erro: 'Erro ao retirar. Tente novamente.' };
+  if (!data?.length) return { ok: false, erro: 'Esse item já foi vendido.' };
+  return { ok: true };
 }
 
 async function sbComprarDoBazar(listingId, preco) {
@@ -139,23 +143,36 @@ async function sbComprarDoBazar(listingId, preco) {
   if (!sb || !_sbUser) return { ok: false, erro: 'Offline' };
   const { data, error } = await sb.rpc('comprar_do_bazar', {
     p_listing_id: listingId,
-    p_buyer_id:   _sbUser.id,
+    p_buyer_id:   _sbUser.id, // ignorado pelo servidor (usa auth.uid()); mantido pela assinatura
     p_preco:      preco
   });
   if (error) return { ok: false, erro: error.message };
   return data;
 }
 
-// ── Aplicar pilhas pendentes (crédito de vendas) ─────────────
+// ── Resgatar créditos de vendas (tabela creditos_bazar) ──────
 
-function aplicarPilhasPendentes(saveData) {
-  const pendentes = saveData?.pilhas_pendentes;
-  if (!pendentes || pendentes <= 0) return;
-  adicionarItem(ITENS.pilha, pendentes);
-  log(`🔋 +${pendentes} Baterias recebidas de vendas na Barraca!`, 'log-sucesso');
-  mostrarToast(`🔋 +${pendentes} Baterias da Barraca`);
-  // Limpar pendentes no save
-  sbSalvar(montarDadosSave());
+let _resgatandoCreditos = false;
+
+async function resgatarCreditosBazar() {
+  const sb = getSB();
+  if (!sb || !_sbUser || !estado.criado || _resgatandoCreditos) return;
+  // Mochila cheia e sem pilha para empilhar: deixa o crédito no servidor para depois
+  if (!cabeNaMochila('pilha')) return;
+
+  _resgatandoCreditos = true;
+  try {
+    const { data: pilhas, error } = await sb.rpc('resgatar_creditos_bazar');
+    if (error) { console.error('[Bazar] Falha ao resgatar créditos:', error.message); return; }
+    if (!pilhas || pilhas <= 0) return;
+    // Crédito já saiu do servidor: forçar para não perder se a mochila encheu durante o await
+    adicionarItem(ITENS.pilha, pilhas, { forcar: true });
+    log(`🔋 +${pilhas} Baterias recebidas de vendas na Barraca!`, 'log-sucesso');
+    mostrarToast(`🔋 +${pilhas} Baterias da Barraca`);
+    salvarJogo();
+  } finally {
+    _resgatandoCreditos = false;
+  }
 }
 
 // ============================================================
@@ -1676,6 +1693,13 @@ let itemModalAtual   = null; // item aberto no modal de uso
 function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
 function randInt(min, max)    { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
+// Escapa texto para interpolação segura em innerHTML (conteúdo e atributos)
+function esc(val) {
+  return String(val ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 function sortearPorPeso(lista) {
   const total = lista.reduce((s, i) => s + i.peso, 0);
   let r = Math.random() * total;
@@ -1742,10 +1766,11 @@ function mostrarConfirmacao(msg, onSim, onNao, { labelSim = 'Sim, descartar', la
 // INVENTÁRIO
 // ============================================================
 
-function adicionarItem(base, qtd = 1) {
+// forcar: ignora a capacidade — usar só para devoluções/pagamentos que não podem se perder
+function adicionarItem(base, qtd = 1, { forcar = false } = {}) {
   const ex = estado.inventario.find(i => i.id === base.id);
   if (ex) { ex.qtd += qtd; renderizarInventario(); return true; }
-  if (estado.inventario.length >= estado.capInventario) return false;
+  if (!forcar && estado.inventario.length >= estado.capInventario) return false;
   estado.inventario.push({
     id:            base.id,
     nome:          base.nome,
@@ -1763,6 +1788,11 @@ function adicionarItem(base, qtd = 1) {
   });
   renderizarInventario();
   return true;
+}
+
+// true se o item empilha num slot existente ou se há slot livre
+function cabeNaMochila(id) {
+  return estado.inventario.some(i => i.id === id) || estado.inventario.length < estado.capInventario;
 }
 
 function removerItem(id, qtd = 1) {
@@ -1899,7 +1929,7 @@ function executarCraft(receita) {
   const resultado = ITENS[receita.id];
   if (!adicionarItem(resultado, 1)) {
     // Mochila cheia — devolve tudo
-    for (const [id, q] of Object.entries(receita.ingredientes)) adicionarItem(ITENS[id], q);
+    for (const [id, q] of Object.entries(receita.ingredientes)) adicionarItem(ITENS[id], q, { forcar: true });
     mostrarToast('⚠️ Mochila cheia! Não foi possível craftar.');
     return;
   }
@@ -2529,7 +2559,11 @@ function wirePainelFogueira() {
       const receita = RECEITAS_FOGUEIRA.find(r => r.id === btn.dataset.id);
       if (!receita) return;
       for (const [id, q] of Object.entries(receita.ingredientes)) removerItem(id, q);
-      adicionarItem(ITENS[btn.dataset.id], 1);
+      if (!adicionarItem(ITENS[btn.dataset.id], 1)) {
+        for (const [id, q] of Object.entries(receita.ingredientes)) adicionarItem(ITENS[id], q, { forcar: true });
+        mostrarToast('⚠️ Mochila cheia! Não foi possível cozinhar.');
+        return;
+      }
       const item = ITENS[btn.dataset.id];
       log(`🔥 Cozinhou: ${item?.icone} ${item?.nome}`, 'log-sucesso');
       mostrarToast(`${item?.icone} ${item?.nome} pronto!`);
@@ -2596,7 +2630,7 @@ function wirePainelCisterna() {
     if (qtd <= 0) return;
     const filtroOk = estado.filtroInstalado.diasRestantes > 0;
     const itemId   = filtroOk ? 'agua_limpa' : 'agua_suja';
-    adicionarItem(ITENS[itemId], qtd);
+    if (!adicionarItem(ITENS[itemId], qtd)) { mostrarToast('🎒 Mochila cheia!'); return; }
     estado.cisterna.aguaAcumulada = 0;
     log(`🪣 Coletou ${qtd}× ${ITENS[itemId].nome} da cisterna.`, 'log-sucesso');
     mostrarToast(`${qtd}× ${ITENS[itemId].icone} coletados`);
@@ -2740,7 +2774,7 @@ function wirePainelCultivo() {
       const i    = parseInt(btn.dataset.slot);
       const slot = estado.cultivo.slots[i];
       if (!slot?.pronto) return;
-      adicionarItem(ITENS[slot.itemId], slot.qtd);
+      if (!adicionarItem(ITENS[slot.itemId], slot.qtd)) { mostrarToast('🎒 Mochila cheia!'); return; }
       estado.cultivo.slots[i] = null;
       log(`🌾 Colheu ${slot.icone} ${slot.nome} ×${slot.qtd}! Item adicionado à mochila.`, 'log-sucesso');
       mostrarToast(`🌾 ${slot.nome} colhida!`);
@@ -2788,8 +2822,8 @@ function wirePainelSeguranca() {
   });
   document.querySelector('#painel-seguranca .btn-remover-arm')?.addEventListener('click', () => {
     if (estado.seguranca.armadilhasInstaladas <= 0) return;
+    if (!adicionarItem(ITENS.armadilha, 1)) { mostrarToast('🎒 Mochila cheia!'); return; }
     estado.seguranca.armadilhasInstaladas--;
-    adicionarItem(ITENS.armadilha, 1);
     log('🪤 Armadilha removida do perímetro.', 'log-sistema');
     salvarJogo(); atualizarDefesaUI(); abrirPainelBase('seguranca');
   });
@@ -2868,7 +2902,7 @@ function retirarDoDeposito(itemId) {
   const idx = dep.findIndex(i => i.id === itemId);
   if (idx === -1) return;
 
-  if (estado.inventario.length >= estado.capInventario) {
+  if (!cabeNaMochila(itemId)) {
     mostrarToast('🎒 Mochila cheia!');
     return;
   }
@@ -3604,7 +3638,11 @@ function venderItem(itemId) {
   if (!preco || !temItem(itemId, 1)) return;
   const item = ITENS[itemId];
   removerItem(itemId, 1);
-  adicionarItem(ITENS.pilha, preco);
+  if (!adicionarItem(ITENS.pilha, preco)) {
+    adicionarItem(item, 1, { forcar: true });
+    mostrarToast('🎒 Mochila cheia! Sem espaço para as Baterias.');
+    return;
+  }
   log(`Vendeu ${item.nome} por ${preco} 🔋.`, 'log-loot');
   mostrarToast(`💰 +${preco} 🔋`);
   renderizarMercado();
@@ -5283,11 +5321,25 @@ async function renderizarBazar() {
     }, []);
     selEl.innerHTML = '<option value="">— escolha um item para vender —</option>' +
       todosItens.map(i =>
-        `<option value="${i.id}" data-icone="${i.icone || '📦'}" data-nome="${i.nome}">${i.icone} ${i.nome} ×${i.qtd}</option>`
+        `<option value="${esc(i.id)}" data-icone="${esc(i.icone || '📦')}" data-nome="${esc(i.nome)}">${esc(i.icone)} ${esc(i.nome)} ×${i.qtd}</option>`
       ).join('');
   }
 
-  const anuncios = await sbCarregarBazar();
+  // Dados do bazar vêm de outros jogadores: nome/ícone saem do catálogo local
+  // quando possível, e todo texto é escapado antes de ir para o innerHTML.
+  const anuncios = (await sbCarregarBazar()).map(a => {
+    const def = ITENS[a.item_id];
+    return {
+      ...a,
+      id:            esc(a.id),
+      item_id:       esc(a.item_id),
+      item_nome:     esc(def?.nome  ?? a.item_nome),
+      item_icone:    esc(def?.icone ?? a.item_icone),
+      vendedor_nome: esc(a.vendedor_nome),
+      qtd:           parseInt(a.qtd)   || 0,
+      preco:         parseInt(a.preco) || 0,
+    };
+  });
 
   // ── Sua barraca ──
   const meusEl     = document.getElementById('bazar-meus-anuncios');
@@ -5309,12 +5361,14 @@ async function renderizarBazar() {
       `).join('');
       meusEl.querySelectorAll('.btn-retirar').forEach(btn => {
         btn.addEventListener('click', async () => {
+          if (!cabeNaMochila(btn.dataset.itemid)) { mostrarToast('🎒 Mochila cheia! Libere espaço para retirar.'); return; }
           btn.disabled = true;
-          const ok = await sbRetirarAnuncio(btn.dataset.id);
-          if (ok) {
-            // Devolver item ao inventário
+          const res = await sbRetirarAnuncio(btn.dataset.id);
+          if (!res.ok) mostrarToast(`❌ ${res.erro}`);
+          else {
+            // Devolver item ao inventário (forçado: o anúncio já foi apagado no servidor)
             const itemDef = ITENS[btn.dataset.itemid];
-            if (itemDef) adicionarItem(itemDef, parseInt(btn.dataset.qtd));
+            if (itemDef) adicionarItem(itemDef, parseInt(btn.dataset.qtd), { forcar: true });
             salvarJogo();
           }
           renderizarBazar();
@@ -5370,6 +5424,7 @@ async function renderizarBazar() {
             mostrarToast(`🔋 Precisa de ${preco} Baterias.`);
             return;
           }
+          if (!cabeNaMochila(btn.dataset.itemid)) { mostrarToast('🎒 Mochila cheia! Libere espaço para comprar.'); return; }
           btn.disabled = true;
           btn.textContent = '...';
           const res = await sbComprarDoBazar(btn.dataset.id, preco);
@@ -5380,8 +5435,9 @@ async function renderizarBazar() {
             return;
           }
           removerItem('pilha', preco);
+          // Forçado: a compra já foi concluída no servidor
           const itemDef = ITENS[res.item_id];
-          if (itemDef) adicionarItem(itemDef, res.qtd);
+          if (itemDef) adicionarItem(itemDef, res.qtd, { forcar: true });
           log(`🛒 Comprou ${res.item_icone} ${res.item_nome} ×${res.qtd} por ${preco} 🔋 (Barracas)`, 'log-sucesso');
           mostrarToast(`🛒 ${res.item_icone} ${res.item_nome} comprado!`);
           salvarJogo();
@@ -5441,7 +5497,7 @@ function inicializarBazar() {
     removerItem(itemId, qtd);
     const ok = await sbAnunciarBazar(itemId, nome, icone, qtd, preco);
     if (!ok) {
-      adicionarItem(ITENS[itemId], qtd);
+      adicionarItem(ITENS[itemId], qtd, { forcar: true });
       mostrarToast('❌ Erro ao colocar à venda. Tente novamente.');
       return;
     }
@@ -5835,7 +5891,7 @@ function entregarTrabalho(id) {
   const rec = trabalho.recompensa;
   let recTxt = '';
   if (rec.tipo === 'pilha') {
-    adicionarItem(ITENS.pilha, rec.qtd);
+    adicionarItem(ITENS.pilha, rec.qtd, { forcar: true }); // pagamento: nunca pode se perder
     recTxt = `${rec.qtd} 🔋`;
   } else {
     for (const r of rec.itens) {
@@ -6368,14 +6424,19 @@ function renderizarAssentamento() {
       const parcela = estado.assentamento.parcelas[idx];
       const npc = parcela?.habitante;
       if (!npc?.itensColetados?.length) return;
-      npc.itensColetados.forEach(i => {
+      // Itens que não couberem ficam com o NPC para recolher depois
+      npc.itensColetados = npc.itensColetados.filter(i => {
         const it = ITENS[i.id];
-        if (it) adicionarItem(it, i.qtd);
+        return it && !adicionarItem(it, i.qtd);
       });
-      log(`📥 Você recolheu os itens de ${npc.nome}.`, 'log-sucesso');
-      mostrarToast(`📥 Itens de ${npc.nome} recolhidos!`);
-      npc.itensColetados = [];
-      npc.estadoNpc = 'idle';
+      if (npc.itensColetados.length) {
+        log(`📥 Mochila cheia: parte dos itens de ${npc.nome} continua guardada no assentamento.`, 'log-alerta');
+        mostrarToast('🎒 Mochila cheia! Alguns itens ficaram com o morador.');
+      } else {
+        log(`📥 Você recolheu os itens de ${npc.nome}.`, 'log-sucesso');
+        mostrarToast(`📥 Itens de ${npc.nome} recolhidos!`);
+        npc.estadoNpc = 'idle';
+      }
       salvarJogo();
       renderizarInventario();
       renderizarAssentamento();
@@ -6589,7 +6650,7 @@ async function entrarComSave(user) {
     aplicarDadosSave(saveNuvem);
     mostrarTela('tela-jogo');
     restaurarUIJogo();
-    if (saveNuvem.pilhas_pendentes > 0) aplicarPilhasPendentes(saveNuvem);
+    resgatarCreditosBazar();
     log(`${saveNuvem.personagem.nome} acorda novamente. A luta continua.`, 'log-alerta');
   } else {
     mostrarTela('tela-criacao');
@@ -6758,7 +6819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       aplicarDadosSave(saveNuvem);
       mostrarTela('tela-jogo');
       restaurarUIJogo();
-      if ((saveNuvem.pilhas_pendentes || 0) > 0) aplicarPilhasPendentes(saveNuvem);
+      resgatarCreditosBazar();
       log(`${saveNuvem.personagem.nome} acorda novamente. A luta continua.`, 'log-alerta');
     } else {
       // Conta sem save — criação direta
@@ -6777,5 +6838,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   // else: Supabase configurado mas sem sessão → tela-login já está ativa
 
-  setInterval(() => { if (estado.criado) salvarJogo(); }, 30000);
+  setInterval(() => {
+    if (!estado.criado) return;
+    salvarJogo();
+    resgatarCreditosBazar(); // vendas feitas enquanto o jogador está online
+  }, 30000);
 });
