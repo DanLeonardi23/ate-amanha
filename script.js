@@ -216,11 +216,11 @@ const ITENS = {
   pilha:        { id: 'pilha',        nome: 'Bateria',             icone: '🔋', tipo: 'material'   },
   faca:         { id: 'faca',         nome: 'Faca de Cozinha',     icone: '🔪', tipo: 'ferramenta' },
   arame:        { id: 'arame',        nome: 'Arame',               icone: '〰️',  tipo: 'material'   },
-  madeira:      { id: 'madeira',      nome: 'Madeira',             icone: '🪵', tipo: 'material'   },
+  madeira:      { id: 'madeira',      nome: 'Madeira',             icone: '🌳', tipo: 'material'   },
 
   // Consumíveis
   comida:       { id: 'comida',       nome: 'Comida Enlatada',     icone: '🥫', tipo: 'consumivel', efeitos: { fome: -30 } },
-  agua_suja:    { id: 'agua_suja',    nome: 'Água Suja',           icone: '🪣', tipo: 'consumivel', efeitos: { sede: -20, vida: -5 } },
+  agua_suja:    { id: 'agua_suja',    nome: 'Água Suja',           icone: '🚱', tipo: 'consumivel', efeitos: { sede: -20, vida: -5 } },
   agua_limpa:   { id: 'agua_limpa',   nome: 'Água Limpa',          icone: '💧', tipo: 'consumivel', efeitos: { sede: -35 } },
   bebida:       { id: 'bebida',       nome: 'Bebida Alcoólica',    icone: '🍶', tipo: 'consumivel', efeitos: { estresse: -20, vida: -5, vicio: 10 } },
 
@@ -233,12 +233,12 @@ const ITENS = {
 
   // Craftáveis básicos (mochila)
   curativo:      { id: 'curativo',      nome: 'Curativo Caseiro',     icone: '🩸', tipo: 'medicinal',  efeitos: { vida: 20 } },
-  agua_filtrada: { id: 'agua_filtrada', nome: 'Água Filtrada',        icone: '🫗', tipo: 'consumivel', efeitos: { sede: -30 } },
+  agua_filtrada: { id: 'agua_filtrada', nome: 'Água Filtrada',        icone: '🚰', tipo: 'consumivel', efeitos: { sede: -30 } },
   tocha:         { id: 'tocha',         nome: 'Tocha Improvisada',    icone: '🔦', tipo: 'ferramenta' },
   lanterna:      { id: 'lanterna',      nome: 'Lanterna Improvisada', icone: '💡', tipo: 'ferramenta' },
 
   // Craftáveis de bancada
-  armadilha:    { id: 'armadilha',    nome: 'Armadilha',           icone: '🪤', tipo: 'ferramenta' },
+  armadilha:    { id: 'armadilha',    nome: 'Armadilha',           icone: '🕸️', tipo: 'ferramenta' },
   lanca:        { id: 'lanca',        nome: 'Lança Improvisada',   icone: '🗡️', tipo: 'ferramenta' },
   arco:         { id: 'arco',         nome: 'Arco Rudimentar',     icone: '🏹', tipo: 'ferramenta' },
   kit_avancado: { id: 'kit_avancado', nome: 'Kit Médico Avançado', icone: '💼', tipo: 'medicinal',  efeitos: { vida: 55, estresse: -15 } },
@@ -266,7 +266,7 @@ const ITENS = {
   doc_classificado: { id: 'doc_classificado', nome: 'Documento Classificado', icone: '📁', tipo: 'raro', desc: 'Carimbo vermelho: RESTRITO. Coordenadas, listas, nomes riscados.' },
   whisky_fino:    { id: 'whisky_fino',    nome: 'Whisky 18 Anos',        icone: '🥃', tipo: 'raro',      efeitos: { estresse: -40, vicio: 25, vida: -5 }, desc: 'Garrafa selada, lacre intacto. Drena estresse — e também você.' },
   remedio_exp:    { id: 'remedio_exp',    nome: 'Medicamento Experimental', icone: '🧬', tipo: 'raro',   efeitos: { vida: 50, estresse: -20 }, desc: 'Rótulo apagado. Embalagem hospitalar. Alto risco, alto retorno.' },
-  colar_id:       { id: 'colar_id',       nome: 'Placa de Identificação Militar', icone: '🪖', tipo: 'raro', desc: 'Dog tag. Nome, número de série, tipo sanguíneo. De quem era isso?' },
+  colar_id:       { id: 'colar_id',       nome: 'Placa de Identificação Militar', icone: '🏷️', tipo: 'raro', desc: 'Dog tag. Nome, número de série, tipo sanguíneo. De quem era isso?' },
   motor_arranque:    { id: 'motor_arranque',    nome: 'Motor de Arranque',       icone: '⚙️',  tipo: 'raro',       desc: 'Peça automotiva pesada, ainda funcional. Alguém, em algum lugar, paga caro por isso.' },
   bateria_automotiva:{ id: 'bateria_automotiva', nome: 'Bateria Automotiva',      icone: '🔋', tipo: 'raro',       desc: 'Bateria de veículo militar — 12V, 90Ah, ainda com carga. O item mais valioso que você já segurou.' },
   ursinho:           { id: 'ursinho',           nome: 'Ursinho de Pelúcia',      icone: '🧸', tipo: 'raro',       desc: 'Manchado, um olho faltando. Para uma criança, ainda vale o mundo.' },
@@ -275,10 +275,10 @@ const ITENS = {
   municao:           { id: 'municao',           nome: 'Munição .308',            icone: '🔩', tipo: 'raro',       desc: 'Caixinha lacrada. Calibre rifle. Ninguém descarta algo assim por acaso.' },
   radio_militar:     { id: 'radio_militar',     nome: 'Rádio Militar',           icone: '📻', tipo: 'raro',       desc: 'Criptografado, robusto, ainda operacional. Quem tem comunicação tem poder.' },
   colete_balistico:  { id: 'colete_balistico',  nome: 'Colete Balístico',        icone: '🛡️',  tipo: 'raro',       desc: 'Placas de cerâmica intactas. Nível III. Feito para guerra — e sobrou da guerra.' },
-  capacete_tatico:   { id: 'capacete_tatico',   nome: 'Capacete Tático',         icone: '🪖', tipo: 'raro',       desc: 'Kevlar e aço. Viseira rachada mas estrutura perfeita. Melhor do que nada — muito melhor.' },
+  capacete_tatico:   { id: 'capacete_tatico',   nome: 'Capacete Tático',         icone: '⛑️', tipo: 'raro',       desc: 'Kevlar e aço. Viseira rachada mas estrutura perfeita. Melhor do que nada — muito melhor.' },
   farda_militar:     { id: 'farda_militar',     nome: 'Farda de Combate',        icone: '🥋', tipo: 'raro',       desc: 'Camuflagem desbotada, bolsos por toda parte. Ainda assusta quem não sabe que está vazia.' },
   planta_instalacao: { id: 'planta_instalacao', nome: 'Planta da Instalação',    icone: '📐', tipo: 'raro',       desc: 'Planta baixa da base militar. Rotas, salas, depósitos. Informação tem preço.' },
-  anotacao_setor3:   { id: 'anotacao_setor3',   nome: 'Rota para o Setor 3',     icone: '🗺️', tipo: 'anotacao',   localId: 'setor3', lore: '"Instalação militar a uns 30 km. Alojamentos, garagem, cemitério — tudo ainda de pé. Tem equipamento, peças e coisas que as pessoas deixaram para trás. Mas a jornada é longa. Leve comida e água. Não entre com fome. Não entre com sede."', revelaLocal: { nome: 'Setor 3 — 3 locais desbloqueados', perigo: 'alto', tempo: '120s', icone: '🪖' } },
+  anotacao_setor3:   { id: 'anotacao_setor3',   nome: 'Rota para o Setor 3',     icone: '🗺️', tipo: 'anotacao',   localId: 'setor3', lore: '"Instalação militar a uns 30 km. Alojamentos, garagem, cemitério — tudo ainda de pé. Tem equipamento, peças e coisas que as pessoas deixaram para trás. Mas a jornada é longa. Leve comida e água. Não entre com fome. Não entre com sede."', revelaLocal: { nome: 'Setor 3 — 3 locais desbloqueados', perigo: 'alto', tempo: '120s', icone: '🎖️' } },
 
   // Equipamentos de proteção
   capacete:          { id: 'capacete',          nome: 'Capacete Industrial',     icone: '⛑️',  tipo: 'ferramenta', desc: 'Plástico duro, alça ajustável. Não foi feito para guerra, mas serve.' },
@@ -1354,7 +1354,7 @@ const EVENTOS_ESCOLHA = [
       },
       {
         texto: 'Escorar com madeira e entrar com calma',
-        icone: '🪵', risco: 'medio',
+        icone: '🌳', risco: 'medio',
         requer: { item: 'madeira', qtd: 1 },
         resultados: [
           { chance: 80, msg: 'O escoro segura. Você pega o que queria sem pressa.', efeitos: { estresse: 8 }, loot: [{id:'sucata',qtd:2},{id:'arame',qtd:2}], consumir: [{id:'madeira',qtd:1}] },
@@ -1526,7 +1526,7 @@ const EVENTOS_NPC = [
   {
     id: 'npc_ex_soldado',
     nome: 'Ex-Soldado',
-    icone: '🪖',
+    icone: '🎖️',
     desc: '"Fui da guarda até o colapso. Agora só ando, não fico em lugar nenhum." Ele fala pouco, mas mostra o que tem.',
     perigo_min: 'medio',
     trocas: [
@@ -2591,7 +2591,7 @@ function htmlPainelCisterna() {
   const filtroOk      = estado.filtroInstalado.diasRestantes > 0;
   const diasRestantes = estado.filtroInstalado.diasRestantes;
   const qtdFiltros    = estado.filtroInstalado.quantidade || 0;
-  const tipoNome      = filtroOk ? '💧 Água Limpa' : '🪣 Água Suja';
+  const tipoNome      = filtroOk ? '💧 Água Limpa' : '🚱 Água Suja';
   const temFiltroInv  = temItem('filtro', 1);
   const podeInstalar  = temFiltroInv && qtdFiltros < 3;
 
@@ -2643,7 +2643,7 @@ function wirePainelCisterna() {
     const itemId   = filtroOk ? 'agua_limpa' : 'agua_suja';
     if (!adicionarItem(ITENS[itemId], qtd)) { mostrarToast('🎒 Mochila cheia!'); return; }
     estado.cisterna.aguaAcumulada = 0;
-    log(`🪣 Coletou ${qtd}× ${ITENS[itemId].nome} da cisterna.`, 'log-sucesso');
+    log(`${ITENS[itemId].icone} Coletou ${qtd}× ${ITENS[itemId].nome} da cisterna.`, 'log-sucesso');
     mostrarToast(`${qtd}× ${ITENS[itemId].icone} coletados`);
     salvarJogo();
     renderizarBase();
@@ -2811,7 +2811,7 @@ function htmlPainelSeguranca() {
       </div>
       <div class="barra-bg"><div class="barra" style="width:${pct}%;background:var(--accent)"></div></div>
     </div>
-    <p class="painel-seg-info">Na mochila: ${noMoch}× Armadilha 🪤 · Cada armadilha reduz a chance de invasão.</p>
+    <p class="painel-seg-info">Na mochila: ${noMoch}× Armadilha 🕸️ · Cada armadilha reduz a chance de invasão.</p>
     <p class="painel-seg-info">⚠ Enquanto você explora, a base fica desprotegida — invasores roubam do depósito. Fique em casa para protegê-la.</p>
     <div class="painel-seg-acoes">
       <button class="btn-primario btn-sm btn-instalar-arm" ${noMoch > 0 && inst < capMax ? '' : 'disabled style="opacity:.45"'}>
@@ -2828,14 +2828,14 @@ function wirePainelSeguranca() {
     if (!temItem('armadilha', 1)) return;
     removerItem('armadilha', 1);
     estado.seguranca.armadilhasInstaladas++;
-    log('🪤 Armadilha instalada no perímetro.', 'log-sucesso');
+    log('🕸️ Armadilha instalada no perímetro.', 'log-sucesso');
     salvarJogo(); atualizarDefesaUI(); abrirPainelBase('seguranca');
   });
   document.querySelector('#painel-seguranca .btn-remover-arm')?.addEventListener('click', () => {
     if (estado.seguranca.armadilhasInstaladas <= 0) return;
     if (!adicionarItem(ITENS.armadilha, 1)) { mostrarToast('🎒 Mochila cheia!'); return; }
     estado.seguranca.armadilhasInstaladas--;
-    log('🪤 Armadilha removida do perímetro.', 'log-sistema');
+    log('🕸️ Armadilha removida do perímetro.', 'log-sistema');
     salvarJogo(); atualizarDefesaUI(); abrirPainelBase('seguranca');
   });
 }
@@ -3972,7 +3972,7 @@ function processarSaqueNoturno() {
     log(`   Depósito: ${roubados.join(', ')}`, 'log-perigo');
   }
   if (temArmadilha) {
-    log(`   🪤 ${estado.seguranca.armadilhasInstaladas} armadilha(s) limitaram o estrago.`, 'log-alerta');
+    log(`   🕸️ ${estado.seguranca.armadilhasInstaladas} armadilha(s) limitaram o estrago.`, 'log-alerta');
   }
 
   mostrarToast(`🚨 Base invadida! Depósito saqueado.`, 4000);
@@ -4096,7 +4096,7 @@ function iniciarExploracao() {
       return;
     }
     mostrarConfirmacao(
-      `🪖 Setor 3 — Jornada Longa<br><br>Esta missão consome:<br>🍖 ${CUSTO_SETOR3.comida}× Comida &nbsp; 💧 ${CUSTO_SETOR3.agua_limpa}× Água Limpa<br><br>Deseja partir?`,
+      `🎖️ Setor 3 — Jornada Longa<br><br>Esta missão consome:<br>🍖 ${CUSTO_SETOR3.comida}× Comida &nbsp; 💧 ${CUSTO_SETOR3.agua_limpa}× Água Limpa<br><br>Deseja partir?`,
       () => {
         removerItem('comida',    CUSTO_SETOR3.comida);
         removerItem('agua_limpa', CUSTO_SETOR3.agua_limpa);
@@ -4967,7 +4967,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
 
     log(`${nome} acorda em um campo aberto. Sem proteção. Sem abrigo.`, 'log-alerta');
     log(`Traço: ${td.icone} ${td.nome} — ${td.desc}`, 'log-sistema');
-    log('⛺ Prioridade: construa o Abrigo (5🔩 · 5🪵 · 5🧻) antes de qualquer outra coisa.', 'log-info');
+    log('⛺ Prioridade: construa o Abrigo (5🔩 · 5🌳 · 5🧻) antes de qualquer outra coisa.', 'log-info');
     log('Dica: na mochila, clique num item e depois em outro para combinar.', 'log-info');
 
     atualizarUI();
@@ -5661,7 +5661,7 @@ const TRABALHOS_POOL = [
     id: 'trab_madeira',
     titulo: 'Madeira para barricada',
     cliente: 'Líder do Bloco 4',
-    icone: '🪵',
+    icone: '🌳',
     desc: 'Vamos fechar a entrada da rua. Precisamos de madeira para as barricadas.',
     entrega: [{ id: 'madeira', qtd: 15 }],
     recompensa: { tipo: 'pilha', qtd: 14 },
@@ -5723,7 +5723,7 @@ const TRABALHOS_POOL = [
     id: 'trab_agua_suja',
     titulo: 'Água para o tanque',
     cliente: 'Mecânico Tulio',
-    icone: '🪣',
+    icone: '🚱',
     desc: 'Preciso encher o tanque de resfriamento. Água suja serve — o processo filtra tudo depois.',
     entrega: [{ id: 'agua_suja', qtd: 8 }],
     recompensa: { tipo: 'item', itens: [{ id: 'sucata', qtd: 10 }, { id: 'arame', qtd: 4 }] },
@@ -6748,6 +6748,10 @@ function aplicarDadosSave(s) {
   estado.base               = s.base               || [];
   estado.tatica             = s.tatica             || 'furtivo';
   estado.deposito           = s.deposito           || { nivel: 0, itens: [] };
+  // Saves guardam cópia do ícone: atualiza pelo catálogo atual para refletir trocas de ícone
+  for (const i of [...estado.inventario, ...estado.deposito.itens]) {
+    if (ITENS[i.id]) i.icone = ITENS[i.id].icone;
+  }
   estado.cisterna           = s.cisterna           || { aguaAcumulada: 0 };
   estado.filtroInstalado    = s.filtroInstalado    || { diasRestantes: 0, quantidade: 0 };
   if (estado.filtroInstalado.quantidade === undefined) estado.filtroInstalado.quantidade = estado.filtroInstalado.diasRestantes > 0 ? 1 : 0;
