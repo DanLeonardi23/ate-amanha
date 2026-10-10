@@ -331,6 +331,30 @@
                 <div class="base-mapa-label">ACAMPAMENTO · ZONA SEGURA</div>
                 <div class="base-mapa" id="base-mapa">
 
+                  <!-- Abrigo e Bancada somem do mapa depois de construídos (não têm painel próprio) -->
+                  <div class="base-slot slot-abrigo"
+                       data-id="abrigo"
+                       data-nome="Abrigo"
+                       data-ocultar-construida
+                       data-custo='{"sucata":5,"madeira":5,"pano":5}'>
+                    <span class="slot-icone">⛺</span>
+                    <span class="slot-nome">Abrigo</span>
+                    <span class="slot-sub slot-custo">5🔩 · 5🌳 · 5🧻</span>
+                    <span class="slot-desc">Protege do frio e dos perigos. Base de tudo.</span>
+                  </div>
+
+                  <div class="base-slot slot-bancada"
+                       data-id="bancada"
+                       data-nome="Bancada"
+                       data-requer="abrigo"
+                       data-ocultar-construida
+                       data-custo='{"sucata":8,"pano":3}'>
+                    <span class="slot-icone">🔨</span>
+                    <span class="slot-nome">Bancada</span>
+                    <span class="slot-sub slot-custo">8🔩 · 3🧻</span>
+                    <span class="slot-desc">Libera projetos avançados e a Segurança.</span>
+                  </div>
+
                   <div class="base-slot slot-fogueira"
                        data-id="fogueira" data-painel="fogueira"
                        data-nome="Fogueira"

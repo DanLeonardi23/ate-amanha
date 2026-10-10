@@ -1376,6 +1376,7 @@ html, body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-areas:
+    "abrigo    bancada"
     "fogueira  cisterna"
     "cultivo   seguranca";
   gap: 2px;
@@ -1406,6 +1407,8 @@ html, body {
   box-sizing: border-box;
 }
 
+.slot-abrigo    { grid-area: abrigo; }
+.slot-bancada   { grid-area: bancada; }
 .slot-fogueira  { grid-area: fogueira; }
 .slot-cisterna  { grid-area: cisterna; }
 .slot-cultivo   { grid-area: cultivo; }
@@ -4151,3 +4154,6 @@ html, body {
   .tracos-lista { grid-template-columns: 1fr; }
   .avatares-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Abrigo/Bancada somem do mapa depois de construídos (ver data-ocultar-construida) */
+.base-slot[hidden] { display: none; }

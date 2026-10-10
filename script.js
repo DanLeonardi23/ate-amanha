@@ -2414,6 +2414,7 @@ function renderizarBase() {
     const temRecursos = Object.entries(custo).every(([itemId, q]) => temItem(itemId, q));
 
     slot.classList.remove('construida', 'disponivel', 'bloqueada', 'sem-recursos');
+    slot.hidden = construida && slot.hasAttribute('data-ocultar-construida');
 
     if (construida) {
       slot.classList.add('construida');
