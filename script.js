@@ -225,7 +225,7 @@ const ITENS = {
   bebida:       { id: 'bebida',       nome: 'Bebida Alcoólica',    icone: '🍶', tipo: 'consumivel', efeitos: { estresse: -20, vida: -5, vicio: 10 } },
 
   // Medicinais de campo
-  remedio:      { id: 'remedio',      nome: 'Analgésico',          icone: '💊', tipo: 'medicinal',  efeitos: { vida: 15, estresse: -10 } },
+  remedio:      { id: 'remedio',      nome: 'Analgésico',          icone: '💊', tipo: 'medicinal',  efeitos: { vida: 15, estresse: -5 } },
   kit:          { id: 'kit',          nome: 'Kit Primeiros Socorros', icone: '🩹', tipo: 'medicinal', efeitos: { vida: 35, estresse: -5 } },
   soro:         { id: 'soro',         nome: 'Soro Fisiológico',    icone: '💉', tipo: 'medicinal',  efeitos: { sede: -40, vida: 10 } },
   atadura:      { id: 'atadura',      nome: 'Atadura',             icone: '🩺', tipo: 'medicinal',  efeitos: { vida: 10 } },
@@ -2088,6 +2088,8 @@ function construirBancada() {
 // USAR ITEM (modal)
 // ============================================================
 
+const CURAM_INTOXICACAO = ['carvao_ativado', 'soro', 'kit_avancado'];
+
 function usarItem(id) {
   const item = estado.inventario.find(i => i.id === id);
   if (!item) return;
@@ -2112,12 +2114,14 @@ function usarItem(id) {
     log('🤢 A água estava contaminada! Você ficou intoxicado.', 'log-perigo');
   }
 
-  // Medicinais curam intoxicação (carvão ativado é o tratamento ideal)
-  if (item.tipo === 'medicinal' && estado.condicoes.intoxicado > 0) {
+  // Só estes itens curam intoxicação (carvão ativado é o tratamento ideal)
+  if (CURAM_INTOXICACAO.includes(id) && estado.condicoes.intoxicado > 0) {
     estado.condicoes.intoxicado = 0;
-    const msgCura = id === 'carvao_ativado'
-      ? '🖤 Carvão ativado adsorveu as toxinas. Intoxicação curada.'
-      : '💉 Remédio aplicado. Intoxicação curada.';
+    const msgCura = {
+      carvao_ativado: '🖤 Carvão ativado adsorveu as toxinas. Intoxicação curada.',
+      soro:           '💉 O soro limpou seu organismo. Intoxicação curada.',
+      kit_avancado:   '💼 Tratamento completo aplicado. Intoxicação curada.',
+    }[id];
     log(msgCura, 'log-sucesso');
   }
 
@@ -3212,7 +3216,7 @@ function atualizarStatus() {
     if (estado.condicoes.intoxicado === 0)
       log('🤢 A intoxicação passou.', 'log-sistema');
     else if (estado.condicoes.intoxicado % 15 === 0)
-      log('🤢 Você está intoxicado. Tome um remédio.', 'log-perigo');
+      log('🤢 Você está intoxicado. Use Carvão Ativado, Soro ou Kit Médico Avançado.', 'log-perigo');
   }
 
   // Contundido (tornozelo torcido) → drena vida lentamente
@@ -3294,7 +3298,7 @@ function atualizarUI() {
   if (s.estresse >= 75) av('😤 Estresse elevado', 'alerta');
   if (s.vicio >= 70)    av('💊 Abstinência! Vício drenando vida', 'perigo');
   else if (s.vicio >= 50) av('💊 Dependência se formando', 'alerta');
-  if (estado.condicoes.intoxicado > 0) av('🤢 Intoxicado! Tome um remédio', 'perigo');
+  if (estado.condicoes.intoxicado > 0) av('🤢 Intoxicado! Use Carvão Ativado, Soro ou Kit Avançado', 'perigo');
   if (estado.condicoes.contundido)     av('🦯 Contundido! Use uma Tala Improvisada', 'perigo');
   if (estado.condicoes.sangramento)    av('🩸 Sangrando! Use uma bandagem ou curativo', 'perigo');
 }
