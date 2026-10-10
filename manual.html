@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/png" href="img/favicon.png" />
+<title>Manual de Campo · Até Amanhã</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap">
+<style>
+/* Layout: o manual é um "terminal da A.C.E." — abas de tela no topo, maquete fiel da tela do jogo abaixo,
+   cada parte da maquete revela sua explicação ao passar o mouse (ou tocar). Tema único escuro, igual ao jogo. */
+:root {
+  --bg-0: #080d08;
+  --bg-1: #0d120d;
+  --bg-2: #121812;
+  --bg-3: #1a201a;
+  --line: #243024;
+  --line-hi: #34483a;
+  --fg: #c3cfbf;
+  --fg-2: #7f8f7b;
+  --fg-3: #4d5d49;
+  --accent: #3fbf3f;
+  --accent-d: #1f6e1f;
+  --red: #d04848;
+  --amber: #d4a03a;
+  --blue: #4a8ac0;
+  --purple: #a64aa6;
+  --teal: #3a9a6a;
+  --paper: #d9cfb4;
+  --paper-ink: #2a2418;
+  --font-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-body: 'Barlow Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+body {
+  margin: 0; background: var(--bg-0); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.45;
+  padding-inline: 16px; padding-block: 20px 48px;
+}
+.wrap { max-width: 1180px; margin-inline: auto; display: grid; gap: 18px; }
+
+/* ── Cabeçalho do manual ── */
+.mast { display: grid; gap: 6px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.mast-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .16em; color: var(--accent); text-transform: uppercase; }
+.mast h1 { margin: 0; font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: .02em; text-wrap: balance; line-height: 1.05; }
+.mast p { margin: 0; color: var(--fg-2); max-width: 68ch; }
+.mast kbd { font-family: var(--font-mono); font-size: 13px; color: var(--fg); border: 1px solid var(--line-hi); border-radius: 3px; padding: 0 5px; background: var(--bg-2); }
+.mast-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 4px; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-family: var(--font-mono); font-size: 13px; color: var(--fg-2); cursor: pointer; }
+.voltar { font-family: var(--font-mono); font-size: 13px; color: var(--accent); text-decoration: none; border: 1px solid var(--accent-d); border-radius: 3px; padding: 5px 10px; }
+.voltar:hover { background: var(--accent-d); color: #e9f5e6; }
+.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+/* ── Abas de tela ── */
+.screens { display: flex; flex-wrap: wrap; gap: 6px; }
+.screens button {
+  font-family: var(--font-mono); font-size: 13px; letter-spacing: .04em;
+  background: var(--bg-2); color: var(--fg-2); border: 1px solid var(--line);
+  padding: 7px 11px; border-radius: 3px; cursor: pointer;
+}
+.screens button:hover { color: var(--fg); border-color: var(--line-hi); }
+.screens button[aria-selected="true"] { background: var(--accent-d); color: #e9f5e6; border-color: var(--accent); }
+.screens button:focus-visible, [data-h]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.screen-intro { font-size: 17px; color: var(--fg-2); max-width: 75ch; margin: 0; }
+.screen-intro strong { color: var(--fg); font-weight: 600; }
+.frame {
+  border: 1px solid var(--line-hi); background: var(--bg-1); border-radius: 4px;
+  padding: 14px; overflow-x: auto;
+}
+.frame-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; color: var(--fg-3); text-transform: uppercase; margin-bottom: 10px; }
+
+/* ── Hotspots ── */
+[data-h] { cursor: help; transition: box-shadow .15s ease, background-color .15s ease; border-radius: 3px; }
+[data-h]:hover, [data-h].on { box-shadow: 0 0 0 2px var(--accent); background-color: rgba(63,191,63,.07); }
+body.marcar [data-h] { box-shadow: 0 0 0 1px rgba(63,191,63,.45); }
+body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(--accent); }
+
+.tip {
+  position: fixed; z-index: 50; max-width: min(340px, calc(100vw - 24px));
+  background: var(--bg-3); border: 1px solid var(--accent); border-radius: 4px;
+  padding: 10px 12px 11px; box-shadow: 0 10px 30px rgba(0,0,0,.6);
+  pointer-events: none; display: grid; gap: 4px;
+}
+.tip-t { font-family: var(--font-mono); font-size: 13px; color: var(--accent); letter-spacing: .04em; }
+.tip-b { font-size: 15.5px; line-height: 1.4; color: var(--fg); }
+.tip-b b { color: #fff; font-weight: 600; }
+.tip-b .warn { color: var(--amber); }
+
+/* ── Peças da maquete (reutilizadas) ── */
+.mono { font-family: var(--font-mono); }
+.dim { color: var(--fg-2); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 13px; padding: 6px 12px; border-radius: 3px;
+  border: 1px solid var(--accent-d); background: var(--accent-d); color: #e6f4e3; white-space: nowrap;
+}
+.btn.sec { background: transparent; color: var(--fg); border-color: var(--line-hi); }
+.btn.perigo { background: transparent; color: var(--red); border-color: #6a2a2a; }
+.btn.off { opacity: .45; }
+.btn.sm { font-size: 12px; padding: 4px 9px; }
+.card { border: 1px solid var(--line); background: var(--bg-2); border-radius: 3px; padding: 10px; }
+.sec-t { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; color: var(--fg-2); text-transform: uppercase; margin: 0 0 8px; display: flex; justify-content: space-between; gap: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.stack { display: grid; gap: 10px; }
+.chip { font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--line-hi); border-radius: 3px; padding: 3px 7px; color: var(--fg-2); background: var(--bg-1); }
+.chip.ok { color: var(--accent); border-color: var(--accent-d); }
+.chip.falta { color: var(--red); border-color: #5a2626; }
+.pill { font-family: var(--font-mono); font-size: 11px; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; letter-spacing: .06em; }
+.p-baixo { background: #173a17; color: #6ad66a; }
+.p-medio { background: #3d3214; color: #e2b44c; }
+.p-alto { background: #421818; color: #ec6a6a; }
+.p-bloq { background: #222; color: #888; }
+
+.bar { height: 8px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.bar > i { display: block; height: 100%; }
+.stat { display: grid; gap: 3px; padding: 4px; }
+.stat-l { display: flex; gap: 6px; align-items: baseline; font-size: 15px; }
+.stat-l .v { margin-left: auto; font-family: var(--font-mono); font-size: 13px; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+
+/* ── Tela: login ── */
+.login { max-width: 440px; margin-inline: auto; display: grid; gap: 14px; }
+.logo { font-family: var(--font-body); font-weight: 700; font-size: 38px; letter-spacing: .08em; text-align: center; color: var(--fg); padding: 8px; }
+.logo small { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .3em; color: var(--accent); font-weight: 400; }
+.field { display: grid; gap: 4px; }
+.field label, .lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; color: var(--fg-2); }
+.input { font-family: var(--font-mono); font-size: 14px; color: var(--fg-2); background: var(--bg-0); border: 1px solid var(--line-hi); border-radius: 3px; padding: 8px 10px; }
+
+/* ── Tela: carteira de sobrevivente ── */
+.doc { max-width: 640px; margin-inline: auto; background: var(--paper); color: var(--paper-ink); border-radius: 4px; padding: 14px; display: grid; gap: 12px; }
+.doc .lbl { color: #6a5f45; }
+.doc-h { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #b3a685; padding-bottom: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; }
+.doc-body { display: grid; grid-template-columns: 150px 1fr; gap: 14px; }
+.foto { aspect-ratio: 3/4; max-width: 100%; background: #3a3a30; border: 2px solid #6a5f45; display: grid; place-items: center; font-size: 48px; border-radius: 2px; }
+.doc .chip { background: #e9e0c6; color: var(--paper-ink); border-color: #a99a72; }
+.doc .chip.sel { background: var(--paper-ink); color: var(--paper); }
+.doc .input { background: #efe7cf; color: var(--paper-ink); border-color: #a99a72; }
+.redacted { background: var(--paper-ink); color: transparent; border-radius: 1px; user-select: none; }
+
+/* ── Tela principal ── */
+.game { display: grid; grid-template-columns: 240px minmax(0,1fr) 220px; gap: 10px; min-width: 760px; }
+.hdr { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 6px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.ico { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--line-hi); border-radius: 3px; background: var(--bg-2); font-size: 16px; }
+.idcard { border: 1px solid var(--line-hi); border-radius: 3px; background: var(--bg-0); }
+.idcard-tela { height: 100px; display: grid; place-items: center; font-size: 52px; background: radial-gradient(circle at 50% 60%, #1d2a1d, var(--bg-0)); }
+.idcard-rod { padding: 6px 8px; display: grid; gap: 2px; border-top: 1px solid var(--line); }
+.taticas { display: flex; gap: 4px; margin-top: 4px; }
+.taticas span { width: 30px; height: 26px; display: grid; place-items: center; border: 1px solid var(--line-hi); border-radius: 3px; font-size: 14px; }
+.taticas span.on { border-color: var(--accent); background: var(--accent-d); }
+.relogio { display: flex; gap: 8px; align-items: center; font-family: var(--font-mono); font-size: 13px; }
+.relogio .bar { flex: 1; }
+.log { background: #050805; border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; font-family: var(--font-mono); font-size: 12.5px; display: grid; gap: 3px; min-height: 120px; }
+.log .s { color: var(--fg-2); } .log .ok { color: var(--accent); } .log .al { color: var(--amber); } .log .pe { color: var(--red); } .log .loot { color: #7fb7e6; }
+.abas { display: flex; flex-wrap: wrap; gap: 4px; }
+.abas span { font-family: var(--font-mono); font-size: 12.5px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 3px 3px 0 0; color: var(--fg-2); background: var(--bg-2); }
+.abas span.on { color: var(--fg); border-color: var(--accent-d); background: var(--bg-3); }
+.abas span.lock { opacity: .45; }
+.inv { display: grid; gap: 5px; }
+.item { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); background: var(--bg-2); border-radius: 3px; padding: 5px 8px; }
+.item .ic { font-size: 18px; width: 22px; text-align: center; }
+.item .nm { font-size: 14.5px; line-height: 1.15; }
+.item .q { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); }
+.item.sel { border-color: var(--amber); }
+.item.raro { border-color: #6a4ea0; }
+
+/* ── Locais ── */
+.locais { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.local { border: 1px solid var(--line); background: var(--bg-2); border-radius: 3px; overflow: hidden; display: grid; }
+.local-img { height: 78px; display: grid; place-items: center; font-size: 34px; background: linear-gradient(160deg, #1f2b1f, #0b100b); position: relative; }
+.local-img .pill { position: absolute; left: 6px; bottom: 6px; }
+.local-img.blur { filter: grayscale(1) blur(1px); opacity: .55; }
+.local-info { padding: 7px 8px 4px; display: grid; gap: 1px; }
+.local .btn { margin: 4px 8px 8px; }
+.setor-t { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; color: var(--fg-2); text-transform: uppercase; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.setor-t b { color: var(--fg); font-weight: 400; }
+.jornada { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; }
+.ponto { height: 44px; border: 1px solid var(--line-hi); border-radius: 3px; display: grid; place-items: center; font-size: 22px; background: var(--bg-0); }
+.trilha { position: relative; height: 10px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 5px; }
+.trilha i { position: absolute; inset: 0 auto 0 0; width: 46%; background: var(--accent-d); border-radius: 5px; }
+.trilha b { position: absolute; left: 46%; top: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 400; }
+
+/* ── Base ── */
+.subabas { display: flex; flex-wrap: wrap; gap: 4px; }
+.subabas span { font-family: var(--font-mono); font-size: 12px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 3px; color: var(--fg-2); }
+.subabas span.on { color: var(--fg); border-color: var(--accent-d); background: var(--bg-3); }
+.mapa { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.slot { border: 1px dashed var(--line-hi); border-radius: 3px; padding: 9px; display: grid; gap: 2px; background: var(--bg-2); }
+.slot .si { font-size: 24px; }
+.slot .sn { font-weight: 600; font-size: 16px; }
+.slot .sc { font-family: var(--font-mono); font-size: 12px; color: var(--amber); }
+.slot .sd { font-size: 13.5px; color: var(--fg-2); line-height: 1.25; }
+.slot.feita { border-style: solid; border-color: var(--accent-d); }
+.slot.feita .sc { color: var(--accent); }
+.slot.trava { opacity: .55; }
+.paineis { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.mini-slots { display: grid; gap: 6px; }
+.mini-slot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px; font-size: 14.5px; background: var(--bg-1); }
+.mini-slot .dim { font-family: var(--font-mono); font-size: 12px; }
+.receita { border: 1px solid var(--line); border-radius: 3px; padding: 8px; background: var(--bg-2); display: grid; gap: 6px; }
+.receita.pode { border-color: var(--accent-d); }
+
+/* ── Comércio ── */
+.loja { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.oferta { border: 1px solid var(--line); border-radius: 3px; padding: 8px; background: var(--bg-2); display: grid; gap: 4px; }
+.oferta .ic { font-size: 22px; }
+.trend-up { color: var(--red); } .trend-down { color: var(--accent); }
+.saldo { font-family: var(--font-mono); font-size: 20px; color: var(--amber); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+
+/* ── Trabalhos / Assentamento ── */
+.trab { border: 1px solid var(--line); border-radius: 3px; padding: 9px; background: var(--bg-2); display: grid; gap: 6px; }
+.trab-h { display: flex; gap: 8px; align-items: center; }
+.trab-h .ic { font-size: 22px; }
+.parcelas { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.parcela { border: 1px solid var(--line); border-radius: 3px; padding: 9px; background: var(--bg-2); display: grid; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.npc { display: flex; gap: 8px; align-items: center; }
+.npc .av { width: 38px; height: 38px; border-radius: 3px; background: #26321f; display: grid; place-items: center; font-size: 20px; }
+
+/* ── Modais e fim ── */
+.modal { max-width: 460px; margin-inline: auto; border: 1px solid var(--line-hi); background: var(--bg-2); border-radius: 4px; padding: 14px; display: grid; gap: 10px; }
+.modal h3 { margin: 0; font-size: 22px; }
+.modal p { margin: 0; color: var(--fg-2); }
+.ev-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; color: var(--amber); }
+.escolha { border: 1px solid var(--line-hi); border-radius: 3px; padding: 8px 10px; display: flex; gap: 10px; align-items: center; background: var(--bg-1); }
+.escolha .r { margin-left: auto; }
+.obito { max-width: 620px; margin-inline: auto; border: 1px solid #4a1a1a; background: #120909; border-radius: 4px; padding: 16px; display: grid; gap: 12px; }
+.obito .tt { font-family: var(--font-mono); text-align: center; letter-spacing: .2em; color: var(--red); }
+.obito .big { font-size: 30px; font-weight: 700; text-align: center; letter-spacing: .06em; }
+.go-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+
+/* ── Referência rápida ── */
+.ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.ref .card h3 { margin: 0 0 6px; font-size: 19px; }
+.ref ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; color: var(--fg-2); }
+.ref li b { color: var(--fg); font-weight: 600; }
+.foot { font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); }
+
+/* ── Catálogo de itens ── */
+.cat-filtros { display: grid; gap: 10px; }
+.cat-busca { font-family: var(--font-mono); font-size: 14px; color: var(--fg); background: var(--bg-0); border: 1px solid var(--line-hi); border-radius: 3px; padding: 8px 10px; width: 100%; max-width: 360px; }
+.cat-busca:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cat-chip { font-family: var(--font-mono); font-size: 12px; background: var(--bg-2); color: var(--fg-2); border: 1px solid var(--line); border-radius: 3px; padding: 5px 9px; cursor: pointer; }
+.cat-chip[aria-pressed="true"] { color: #e9f5e6; background: var(--accent-d); border-color: var(--accent); }
+.cat-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cat-grupo h3 { margin: 0 0 8px; font-size: 20px; font-weight: 600; display: flex; gap: 10px; align-items: baseline; }
+.cat-grupo h3 span { font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); font-weight: 400; }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.cat-item { border: 1px solid var(--line); background: var(--bg-2); border-radius: 3px; padding: 10px; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 10px; align-content: start; }
+.cat-item.raro { border-color: #4b3a72; }
+.cat-ic { font-size: 26px; line-height: 1.1; grid-row: span 3; text-align: center; }
+.cat-nome { font-weight: 600; font-size: 17px; line-height: 1.15; }
+.cat-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.cat-tags span { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-radius: 2px; border: 1px solid var(--line-hi); color: var(--fg-2); }
+.tag-craft { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-radius: 2px; color: var(--amber) !important; border: 1px solid #5e4a1c !important; background: #241d0c; white-space: nowrap; }
+.cat-tags .tag-equip { color: #8fc0ea; border-color: #2a4a6b; }
+.cat-tags .tag-raro { color: #c4a6f0; border-color: #4b3a72; }
+.cat-txt { font-size: 15px; line-height: 1.35; color: var(--fg-2); }
+.cat-fx { font-family: var(--font-mono); font-size: 12px; color: var(--fg); }
+.cat-fx .neg { color: var(--red); } .cat-fx .pos { color: var(--accent); }
+.cat-vazio { color: var(--fg-2); }
+
+@media (max-width: 640px) {
+  .doc-body { grid-template-columns: 1fr; }
+  .foto { max-width: 160px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="mast">
+    <span class="mast-eyebrow">A.C.E. · Autoridade Civil de Emergência · Documento de campo</span>
+    <h1>Manual de Campo · Até Amanhã</h1>
+    <p>Cada tela do jogo está reproduzida abaixo. Passe o mouse sobre qualquer parte (no celular, toque) para ver o que ela faz e como funciona. Use <kbd>Tab</kbd> para percorrer os elementos pelo teclado.</p>
+    <div class="mast-row">
+      <a class="voltar" href="./">← Voltar ao jogo</a>
+      <label class="toggle" for="marcar"><input type="checkbox" id="marcar"> Destacar tudo que tem explicação</label>
+    </div>
+  </header>
+
+  <nav class="screens" role="tablist" aria-label="Telas do jogo" id="screens"></nav>
+
+  <!-- ═══════════ 1. ENTRADA ═══════════ -->
+  <section class="screen" id="s-entrada" data-nome="Entrada">
+    <p class="screen-intro">A primeira tela. Aqui você decide se o progresso fica <strong>salvo na nuvem</strong> (com conta) ou <strong>só neste navegador</strong>.</p>
+    <div class="frame">
+      <div class="frame-label">Tela de login</div>
+      <div class="login">
+        <div class="logo" data-h="logo" tabindex="0">ATÉ AMANHÃ<small>2031</small></div>
+        <div class="card stack">
+          <div class="mono dim" style="font-size:11px;letter-spacing:.12em">SISTEMA DE AUTENTICAÇÃO</div>
+          <div class="field" data-h="email" tabindex="0"><label>IDENTIFICAÇÃO (E-MAIL)</label><div class="input">sobrevivente@zona.br</div></div>
+          <div class="field" data-h="senha" tabindex="0"><label>SENHA DE ACESSO</label><div class="input">••••••••</div></div>
+          <div class="row">
+            <span class="btn" data-h="entrar" tabindex="0">▶ ENTRAR</span>
+            <span class="btn sec" data-h="registrar" tabindex="0">+ REGISTRAR</span>
+          </div>
+          <span class="btn sec sm" data-h="offline" tabindex="0" style="justify-self:center">Jogar sem conta (salvo localmente)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 2. CARTEIRA ═══════════ -->
+  <section class="screen" id="s-criacao" data-nome="Criar personagem" hidden>
+    <p class="screen-intro">Você preenche a <strong>Carteira de Sobrevivente</strong>. A foto é só visual; o <strong>traço psicológico</strong> muda as regras do jogo para o seu personagem.</p>
+    <div class="frame">
+      <div class="frame-label">Tela de criação</div>
+      <div class="doc">
+        <div class="doc-h"><span>✦</span><span>AUTORIDADE CIVIL DE EMERGÊNCIA · ZONA DE CONTROLE — SETOR NORDESTE</span></div>
+        <div class="doc-body">
+          <div class="stack" data-h="foto" tabindex="0">
+            <div class="foto">🧔</div>
+            <div class="row" style="justify-content:space-between"><span class="mono">◀</span><span class="mono" style="font-size:12px">01 / 12</span><span class="mono">▶</span></div>
+          </div>
+          <div class="stack">
+            <div class="field" data-h="nome" tabindex="0"><span class="lbl">NOME COMPLETO</span><div class="input">Marta Valença</div></div>
+            <div class="stack" style="gap:6px">
+              <span class="lbl">TRAÇO PSICOLÓGICO</span>
+              <div class="row">
+                <span class="chip sel" data-h="t-resistente" tabindex="0">💪 Resistente</span>
+                <span class="chip" data-h="t-ansioso" tabindex="0">😰 Ansioso</span>
+                <span class="chip" data-h="t-economico" tabindex="0">🧠 Econômico</span>
+                <span class="chip" data-h="t-medico" tabindex="0">🩹 Ex-Médico</span>
+              </div>
+            </div>
+            <div class="row" data-h="campos-doc" tabindex="0" style="gap:18px">
+              <div class="field"><span class="lbl">Nº REGISTRO</span><span class="mono">ACE-2031-4417</span></div>
+              <div class="field"><span class="lbl">SETOR DE ORIGEM</span><span class="redacted">██████████</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:12px"><span class="btn" data-h="sobreviver" tabindex="0">▶ SOBREVIVER</span></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 3. TELA PRINCIPAL ═══════════ -->
+  <section class="screen" id="s-jogo" data-nome="Tela principal" hidden>
+    <p class="screen-intro">A tela onde você passa o jogo inteiro. <strong>Esquerda:</strong> seu personagem e as barras de status. <strong>Centro:</strong> o registro de eventos e as abas de ação. <strong>Direita:</strong> a mochila.</p>
+    <div class="frame">
+      <div class="frame-label">Visão geral · role para os lados no celular</div>
+      <div class="game">
+        <div class="hdr">
+          <span class="mono dim" style="font-size:12px;margin-right:auto" data-h="usuario" tabindex="0">sobrevivente@zona.br</span>
+          <span class="ico" data-h="som" tabindex="0">🔊</span>
+          <span class="ico" data-h="salvar" tabindex="0">💾</span>
+          <span class="ico" data-h="reiniciar" tabindex="0">🔄</span>
+          <span class="ico" data-h="sair" tabindex="0">🚪</span>
+        </div>
+
+        <div class="stack">
+          <div class="idcard">
+            <div class="mono dim" style="font-size:10px;letter-spacing:.14em;padding:5px 8px">ID · SOBREVIVENTE</div>
+            <div class="idcard-tela" data-h="avatar" tabindex="0">🧔</div>
+            <div class="idcard-rod">
+              <span data-h="nome-traco" tabindex="0"><b style="font-weight:600">Marta Valença</b><br><span class="dim" style="font-size:14px">💪 Resistente</span></span>
+              <div class="taticas">
+                <span class="on" data-h="tat-furtivo" tabindex="0">🐾</span>
+                <span data-h="tat-oportunista" tabindex="0">⚡</span>
+                <span data-h="tat-agressivo" tabindex="0">🔥</span>
+              </div>
+            </div>
+          </div>
+          <div class="card" data-h="reputacao" tabindex="0" style="padding:8px">
+            <div class="sec-t" style="margin:0 0 5px">Reputação <span style="color:var(--fg)">Neutro</span></div>
+            <div class="bar"><i style="width:52%;background:var(--amber)"></i></div>
+          </div>
+          <div class="card" data-h="relogio" tabindex="0" style="padding:8px">
+            <div class="relogio"><b style="font-weight:400">Dia 4</b><span>☀ 14:20</span><div class="bar"><i style="width:58%;background:var(--amber)"></i></div></div>
+          </div>
+          <div class="card" style="padding:8px">
+            <div class="sec-t">Status</div>
+            <div class="stat" data-h="vida" tabindex="0"><div class="stat-l">❤️ Vida <span class="v">96</span></div><div class="bar"><i style="width:80%;background:var(--red)"></i></div></div>
+            <div class="stat" data-h="saciedade" tabindex="0"><div class="stat-l">🍖 Saciedade <span class="v">62</span></div><div class="bar"><i style="width:62%;background:#c88a2a"></i></div></div>
+            <div class="stat" data-h="hidratacao" tabindex="0"><div class="stat-l">💧 Hidratação <span class="v">17</span></div><div class="bar"><i style="width:17%;background:var(--blue)"></i></div></div>
+            <div class="stat" data-h="estresse" tabindex="0"><div class="stat-l">😤 Estresse <span class="v">34</span></div><div class="bar"><i style="width:34%;background:var(--purple)"></i></div></div>
+            <div class="stat" data-h="vicio" tabindex="0"><div class="stat-l">💊 Vício <span class="v">0</span></div><div class="bar"><i style="width:0%;background:var(--teal)"></i></div></div>
+            <div class="stack" data-h="avisos" tabindex="0" style="gap:3px;margin-top:6px;font-size:14px">
+              <span style="color:var(--amber)">💧 Com muita sede!</span>
+              <span style="color:var(--red)">🩸 Sangrando! Use uma bandagem ou curativo</span>
+            </div>
+          </div>
+          <div class="card" data-h="equipado" tabindex="0" style="padding:8px">
+            <div class="sec-t">Equipado</div>
+            <div class="dim" style="font-size:14px">🗡️ Faca · 🎒 Mochila tática</div>
+          </div>
+        </div>
+
+        <div class="stack" style="align-content:start">
+          <div class="log" data-h="log" tabindex="0">
+            <span class="mono dim" style="font-size:10px;letter-spacing:.14em">TERMINAL · REGISTRO DE EVENTOS</span>
+            <span class="s">_ Sistema inicializado. Boa sorte.</span>
+            <span class="al">☀ Dia 4. Você sobreviveu mais uma noite.</span>
+            <span class="loot">  → Encontrou: 🔩 Sucata ×2</span>
+            <span class="ok">✅ Fogueira construída!</span>
+            <span class="pe">⚠️ Um cão faminto avança. Você se defende, mas sai ferido.</span>
+          </div>
+          <div class="abas">
+            <span class="on" data-h="aba-locais" tabindex="0">Locais</span>
+            <span data-h="aba-base" tabindex="0">Base</span>
+            <span data-h="aba-mercado" tabindex="0">Mercado</span>
+            <span data-h="aba-barracas" tabindex="0">Barracas</span>
+            <span data-h="aba-trabalhos" tabindex="0">Trabalhos</span>
+            <span class="lock" data-h="aba-assent" tabindex="0">Assentamento</span>
+          </div>
+          <div class="card dim" style="font-size:15px">O conteúdo da aba escolhida aparece aqui. Cada aba tem sua própria tela neste manual: use os botões lá no alto.</div>
+        </div>
+
+        <div class="card stack" style="align-content:start">
+          <div class="sec-t" style="margin:0" data-h="mochila" tabindex="0">Mochila <span class="mono" style="color:var(--fg)">7/10</span></div>
+          <div class="dim" style="font-size:13.5px" data-h="combinar" tabindex="0">Clique num item e depois em outro para combinar.</div>
+          <div class="inv">
+            <div class="item" data-h="item" tabindex="0"><span class="ic">🥫</span><div><div class="nm">Comida Enlatada</div><div class="q">×3 · clique para opções</div></div></div>
+            <div class="item sel" data-h="item-sel" tabindex="0"><span class="ic">🔩</span><div><div class="nm">Sucata</div><div class="q">×6</div></div></div>
+            <div class="item"><span class="ic">🌳</span><div><div class="nm">Madeira</div><div class="q">×4</div></div></div>
+            <div class="item"><span class="ic">🧻</span><div><div class="nm">Trapo</div><div class="q">×2</div></div></div>
+            <div class="item" data-h="pilha" tabindex="0"><span class="ic">🔋</span><div><div class="nm">Bateria</div><div class="q">×23</div></div></div>
+            <div class="item raro" data-h="raro" tabindex="0"><span class="ic">⌚</span><div><div class="nm">Relógio de Ouro <span class="pill p-medio">raro</span></div><div class="q">×1</div></div></div>
+            <div class="item"><span class="ic">📔</span><div><div class="nm">Revista em Quadrinhos</div><div class="q">×1</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 4. LOCAIS ═══════════ -->
+  <section class="screen" id="s-locais" data-nome="Locais" hidden>
+    <p class="screen-intro">Explorar é como você consegue quase tudo: comida, água, materiais, baterias, manuais e itens raros. Cada viagem tem <strong>ida, busca e volta</strong>, e algo pode acontecer no caminho.</p>
+    <div class="frame stack">
+      <div class="frame-label">Aba Locais · exploração em andamento</div>
+      <div class="card stack" data-h="exp-painel" tabindex="0">
+        <div class="row"><span style="font-size:22px">🔍</span><div><b style="font-weight:600">Mercado Abandonado</b><div class="dim" style="font-size:14px">Explorando o local</div></div><span class="mono" style="margin-left:auto;color:var(--amber)">12s</span></div>
+        <div class="jornada"><span class="ponto">🏚️</span><div class="trilha"><i></i><b>🚶</b></div><span class="ponto">🏪</span></div>
+      </div>
+
+      <div class="setor-t">Setor 01 <b>Zona Residencial</b></div>
+      <div class="locais">
+        <div class="local" data-h="local" tabindex="0">
+          <div class="local-img">🏚️<span class="pill p-baixo" data-h="risco" tabindex="0">Baixo risco</span></div>
+          <div class="local-info"><b style="font-weight:600">Ruínas Residenciais</b><span class="mono dim" style="font-size:12px" data-h="tempo" tabindex="0">⏱ 10s</span></div>
+          <span class="btn" data-h="explorar" tabindex="0">Explorar</span>
+        </div>
+        <div class="local">
+          <div class="local-img">🏪<span class="pill p-medio">Médio risco</span></div>
+          <div class="local-info"><b style="font-weight:600">Mercado Abandonado</b><span class="mono dim" style="font-size:12px">⏱ 20s</span></div>
+          <span class="btn off">Explorando…</span>
+        </div>
+        <div class="local" data-h="bloqueado" tabindex="0">
+          <div class="local-img blur">⛽<span class="pill p-bloq">🔒 Bloqueado</span></div>
+          <div class="local-info"><b style="font-weight:600">???</b><span class="dim" style="font-size:13px">Encontre a anotação para revelar</span></div>
+          <span class="btn off">Bloqueado</span>
+        </div>
+      </div>
+
+      <div class="setor-t">Setor 02 <b>Zona Industrial</b></div>
+      <div class="card dim" data-h="setor2" tabindex="0" style="font-size:15px">Depósito Logístico · Garagem Industrial · Fábrica Têxtil · Subestação Elétrica · Silo de Grãos (45 a 85 s)</div>
+
+      <div class="setor-t">Setor 03 <b>Zona Militar</b> <span class="pill p-alto">⚠️ Zona de alto risco</span></div>
+      <div class="locais">
+        <div class="local" data-h="setor3" tabindex="0">
+          <div class="local-img">🎖️<span class="pill p-alto">Alto risco</span></div>
+          <div class="local-info"><b style="font-weight:600">🏠 Alojamento Militar</b><span class="mono dim" style="font-size:12px">⏱ 100s</span></div>
+          <div class="row" style="padding:0 8px"><span class="chip">🍖 ×2 Comida</span><span class="chip">💧 ×2 Água Limpa</span></div>
+          <span class="btn">Explorar</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 5. BASE ═══════════ -->
+  <section class="screen" id="s-base" data-nome="Base" hidden>
+    <p class="screen-intro">Sua casa entre uma exploração e outra. Tudo começa pelo <strong>Abrigo</strong>: sem ele, nenhuma outra estrutura pode ser construída. A Base tem quatro sub-abas.</p>
+    <div class="frame stack">
+      <div class="frame-label">Aba Base</div>
+      <div class="subabas">
+        <span class="on" data-h="sub-estruturas" tabindex="0">🏗 Estruturas</span>
+        <span data-h="sub-projetos" tabindex="0">⚒ Projetos</span>
+        <span data-h="sub-deposito" tabindex="0">📦 Depósito</span>
+        <span data-h="sub-defesa" tabindex="0">🛡 Defesa</span>
+      </div>
+
+      <div class="mono dim" style="font-size:11px;letter-spacing:.14em">ACAMPAMENTO · ZONA SEGURA</div>
+      <div class="mapa">
+        <div class="slot feita" data-h="abrigo" tabindex="0"><span class="si">⛺</span><span class="sn">Abrigo</span><span class="sc">✔ Construído</span><span class="sd">Protege do frio e dos perigos. Base de tudo.</span></div>
+        <div class="slot feita" data-h="bancada" tabindex="0"><span class="si">🔨</span><span class="sn">Bancada</span><span class="sc">✔ Construída</span><span class="sd">Libera os projetos avançados.</span></div>
+        <div class="slot feita" data-h="fogueira" tabindex="0"><span class="si">🔥</span><span class="sn">Fogueira</span><span class="sc">✔ Construída</span><span class="sd">Cozinhe alimentos para melhorar seus efeitos.</span></div>
+        <div class="slot" data-h="cisterna" tabindex="0"><span class="si">💧</span><span class="sn">Cisterna</span><span class="sc">5🌳 · 2🧻 · 2〰️</span><span class="sd">Acumula água da chuva. Potencializada pelo Filtro.</span></div>
+        <div class="slot" data-h="cultivo" tabindex="0"><span class="si">🌱</span><span class="sn">Cultivo</span><span class="sc">5🌳 · 2🧻</span><span class="sd">Plante até 3 culturas. Sementes na Mata.</span></div>
+        <div class="slot trava" data-h="seguranca" tabindex="0"><span class="si">🚨</span><span class="sn">Segurança</span><span class="sc">2🕸️ · requer Bancada</span><span class="sd">Instale armadilhas para proteger a base.</span></div>
+      </div>
+
+      <div class="paineis">
+        <div class="card">
+          <div class="sec-t">🔥 Fogueira</div>
+          <div class="mini-slots">
+            <div class="mini-slot" data-h="cozinhar" tabindex="0">🍲 Comida Quente <span class="dim">2× Comida</span><span class="btn sm" style="margin-left:auto">Cozinhar</span></div>
+            <div class="mini-slot">🥣 Sopa <span class="dim">Comida + Água Suja</span></div>
+            <div class="mini-slot">💊 Remédio <span class="dim">2× Erva Medicinal</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-t">💧 Cisterna</div>
+          <div class="mini-slots">
+            <div class="mini-slot" data-h="cist-coletar" tabindex="0">🚱 Água Suja <span class="dim">3/5 acumulada</span><span class="btn sm" style="margin-left:auto">Coletar</span></div>
+            <div class="mini-slot" data-h="cist-filtro" tabindex="0">🧪 Filtro <span class="dim">0/3 instalados</span><span class="btn sec sm" style="margin-left:auto">Instalar filtro</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-t">🌱 Cultivo</div>
+          <div class="mini-slots">
+            <div class="mini-slot" data-h="plantar" tabindex="0">Slot 1 <span class="dim">— escolha uma semente —</span><span class="btn sm" style="margin-left:auto">Plantar</span></div>
+            <div class="mini-slot" data-h="regar" tabindex="0">Slot 2 🎃 Abóbora <span class="dim">água 1/3</span><span class="btn sm" style="margin-left:auto">Regar</span></div>
+            <div class="mini-slot" data-h="colher" tabindex="0">Slot 3 🌾 Cânhamo <span class="dim">pronto</span><span class="btn sm" style="margin-left:auto">🌾 Colher</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-t">🚨 Segurança</div>
+          <div class="mini-slots">
+            <div class="mini-slot" data-h="armadilhas" tabindex="0">🕸️ 2 instaladas <span class="btn sm" style="margin-left:auto">Instalar</span><span class="btn sec sm">Remover</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="card stack">
+          <div class="sec-t">⚒ Projetos</div>
+          <div class="receita pode" data-h="receita" tabindex="0">
+            <div class="row"><span style="font-size:20px">🩹</span><b style="font-weight:600">Tala Improvisada</b><span class="chip">👜 Mochila</span><span class="btn sm" style="margin-left:auto">Criar</span></div>
+            <div class="row"><span class="chip ok">🌳 Madeira ×1</span><span class="chip ok">🧻 Trapo ×2</span></div>
+          </div>
+          <div class="receita" data-h="receita-bancada" tabindex="0">
+            <div class="row"><span style="font-size:20px">🕸️</span><b style="font-weight:600">Armadilha</b><span class="chip">🔨 Bancada</span></div>
+            <div class="row"><span class="chip ok">〰️ Arame ×2</span><span class="chip falta">🔩 Sucata ×2</span></div>
+          </div>
+          <span class="dim" style="font-size:14px" data-h="ocultas" tabindex="0">🔒 6 receita(s) ainda desconhecida(s). Explore e leia manuais.</span>
+        </div>
+        <div class="card stack">
+          <div class="sec-t">📦 Depósito · 🛡 Defesa</div>
+          <div class="mini-slot" data-h="deposito" tabindex="0">📦 Nível 2 · 4/7 slots <span class="btn sec sm" style="margin-left:auto">Melhorar → Nv3</span></div>
+          <div class="mini-slot" data-h="dep-retirar" tabindex="0">🥫 Comida ×5 <span class="btn sec sm" style="margin-left:auto">Retirar</span></div>
+          <div class="stat" data-h="nivel-seg" tabindex="0"><div class="stat-l">Nível de segurança <span class="v" style="color:var(--amber)">Baixo</span></div><div class="bar"><i style="width:30%;background:var(--amber)"></i></div></div>
+          <div class="stat-l" data-h="chance-saque" tabindex="0">Chance de saque esta noite <span class="v" style="color:var(--red)">43%</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 6. COMÉRCIO ═══════════ -->
+  <section class="screen" id="s-comercio" data-nome="Mercado e Barracas" hidden>
+    <p class="screen-intro">A moeda do jogo é a <strong>Bateria 🔋</strong>. O <strong>Mercado</strong> é uma loja do próprio jogo; as <strong>Barracas</strong> são o comércio entre jogadores reais (exige conta).</p>
+    <div class="frame two">
+      <div class="stack">
+        <div class="frame-label">Aba Mercado</div>
+        <div class="row" style="justify-content:space-between">
+          <div><b style="font-size:19px;font-weight:600">🏷️ Loja Geral</b><div class="dim" style="font-size:14px">Itens rotacionam a cada dia.</div></div>
+          <div data-h="saldo" tabindex="0"><span class="mono dim" style="font-size:11px">SALDO</span><div class="saldo">23 🔋</div></div>
+        </div>
+        <div class="row mono dim" style="font-size:12px;justify-content:space-between" data-h="fator" tabindex="0"><span>Renova no próximo dia</span><span>Vendas hoje: ×1.15</span></div>
+        <div class="loja">
+          <div class="oferta" data-h="oferta" tabindex="0"><span class="ic">💧</span><b style="font-weight:600">Água Limpa ×2</b><span class="mono"><span class="trend-up">▲</span> 6 🔋</span><span class="btn sm">Comprar</span></div>
+          <div class="oferta"><span class="ic">🩹</span><b style="font-weight:600">Atadura ×1</b><span class="mono"><span class="trend-down">▼</span> 3 🔋</span><span class="btn sm">Comprar</span></div>
+        </div>
+        <div class="sec-t" style="margin-top:4px">💰 Vender itens</div>
+        <div class="loja">
+          <div class="oferta" data-h="vender" tabindex="0"><span class="ic">⌚</span><b style="font-weight:600">Relógio de Ouro</b><span class="mono">+18 🔋</span><span class="btn sec sm">Vender 1</span></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="frame-label">Aba Barracas</div>
+        <div class="row" style="justify-content:space-between"><b style="font-size:19px;font-weight:600">🏕️ Barraca do Sobrevivente</b><span class="mono" style="font-size:12px;color:var(--accent)" data-h="online" tabindex="0">🟢 online</span></div>
+        <div class="card stack" data-h="anunciar" tabindex="0">
+          <div class="sec-t" style="margin:0">Sua barraca <span>(1/5 slots)</span></div>
+          <div class="input" style="font-size:13px">🔩 Sucata ×6</div>
+          <div class="row"><span class="input" style="padding:5px 8px;font-size:13px">QTD 3</span><span class="input" style="padding:5px 8px;font-size:13px">PREÇO 4 🔋</span><span class="btn sm">Colocar à venda</span></div>
+        </div>
+        <div class="mini-slot" data-h="retirar-anuncio" tabindex="0">🌳 Madeira ×5 <span class="mono dim">8 🔋</span><span class="btn perigo sm" style="margin-left:auto">Retirar</span></div>
+        <div class="sec-t" style="margin-top:4px">Barracas de sobreviventes <span data-h="refresh" tabindex="0">↻ em 7s</span></div>
+        <div class="card stack" data-h="comprar-bazar" tabindex="0">
+          <div class="row">🏕️ <b style="font-weight:600">Joaquim</b></div>
+          <div class="mini-slot">🔦 Lanterna ×1 <span class="mono dim">12 🔋</span><span class="btn sm" style="margin-left:auto">Comprar</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 7. TRABALHOS E ASSENTAMENTO ═══════════ -->
+  <section class="screen" id="s-comunidade" data-nome="Trabalhos e Assentamento" hidden>
+    <p class="screen-intro"><strong>Trabalhos</strong> são encomendas de outros sobreviventes: entregue o que pedem e receba baterias, itens e reputação. Com reputação alta, você abre o <strong>Assentamento</strong> e passa a abrigar moradores que trabalham para você.</p>
+    <div class="frame two">
+      <div class="stack">
+        <div class="frame-label">Aba Trabalhos</div>
+        <div class="sec-t" style="margin:0" data-h="trab-slots" tabindex="0">⏳ Em andamento <span>1/3</span></div>
+        <div class="trab" data-h="trab-aceito" tabindex="0">
+          <div class="trab-h"><span class="ic">🌳</span><div><b style="font-weight:600">Madeira para barricada</b><div class="dim" style="font-size:13.5px">Líder do Bloco 4</div></div></div>
+          <div class="row"><span class="chip falta">🌳 Madeira 4/15</span><span class="chip">Recompensa: 25 🔋 · +5 rep.</span></div>
+          <div class="row"><span class="btn sm off">Entregar</span><span class="btn perigo sm" data-h="desistir" tabindex="0">Desistir (10 🔋)</span></div>
+        </div>
+        <div class="sec-t" style="margin:6px 0 0">📌 Disponíveis hoje</div>
+        <div class="trab" data-h="trab-disp" tabindex="0">
+          <div class="trab-h"><span class="ic">🚱</span><div><b style="font-weight:600">Água para o tanque</b><div class="dim" style="font-size:13.5px">Mecânico Tulio</div></div></div>
+          <div class="row"><span class="chip">🚱 Água Suja ×8</span><span class="btn sm" style="margin-left:auto">Aceitar</span></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="frame-label">Aba Assentamento</div>
+        <div class="card stack" data-h="npc-chega" tabindex="0">
+          <b style="font-weight:600">🚪 Sobrevivente pedindo abrigo</b>
+          <div class="npc"><span class="av">👩</span><div><b style="font-weight:600">Sofia</b> <span class="dim">· 🌱 Cultivadora</span><div class="dim" style="font-size:13.5px">Sementes nos bolsos.</div></div></div>
+          <div class="row"><span class="btn sm">✔ Aceitar</span><span class="btn sec sm">✖ Recusar</span></div>
+        </div>
+        <div class="parcelas">
+          <div class="parcela" data-h="parcela-vazia" tabindex="0"><b style="font-weight:600">🏗 Parcela 1</b><span class="dim" style="font-size:14px">Terreno livre</span><span class="btn sm">Construir</span></div>
+          <div class="parcela" data-h="morador" tabindex="0">
+            <div class="row"><span class="dot" style="background:var(--accent)"></span><b style="font-weight:600">🏠 Cabana</b></div>
+            <div class="npc"><span class="av">🧔</span><div><b style="font-weight:600">Lucas</b><div class="dim" style="font-size:13.5px">🔧 Mecânico · pronto</div></div></div>
+            <div class="row" data-h="foco" tabindex="0"><span class="mono dim" style="font-size:12px">🎯 Foco:</span><span class="input" style="padding:3px 7px;font-size:12px">Aleatório</span></div>
+            <div class="row"><span class="btn sm" data-h="npc-coletar" tabindex="0">📥 Coletar</span><span class="btn sec sm" data-h="npc-dispensar" tabindex="0">🚪 Dispensar</span></div>
+          </div>
+          <div class="parcela" data-h="pagamento" tabindex="0">
+            <div class="row"><span class="dot" style="background:var(--amber)"></span><b style="font-weight:600">⛺ Tenda Reforçada</b></div>
+            <span>🔋 Davi quer ser pago</span>
+            <div class="row"><span class="btn sm">🔋 Pagar (24×)</span><span class="btn perigo sm">✖ Recusar</span></div>
+          </div>
+        </div>
+        <div class="card dim" data-h="estruturas-assent" tabindex="0" style="font-size:14.5px">Estruturas: 🏚️ Barraco · ⛺ Tenda Reforçada · 🏠 Cabana · 🌿 Estufa · ⚕️ Posto Médico · 🗼 Torre de Vigilância</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 8. ITENS E EVENTOS ═══════════ -->
+  <section class="screen" id="s-itens" data-nome="Janelas e eventos" hidden>
+    <p class="screen-intro">Clicar num item da mochila abre a <strong>janela do item</strong>. Durante as explorações aparecem <strong>eventos</strong> com escolhas, e nem toda escolha é segura.</p>
+    <div class="frame two">
+      <div class="stack">
+        <div class="frame-label">Janela de item</div>
+        <div class="modal">
+          <h3>💧 Água Limpa</h3>
+          <p data-h="item-efeitos" tabindex="0">Efeitos ao usar: +35 hidratação</p>
+          <div class="row">
+            <span class="btn" data-h="usar" tabindex="0">Usar</span>
+            <span class="btn" data-h="equipar" tabindex="0">⚔️ Equipar</span>
+          </div>
+          <div class="row" data-h="guardar" tabindex="0"><span class="input" style="padding:5px 8px;font-size:13px;width:56px">1</span><span class="btn sec sm">Guardar</span><span class="btn sec sm">Guardar Tudo</span></div>
+          <div class="row"><span class="btn perigo" data-h="descartar" tabindex="0">Descartar</span><span class="btn sec">Fechar</span></div>
+        </div>
+        <div class="card stack" data-h="tipos-item" tabindex="0">
+          <div class="sec-t" style="margin:0">Tipos de item</div>
+          <div class="row"><span class="chip">🥫 consumível</span><span class="chip">🩹 medicinal</span><span class="chip">🔩 material</span><span class="chip">📔 leitura</span><span class="chip">📄 anotação</span><span class="chip">🔦 ferramenta</span><span class="chip">⌚ raro</span></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="frame-label">Evento durante a exploração</div>
+        <div class="modal">
+          <span class="ev-label" data-h="evento" tabindex="0">⚠ EVENTO</span>
+          <h3>Prédio escorado</h3>
+          <p>A entrada está meio desabada. Lá dentro, prateleiras ainda cheias.</p>
+          <div class="escolha" data-h="escolha-risco" tabindex="0"><span>🏃 Entrar correndo</span><span class="pill p-alto r">alto</span></div>
+          <div class="escolha" data-h="escolha-requer" tabindex="0"><span>🌳 Escorar com madeira e entrar com calma</span><span class="pill p-medio r">médio</span></div>
+          <div class="escolha"><span>↩ Deixar para lá</span><span class="pill p-baixo r">baixo</span></div>
+          <span class="btn sec" data-h="continuar" tabindex="0" style="justify-self:start">CONTINUAR</span>
+        </div>
+        <div class="card stack" data-h="condicoes" tabindex="0">
+          <div class="sec-t" style="margin:0">Condições</div>
+          <span>🤢 Intoxicado · 🦯 Contundido · 🩸 Sangrando</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ ITENS ═══════════ -->
+  <section class="screen" id="s-catalogo" data-nome="Itens" hidden>
+    <p class="screen-intro">Todos os itens que existem no jogo até agora e para que cada um serve. A etiqueta <span class="tag-craft">⚒ fabricável</span> marca os que você pode produzir; descobrir como faz parte do jogo.</p>
+    <div class="frame stack">
+      <div class="cat-filtros">
+        <input type="search" id="cat-busca" class="cat-busca" placeholder="Buscar item…" aria-label="Buscar item">
+        <div class="row" id="cat-chips" role="group" aria-label="Filtrar por categoria"></div>
+        <label class="toggle" for="cat-so-craft"><input type="checkbox" id="cat-so-craft"> Só fabricáveis</label>
+      </div>
+      <p class="mono dim" id="cat-total" style="font-size:12px;margin:0"></p>
+      <div id="cat-lista" class="stack" style="gap:16px"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 9. FIM DE JOGO ═══════════ -->
+  <section class="screen" id="s-fim" data-nome="Fim de jogo" hidden>
+    <p class="screen-intro">Quando a vida chega a zero, o personagem morre <strong>de vez</strong>. Não existe continuar: o save é apagado e você recomeça com uma nova carteira.</p>
+    <div class="frame">
+      <div class="obito">
+        <div class="tt">REGISTRO DE ÓBITO</div>
+        <div class="big">VOCÊ NÃO SOBREVIVEU</div>
+        <div class="stack" data-h="causa" tabindex="0">
+          <span class="lbl">CAUSA MORTIS</span>
+          <b style="font-size:19px;font-weight:600">Desidratação</b>
+          <span class="dim">Seu corpo cedeu sem água. A sede foi mais forte.</span>
+        </div>
+        <div class="go-stats" data-h="relatorio" tabindex="0">
+          <span class="chip">📅 Dias sobrevividos: 12</span>
+          <span class="chip">🧭 Explorações: 41</span>
+          <span class="chip">⚗️ Itens fabricados: 9</span>
+          <span class="chip">🏗️ Estruturas: 5</span>
+        </div>
+        <span class="btn" data-h="tentar" tabindex="0" style="justify-self:center">▶ TENTAR NOVAMENTE</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ REFERÊNCIA RÁPIDA ═══════════ -->
+  <section class="ref" aria-label="Referência rápida">
+    <div class="card">
+      <h3>Primeiros passos</h3>
+      <ul>
+        <li><b>Explore as Ruínas</b> algumas vezes: são curtas e de baixo risco.</li>
+        <li>Junte <b>5 Sucata, 5 Madeira e 5 Trapo</b> e construa o <b>Abrigo</b>.</li>
+        <li>Construa a <b>Fogueira</b> e a <b>Cisterna</b> para comida e água estáveis.</li>
+        <li>Mantenha <b>Saciedade e Hidratação acima de 20</b>. Abaixo disso, a vida cai.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>O relógio do jogo</h3>
+      <ul>
+        <li>Um dia completo dura cerca de <b>7 minutos</b>: 5 de dia e 2 de noite.</li>
+        <li>À noite, se você estiver <b>fora explorando</b>, a base pode ser saqueada.</li>
+        <li>Fechado o jogo, o tempo corre por até <b>1 hora</b>: você volta com mais fome e sede.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Como se manter vivo</h3>
+      <ul>
+        <li><b>Vida ≤ 15</b> impede novas explorações.</li>
+        <li>Água suja hidrata, mas <b>intoxica</b>. Cozinhe ou filtre antes.</li>
+        <li>Trate <b>sangramento</b> rápido: é a condição que mais drena vida.</li>
+        <li>Descanse na base para o <b>estresse</b> baixar.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="foot">Manual de Campo · Até Amanhã · valores conferidos no código do jogo em outubro de 2026.</p>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden><span class="tip-t" id="tip-t"></span><span class="tip-b" id="tip-b"></span></div>
+
+<script>
+const H = {
+  // Entrada
+  logo: ['Até Amanhã', 'Jogo de sobrevivência no Brasil de <b>2031</b>, depois do colapso. O objetivo é simples: chegar vivo ao dia seguinte, quantas vezes conseguir.'],
+  email: ['E-mail', 'O e-mail da sua conta. Com conta, o progresso fica salvo na nuvem e você pode jogar de qualquer computador.'],
+  senha: ['Senha', 'Mínimo de <b>6 caracteres</b>.'],
+  entrar: ['Entrar', 'Entra na conta e carrega o sobrevivente salvo. Se a conta ainda não tem personagem, abre a criação.'],
+  registrar: ['Registrar', 'Cria uma conta nova com o e-mail e a senha digitados. Pode ser necessário confirmar o e-mail antes de entrar.'],
+  offline: ['Jogar sem conta', 'Joga sem login. O progresso fica salvo <b>só neste navegador</b>. <span class="warn">Sem conta, as Barracas (comércio entre jogadores) ficam indisponíveis.</span>'],
+
+  // Criação
+  foto: ['Foto do titular', 'Use ◀ e ▶ para escolher entre <b>12 retratos</b>. É só aparência: não muda nada nas regras.'],
+  nome: ['Nome', 'Até <b>20 caracteres</b>. É o nome que aparece na sua ficha e na sua barraca para os outros jogadores.'],
+  't-resistente': ['💪 Resistente', 'Vida máxima <b>120</b> em vez de 100, e perde vida <b>30% mais devagar</b> com fome, sede e outros danos contínuos. A escolha mais segura para começar.'],
+  't-ansioso': ['😰 Ansioso', '<b>+15% de chance de loot</b> nas explorações, mas o estresse <b>acumula 30% mais rápido</b>.'],
+  't-economico': ['🧠 Econômico', 'Saciedade e hidratação caem <b>25% mais devagar</b>. Você precisa de menos comida e água.'],
+  't-medico': ['🩹 Ex-Médico', 'Itens que curam vida são <b>50% mais eficazes</b>. Começa com um <b>Kit de primeiros socorros</b> na mochila.'],
+  'campos-doc': ['Campos do documento', 'Registro, validade, setor de origem e classificação são <b>decorativos</b>. Ninguém sabe de onde você veio.'],
+  sobreviver: ['Sobreviver', 'Confirma a carteira e começa o jogo. Uma introdução conta a história; depois você acorda no Dia 1 com 2 Comidas, 1 Água Suja, 3 Sucatas e 1 Trapo.'],
+
+  // Tela principal: topo
+  usuario: ['Conta conectada', 'O e-mail da conta em uso. Não aparece quando você joga sem conta.'],
+  som: ['Som', 'Liga e desliga a trilha sonora. A música muda entre dia e noite.'],
+  salvar: ['Salvar', 'Salva na hora. O jogo também salva sozinho a cada <b>30 segundos</b>.'],
+  reiniciar: ['Reiniciar', '<span class="warn">Apaga o progresso e começa do zero.</span> O jogo pede confirmação antes.'],
+  sair: ['Sair da conta', 'Desconecta e volta para a tela de login. Só aparece quando você está logado.'],
+
+  // Coluna esquerda
+  avatar: ['Retrato', 'O retrato escolhido na criação. O fundo muda conforme o dia e a noite.'],
+  'nome-traco': ['Nome e traço', 'Seu nome e o traço psicológico escolhido. O traço vale para o personagem inteiro e não pode ser trocado.'],
+  'tat-furtivo': ['🐾 Tática Furtivo', 'Explora com cuidado: <b>35% menos eventos negativos</b> e o estresse baixa <b>80% mais rápido</b> no descanso. Sem bônus de loot.'],
+  'tat-oportunista': ['⚡ Tática Oportunista', 'O meio-termo: risco, loot e recuperação de estresse normais.'],
+  'tat-agressivo': ['🔥 Tática Agressivo', '<b>+30% de loot</b>, mas <b>50% mais eventos negativos</b> e o estresse baixa pela metade da velocidade. Pode trocar de tática a qualquer momento.'],
+  reputacao: ['Reputação', 'Vai de 0 a 100 e começa em 50. Sobe e desce com suas escolhas em eventos e com os trabalhos entregues.<br>Faixas: <b>Predador</b> (0–20), <b>Suspeito</b>, <b>Neutro</b>, <b>Solidário</b> e <b>Líder</b> (81–100). Ser Líder libera o <b>Assentamento</b>.'],
+  relogio: ['Dia e hora', 'O dia dura cerca de <b>5 minutos</b> reais e a noite, <b>2 minutos</b>. A cada amanhecer: o mercado renova, a cisterna acumula água, as plantas crescem e os moradores trabalham. Durante a noite, a base pode ser saqueada se você estiver fora.'],
+  vida: ['❤️ Vida', 'Chegou a zero, o personagem <b>morre de vez</b>. Cai com fome, sede, vício alto e condições como sangramento. Sobe com itens de cura e comida cozida. Abaixo de 25 a barra pulsa; com 15 ou menos você <b>não pode explorar</b>.'],
+  saciedade: ['🍖 Saciedade', 'Cheia = bem alimentado. Esvazia com o tempo. <span class="warn">Abaixo de 20, você perde vida e acumula estresse</span>; abaixo de 5, perde vida rápido. Coma para encher.'],
+  hidratacao: ['💧 Hidratação', 'Cheia = hidratado. Esvazia <b>mais rápido que a saciedade</b>. <span class="warn">Abaixo de 20, você perde vida</span>, e abaixo de 5, perde rápido. Água Limpa dá +35; Água Suja dá +20 mas intoxica.'],
+  estresse: ['😤 Estresse', 'Sobe com eventos ruins e quando você passa fome. Baixa sozinho enquanto você está <b>na base</b> (não durante explorações). A tática Furtivo acelera a recuperação.'],
+  vicio: ['💊 Vício', 'Sobe ao usar bebidas e certas substâncias, e cai devagar com o tempo. Acima de <b>30</b> aumenta o estresse; acima de <b>70</b> vira abstinência e <b>drena vida</b>.'],
+  avisos: ['Avisos', 'Alertas do que precisa de atenção agora: fome, sede, vida crítica, estresse, vício e condições como intoxicação, contusão e sangramento. Cada aviso diz o que fazer.'],
+  equipado: ['Equipado', 'Resumo do que você está usando. Só aparece quando há algo equipado. Equipamentos dão bônus como menos dano em eventos, mais loot ou mais espaço na mochila.'],
+
+  // Centro
+  log: ['Registro de eventos', 'Tudo que acontece fica anotado aqui: o que você achou, construiu, comeu e sofreu. Cores: <b style="color:var(--accent)">verde</b> sucesso, <b style="color:#7fb7e6">azul</b> loot, <b style="color:var(--amber)">amarelo</b> alerta, <b style="color:var(--red)">vermelho</b> perigo.'],
+  'aba-locais': ['Aba Locais', 'Escolha um lugar para explorar. É a principal forma de conseguir recursos.'],
+  'aba-base': ['Aba Base', 'Construa e use estruturas: Abrigo, Fogueira, Cisterna, Cultivo, Segurança. Inclui projetos de fabricação, depósito e defesa.'],
+  'aba-mercado': ['Aba Mercado', 'Loja do jogo: compre itens com Baterias e venda o que sobra. O estoque muda todo dia.'],
+  'aba-barracas': ['Aba Barracas', 'Comércio com <b>outros jogadores</b>. Exige estar logado.'],
+  'aba-trabalhos': ['Aba Trabalhos', 'Encomendas de outros sobreviventes. Entregue os itens pedidos e receba recompensas e reputação.'],
+  'aba-assent': ['Aba Assentamento', 'Fica <b>bloqueada</b> até sua reputação chegar a <b>Líder (81+)</b>. Lá você constrói moradias e acolhe moradores.'],
+
+  // Mochila
+  mochila: ['Mochila', 'Mostra quantos <b>tipos</b> de item você carrega e o limite (começa em 10). Itens iguais se empilham sem ocupar espaço extra. Algumas mochilas equipáveis aumentam o limite.'],
+  combinar: ['Combinar itens', 'Clique num item e depois em outro: se existir uma receita com os dois, você fabrica na hora. É assim que se descobre receitas novas.'],
+  item: ['Item', 'Clique para abrir a janela do item: usar, equipar, guardar no depósito ou descartar.'],
+  'item-sel': ['Item selecionado', 'A borda amarela indica o primeiro item escolhido para combinar. Clique em outro item para tentar a combinação.'],
+  pilha: ['🔋 Bateria', 'A <b>moeda do jogo</b>. Use no Mercado, nas Barracas, para pagar moradores e para desistir de trabalhos.'],
+  raro: ['Item raro', 'Achados especiais, com moldura roxa. Não servem para muito na sobrevivência, mas valem bem no Mercado. O preço varia muito de um dia para o outro.'],
+
+  // Locais
+  'exp-painel': ['Exploração em andamento', 'Mostra o destino, a fase e o tempo restante. A viagem tem três fases: <b>ida</b>, <b>busca</b> e <b>volta</b>. Eventos e descobertas acontecem durante a busca. Você só pode fazer uma exploração por vez.'],
+  local: ['Card de local', 'Cada local tem seus próprios itens. Lugares mais longos e perigosos dão loot melhor.'],
+  risco: ['Nível de risco', 'Indica a chance de eventos negativos (ferimentos, cães, saqueadores). <b>Baixo</b>, <b>médio</b> ou <b>alto</b>.'],
+  tempo: ['Duração', 'Tempo real da viagem completa, em segundos.'],
+  explorar: ['Explorar', 'Parte para o local. <span class="warn">Explorar o mesmo lugar várias vezes esgota o loot</span>: a cada 3 visitas rende 25% menos (até −85%). O local se recupera aos poucos com o tempo.'],
+  bloqueado: ['Local bloqueado', 'Escondido até você achar a <b>anotação</b> certa explorando. Use a anotação na mochila para revelar o local no mapa.'],
+  setor2: ['Setor 02 · Zona Industrial', 'Locais mais longos (45 a 85 s), cheios de materiais: madeira, arame, sucata, baterias. Todos começam bloqueados por anotações.'],
+  setor3: ['Setor 03 · Zona Militar', 'Os locais mais perigosos e recompensadores. Revelados pela anotação "Rota para o Setor 3". <span class="warn">Cada viagem consome 2 Comidas e 2 Águas Limpas</span>, que precisam estar com você antes de partir.'],
+
+  // Base
+  'sub-estruturas': ['Estruturas', 'O mapa do acampamento. Clique numa estrutura para ver o custo e construir; depois de pronta, o painel dela aparece logo abaixo.'],
+  'sub-projetos': ['Projetos', 'Receitas de fabricação que você já conhece. As de <b>🔨 Bancada</b> só podem ser feitas depois de construir a Bancada.'],
+  'sub-deposito': ['Depósito', 'Armazém para itens que não cabem na mochila. Requer o Abrigo.'],
+  'sub-defesa': ['Defesa', 'Mostra o nível de segurança da base e a chance de saque esta noite.'],
+  abrigo: ['⛺ Abrigo', 'Custa <b>5 Sucata, 5 Madeira e 5 Trapo</b>. É o <b>primeiro passo</b>: todas as outras estruturas e o depósito exigem o Abrigo.'],
+  bancada: ['🔨 Bancada de Trabalho', 'Custa <b>8 Sucata e 3 Trapo</b>. Libera os projetos avançados (armadilha, arco, lança, filtro, kit avançado) e a estrutura de Segurança. Também melhora a defesa da base.'],
+  fogueira: ['🔥 Fogueira', 'Custa <b>5 Madeira e 1 Bateria</b>. Cozinha comida para render mais e neutraliza parte das toxinas da água. <span class="warn">À noite, a luz deixa a base um pouco mais visível para saqueadores.</span>'],
+  cisterna: ['💧 Cisterna', 'Custa <b>5 Madeira, 2 Trapo e 2 Arame</b>. Acumula <b>1 água por dia</b>, até 5. Sem filtro é Água Suja; com filtro é Água Limpa.'],
+  cultivo: ['🌱 Cultivo', 'Custa <b>5 Madeira e 2 Trapo</b>. Três canteiros para plantar sementes encontradas na mata.'],
+  seguranca: ['🚨 Segurança', 'Custa <b>2 Armadilhas</b> e exige a Bancada. Deixa você instalar armadilhas no perímetro, o que reduz a chance de saque e o estrago quando ele acontece.'],
+  cozinhar: ['Receitas da Fogueira', '<b>Comida Quente</b> (2 Comidas) dobra o valor nutritivo. <b>Sopa</b> (Comida + Água Suja) alimenta, hidrata e cura um pouco. <b>Remédio</b> (2 Ervas Medicinais) trata ferimentos.'],
+  'cist-coletar': ['Coletar água', 'Passa toda a água acumulada para a mochila. Se a mochila estiver cheia, a água continua na cisterna.'],
+  'cist-filtro': ['Filtro', 'Instale um <b>Filtro</b> (feito na Bancada) para a cisterna dar Água Limpa. Cada filtro dura alguns dias; dá para instalar até 3 de uma vez.'],
+  plantar: ['Plantar', 'Escolha uma semente da mochila. <b>Cânhamo</b> (2 dias, 1 rega) dá fibra para fazer trapo; <b>Erva Medicinal</b> (3 dias, 2 regas) vira remédio; <b>Abóbora</b> (2 dias, 3 regas) é comida.'],
+  regar: ['Regar', 'Gasta 1 água (limpa ou suja) da mochila. A planta só cresce depois de receber toda a água de que precisa.'],
+  colher: ['Colher', 'Leva a colheita para a mochila. <span class="warn">Se esperar demais, a planta apodrece.</span>'],
+  armadilhas: ['Armadilhas', 'Cada armadilha instalada melhora a segurança (até 4 contam) e reduz pela metade os itens roubados num saque. Remover devolve a armadilha à mochila.'],
+  receita: ['Receita', 'Ingredientes em <b style="color:var(--accent)">verde</b> você já tem; em <b style="color:var(--red)">vermelho</b>, falta. O botão <b>Criar</b> só aparece quando tudo está disponível. Ingredientes do depósito também contam.'],
+  'receita-bancada': ['Receita de Bancada', 'Exige a Bancada de Trabalho construída. Sem ela, a receita aparece travada.'],
+  ocultas: ['Receitas desconhecidas', 'Receitas que você ainda não aprendeu. Leia <b>manuais e revistas</b> encontrados explorando, ou descubra combinando itens na mochila.'],
+  deposito: ['Depósito', 'Nível 1 guarda <b>5 tipos de item</b>, e cada nível acima soma mais 2 (até 13 no nível 5). Melhorar custa madeira, sucata e, nos níveis altos, arame. Para guardar, abra o item na mochila e use <b>Guardar</b>.'],
+  'dep-retirar': ['Retirar', 'Traz 1 unidade de volta para a mochila. <span class="warn">O depósito é o que os saqueadores roubam</span> quando atacam a base.'],
+  'nivel-seg': ['Nível de segurança', 'Somam pontos: Bancada, Depósito, armadilhas e moradores de Segurança. Perdem pontos: muito item na mochila (vira alvo) e a luz da Fogueira à noite.'],
+  'chance-saque': ['Chance de saque', 'Chance de a base ser atacada <b>esta noite</b>, mas só se você estiver <b>fora explorando</b> quando a noite cai. Estando em casa, você vigia e nada acontece. Nunca fica abaixo de 2%.'],
+
+  // Comércio
+  saldo: ['Saldo', 'Quantas Baterias você tem, somando mochila e depósito.'],
+  fator: ['Renovação e preço do dia', 'O estoque muda a cada novo dia. O multiplicador mostra quanto o mercado paga hoje pelo que você vende: varia entre <b>×0,70 e ×1,30</b>. Vale esperar um dia bom para vender itens caros.'],
+  oferta: ['Item à venda', 'Até 5 itens por dia. A seta mostra se o preço está <b style="color:var(--red)">acima ▲</b> ou <b style="color:var(--accent)">abaixo ▼</b> do normal. Precisa ter espaço na mochila para comprar.'],
+  vender: ['Vender', 'Vende <b>1 unidade</b> pelo preço do dia. Itens fabricados valem a soma dos ingredientes e mais um pouco.'],
+  online: ['Status da conexão', '🟢 online: conectado ao servidor. ⚫ offline: você está sem conta ou o servidor está fora do ar.'],
+  anunciar: ['Sua barraca', 'Escolha um item (da mochila ou do depósito), a quantidade (até 99) e o preço. O item sai do seu inventário na hora. Você pode ter <b>até 5 anúncios</b> ao mesmo tempo.'],
+  'retirar-anuncio': ['Retirar anúncio', 'Cancela a venda e devolve o item. Se alguém comprou antes, aparece "Esse item já foi vendido".'],
+  refresh: ['Atualização automática', 'A lista de barracas se atualiza sozinha a cada 10 segundos.'],
+  'comprar-bazar': ['Barraca de outro jogador', 'Itens à venda por outro sobrevivente, agrupados por vendedor. Ao comprar, as Baterias vão para o vendedor, que as recebe <b>em até 30 segundos</b> se estiver jogando, ou no próximo login.'],
+
+  // Trabalhos
+  'trab-slots': ['Trabalhos em andamento', 'Você pode ter até <b>3 trabalhos</b> aceitos ao mesmo tempo.'],
+  'trab-aceito': ['Trabalho aceito', 'Mostra quanto você já tem de cada item pedido. Quando tiver tudo, use <b>Entregar</b>: os itens saem do inventário e você recebe a recompensa e reputação.'],
+  desistir: ['Desistir', 'Abandona o trabalho, mas <span class="warn">custa 10 Baterias</span>.'],
+  'trab-disp': ['Trabalhos do dia', 'Até 5 encomendas novas por dia. Aceite as que você consegue cumprir.'],
+
+  // Assentamento
+  'npc-chega': ['Pedido de abrigo', 'De tempos em tempos (no mínimo a cada 3 dias), aparece alguém pedindo abrigo, desde que você tenha moradia livre. Cada morador tem uma aptidão. Aceitar exige uma moradia compatível com ela.'],
+  'parcela-vazia': ['Parcela', 'São 4 terrenos. Construa uma moradia em cada para receber moradores.'],
+  morador: ['Morador', 'O ponto colorido mostra o estado: pronto, buscando, parado ou cobrando. Toque no card para expandir. Mande o morador buscar itens e depois recolha o que ele trouxe.'],
+  foco: ['Foco', 'Escolhe que item o morador deve priorizar entre os da aptidão dele. "Aleatório" traz de tudo um pouco.'],
+  'npc-coletar': ['Coletar', 'Leva para a mochila o que o morador juntou. O que não couber fica guardado com ele.'],
+  'npc-dispensar': ['Dispensar', 'Manda o morador embora e libera a moradia.'],
+  pagamento: ['Pagamento', 'A cada poucos dias, cada morador cobra de <b>10 a 40 Baterias</b>. <span class="warn">Recusar faz ele parar de trabalhar.</span>'],
+  'estruturas-assent': ['Moradias', '<b>Barraco</b>, <b>Tenda</b> e <b>Cabana</b> (a cabana abriga 2) são moradias comuns. Moradias especiais dão bônus para uma aptidão: <b>Estufa</b> (cultivador colhe mais), <b>Posto Médico</b> (médico cura você +10–20 de vida por dia), <b>Torre de Vigilância</b> (segurança reduz saques em 20% em vez de 12%).<br>Aptidões: Coletor traz comida e água; Médico, ataduras e remédios; Mecânico, sucata e arame; Cultivador, sementes; Explorador, itens variados.'],
+
+  // Itens e eventos
+  'item-efeitos': ['Efeitos', 'O que acontece ao usar. Saciedade e hidratação aparecem como <b>+</b> quando enchem a barra.'],
+  usar: ['Usar', 'Consome 1 unidade e aplica os efeitos. Em <b>manuais e revistas</b>, ensina receitas; em <b>anotações</b>, revela um local no mapa.'],
+  equipar: ['Equipar', 'Aparece só em equipamentos. Cada item ocupa um encaixe (cabeça, peito, mãos, pernas, pés, arma, acessório). Trocar devolve o anterior para a mochila.'],
+  guardar: ['Guardar no depósito', 'Escolha a quantidade e guarde no depósito, ou guarde tudo de uma vez. Só aparece depois de construir o depósito.'],
+  descartar: ['Descartar', '<span class="warn">Joga o item fora para sempre.</span> O jogo pede confirmação.'],
+  'tipos-item': ['Tipos de item', '<b>Consumível</b>: comida e água. <b>Medicinal</b>: cura e trata condições. <b>Material</b>: para construir e fabricar. <b>Leitura</b>: ensina receitas. <b>Anotação</b>: revela locais. <b>Ferramenta</b>: usada em receitas e eventos. <b>Raro</b>: vale muito no Mercado.'],
+  evento: ['Evento', 'Pode acontecer <b>uma vez por exploração</b>, durante a busca. A exploração pausa até você escolher.'],
+  'escolha-risco': ['Escolha arriscada', 'Cada opção mostra o risco. Opções arriscadas podem dar mais recompensa, mas também ferimentos, estresse ou condições.'],
+  'escolha-requer': ['Escolha que exige item', 'Algumas opções pedem um item específico, que é gasto na escolha. Costumam ser as mais seguras.'],
+  continuar: ['Continuar', 'Fecha o resultado do evento e a exploração segue.'],
+  condicoes: ['Condições', '<b>🤢 Intoxicado</b> (água suja, comida estragada): drena vida e aumenta a fome; cure com Carvão Ativado, Soro Fisiológico ou Kit Médico Avançado. <b>🦯 Contundido</b>: drena vida devagar; trate com Tala Improvisada. <b>🩸 Sangrando</b>: drena vida rápido; trate com Atadura, Curativo Caseiro ou um dos kits médicos.'],
+
+  // Fim
+  causa: ['Causa da morte', 'O que levou o personagem: fome, sede, ferimentos, abstinência…'],
+  relatorio: ['Relatório', 'Seu recorde nesta vida: dias, explorações, itens fabricados e estruturas construídas.'],
+  tentar: ['Tentar novamente', 'Volta para a criação de personagem. O save anterior foi apagado; é uma vida nova.'],
+};
+
+const tip = document.getElementById('tip'), tipT = document.getElementById('tip-t'), tipB = document.getElementById('tip-b');
+let atual = null;
+
+function mostrar(el) {
+  const d = H[el.dataset.h]; if (!d) return;
+  if (atual && atual !== el) atual.classList.remove('on');
+  atual = el; el.classList.add('on');
+  tipT.textContent = d[0]; tipB.innerHTML = d[1];
+  tip.hidden = false;
+  const r = el.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  const m = 10, vw = innerWidth, vh = innerHeight;
+  let top = r.bottom + m;
+  if (top + t.height > vh - m) top = r.top - t.height - m;
+  if (top < m) top = Math.min(vh - t.height - m, r.bottom + m);
+  let left = r.left + r.width / 2 - t.width / 2;
+  left = Math.max(m, Math.min(left, vw - t.width - m));
+  tip.style.top = top + 'px'; tip.style.left = left + 'px';
+}
+function esconder() { tip.hidden = true; if (atual) atual.classList.remove('on'); atual = null; }
+
+document.querySelectorAll('[data-h]').forEach(el => {
+  if (!H[el.dataset.h]) console.warn('sem texto:', el.dataset.h);
+  el.setAttribute('aria-label', (H[el.dataset.h] || [''])[0]);
+  el.addEventListener('mouseenter', () => mostrar(el));
+  el.addEventListener('mouseleave', () => { if (atual === el) esconder(); });
+  el.addEventListener('focus', () => mostrar(el));
+  el.addEventListener('blur', () => { if (atual === el) esconder(); });
+  el.addEventListener('click', e => { e.stopPropagation(); atual === el && !tip.hidden ? esconder() : mostrar(el); });
+});
+document.addEventListener('click', esconder);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') esconder(); });
+addEventListener('scroll', () => { if (atual) mostrar(atual); }, { passive: true });
+addEventListener('resize', () => { if (atual) mostrar(atual); });
+document.querySelectorAll('.frame').forEach(f => f.addEventListener('scroll', () => { if (atual) mostrar(atual); }, { passive: true }));
+
+// ── Catálogo de itens ──
+// [ícone, nome, categoria, fabricável, encaixe (equipável), efeitos ao usar, para que serve]
+const CATS = {
+  material: 'Materiais', consumo: 'Comida e água', medicina: 'Medicina',
+  ferramenta: 'Ferramentas e equipamentos', leitura: 'Leitura e anotações', raro: 'Raros'
+};
+const SLOT = { cabeca: 'cabeça', peito: 'peito', maos: 'mãos', pernas: 'pernas', pes: 'pés', arma: 'arma', acessorio: 'acessório' };
+const ITENS_CAT = [
+  ['🔩','Sucata','material',0,null,null,'O material mais usado do jogo: entra no Abrigo, na Bancada, no Depósito e em várias receitas.'],
+  ['🌳','Madeira','material',0,null,null,'Base de quase todas as construções: Fogueira, Cisterna, Cultivo, Depósito e moradias do Assentamento.'],
+  ['🧻','Trapo','material',1,null,null,'Tecido para construções e receitas. Também é pedido em trabalhos.'],
+  ['〰️','Arame','material',1,null,null,'Usado em estruturas mais resistentes, no Depósito de nível alto e em receitas de Bancada.'],
+  ['🔋','Bateria','material',0,null,null,'A moeda do jogo. Compra no Mercado e nas Barracas, paga moradores e trabalhos. Também entra em receitas.'],
+  ['🌱','Semente de Cânhamo','material',0,null,null,'Plante no Cultivo. Cresce em 2 dias com 1 rega.'],
+  ['🌿','Semente de Erva','material',0,null,null,'Plante no Cultivo. Cresce em 3 dias com 2 regas.'],
+  ['🎃','Semente de Abóbora','material',0,null,null,'Plante no Cultivo. Cresce em 2 dias com 3 regas.'],
+  ['🌾','Cânhamo','material',0,null,null,'Fibra vegetal resistente, usada como ingrediente.'],
+  ['🍃','Erva Medicinal','material',0,null,null,'Planta com propriedades curativas, usada como ingrediente.'],
+
+  ['🥫','Comida Enlatada','consumo',0,null,{fome:-30},'O alimento básico. Rende mais se for preparado.'],
+  ['🎃','Abóbora','consumo',0,null,{fome:-35},'Alimenta um pouco mais que uma lata.'],
+  ['🍲','Refeição Quente','consumo',1,null,{fome:-55,estresse:-10},'Alimenta muito e ainda acalma.'],
+  ['🥣','Sopa de Emergência','consumo',1,null,{fome:-25,sede:-20,vida:8},'Alimenta, hidrata e recupera um pouco de vida de uma vez.'],
+  ['💧','Água Limpa','consumo',0,null,{sede:-35},'Hidrata sem riscos. Também rega plantas.'],
+  ['🚰','Água Filtrada','consumo',1,null,{sede:-30},'Quase tão boa quanto a limpa, e segura para beber.'],
+  ['🚱','Água Suja','consumo',0,null,{sede:-20,vida:-5},'Hidrata, mas <b>intoxica</b> quem bebe. Serve para regar plantas sem esse risco.'],
+  ['🍶','Bebida Alcoólica','consumo',0,null,{estresse:-20,vida:-5,vicio:10},'Alivia o estresse na hora, mas causa dependência.'],
+  ['📔','Revista em Quadrinhos','consumo',0,null,{estresse:-25},'Uma leitura para distrair. Reduz bastante o estresse.'],
+
+  ['🩺','Atadura','medicina',0,null,{vida:10},'Cura pouco, mas <b>estanca sangramento</b>.'],
+  ['🩸','Curativo Caseiro','medicina',1,null,{vida:20},'Cura e <b>estanca sangramento</b>.'],
+  ['💊','Analgésico','medicina',1,null,{vida:15,estresse:-5},'Alivia a dor e reduz um pouco o estresse.'],
+  ['🩹','Kit Primeiros Socorros','medicina',0,null,{vida:35,estresse:-5},'Cura bem e <b>estanca sangramento</b>.'],
+  ['💼','Kit Médico Avançado','medicina',1,null,{vida:55,estresse:-15},'Cura muito, acalma, <b>estanca sangramento</b> e <b>cura intoxicação</b>.'],
+  ['🔬','Kit Cirúrgico','medicina',0,null,{vida:60},'A maior cura comum do jogo.'],
+  ['💉','Soro Fisiológico','medicina',0,null,{sede:-40,vida:10},'Hidrata mais que qualquer água, cura um pouco e <b>cura intoxicação</b>.'],
+  ['🖤','Carvão Ativado','medicina',0,null,{vida:5},'O tratamento ideal para <b>intoxicação</b>.'],
+  ['🦯','Tala Improvisada','medicina',1,null,{vida:5},'Trata a condição <b>contundido</b> (tornozelo torcido).'],
+
+  ['🔪','Faca de Cozinha','ferramenta',0,'arma',null,'Equipada, reduz um pouco o dano em confrontos. Também serve de ingrediente.'],
+  ['🗡️','Lança Improvisada','ferramenta',1,'arma',null,'Equipada, reduz o dano recebido em eventos de exploração.'],
+  ['🏹','Arco Rudimentar','ferramenta',1,'arma',null,'Equipado, dá +10% de chance de loot.'],
+  ['🔦','Tocha Improvisada','ferramenta',1,'acessorio',null,'Equipada, faz o estresse baixar mais depressa.'],
+  ['💡','Lanterna Improvisada','ferramenta',1,'acessorio',null,'Equipada, dá um leve bônus de loot.'],
+  ['⛑️','Capacete Industrial','ferramenta',0,'cabeca',null,'−5% de dano sofrido em eventos de exploração.'],
+  ['🧣','Capuz de Lã','ferramenta',0,'cabeca',null,'Mais furtividade: reduz a chance de eventos negativos.'],
+  ['🦺','Colete de Carga','ferramenta',0,'peito',null,'<b>+2 espaços na mochila</b> enquanto equipado.'],
+  ['🧥','Jaqueta de Couro','ferramenta',0,'peito',null,'−5% de dano em confrontos e eventos.'],
+  ['🧤','Luvas de Trabalho','ferramenta',0,'maos',null,'+5% de chance de achar itens raros.'],
+  ['👖','Calças Reforçadas','ferramenta',0,'pernas',null,'+10 de vida máxima enquanto equipadas.'],
+  ['👢','Botas de Trabalho','ferramenta',0,'pes',null,'+5% de chance de loot.'],
+  ['🕸️','Armadilha','ferramenta',1,null,null,'Instalada na Segurança da base, reduz a chance de saque e o que é roubado.'],
+  ['🧪','Filtro de Água','ferramenta',1,null,null,'Instalado na Cisterna, faz ela produzir Água Limpa por alguns dias.'],
+
+  ['📕','Manual de Primeiros Socorros','leitura',0,null,null,'Ao ler, você aprende receitas médicas.'],
+  ['📗','Guia de Sobrevivência','leitura',0,null,null,'Ao ler, você aprende receitas de sobrevivência.'],
+  ['📘','Catálogo de Ferramentas','leitura',0,null,null,'Ao ler, você aprende receitas de ferramentas.'],
+  ['📄','Anotação: Hospital Regional','leitura',0,null,null,'Revela o Hospital Regional no mapa de Locais.'],
+  ['📄','Anotação: Mata do Cônego','leitura',0,null,null,'Revela a Mata do Cônego no mapa de Locais.'],
+  ['📄','Anotação: Posto Km 14','leitura',0,null,null,'Revela o Posto Km 14 no mapa de Locais.'],
+  ['📄','Anotação: Depósito Logístico','leitura',0,null,null,'Revela o Depósito Logístico no mapa de Locais.'],
+  ['📄','Anotação: Garagem Industrial','leitura',0,null,null,'Revela a Garagem Industrial no mapa de Locais.'],
+  ['📄','Anotação: Fábrica Têxtil','leitura',0,null,null,'Revela a Fábrica Têxtil no mapa de Locais.'],
+  ['📄','Anotação: Subestação Elétrica','leitura',0,null,null,'Revela a Subestação Elétrica no mapa de Locais.'],
+  ['📄','Anotação: Silo de Grãos','leitura',0,null,null,'Revela o Silo de Grãos no mapa de Locais.'],
+  ['🗺️','Rota para o Setor 3','leitura',0,null,null,'Revela os três locais da Zona Militar.'],
+
+  ['🪓','Machado de Bombeiro','raro',0,'arma',null,'A melhor arma: reduz bastante o dano recebido e melhora o loot.'],
+  ['🛡️','Colete Balístico','raro',0,'peito',null,'−30% de dano recebido e +15 de vida máxima.'],
+  ['⛑️','Capacete Tático','raro',0,'cabeca',null,'−20% de dano recebido e −12% de eventos negativos.'],
+  ['🥋','Farda de Combate','raro',0,'pernas',null,'+5 de vida máxima e +8% de chance de loot.'],
+  ['🧬','Medicamento Experimental','raro',0,null,{vida:50,estresse:-20},'Cura muito e acalma. Também vale bem no Mercado.'],
+  ['🥃','Whisky 18 Anos','raro',0,null,{estresse:-40,vicio:25,vida:-5},'Apaga o estresse, mas vicia forte. Ou venda caro.'],
+  ['🔫','Revólver .38','raro',0,null,null,'Sem munição. Vale uma fortuna no Mercado.'],
+  ['🗡️','Faca Tática Militar','raro',0,null,null,'Item de valor para vender.'],
+  ['⌚','Relógio de Ouro','raro',0,null,null,'Item de valor para vender.'],
+  ['💍','Joias Diversas','raro',0,null,null,'Item de valor para vender.'],
+  ['📷','Câmera Digital','raro',0,null,null,'Item de valor para vender.'],
+  ['🔭','Binóculo Militar','raro',0,null,null,'Item de valor para vender.'],
+  ['💾','Pen Drive Criptografado','raro',0,null,null,'Item de valor para vender.'],
+  ['📁','Documento Classificado','raro',0,null,null,'Item de valor para vender.'],
+  ['🏷️','Placa de Identificação Militar','raro',0,null,null,'Item de valor para vender.'],
+  ['⚙️','Motor de Arranque','raro',0,null,null,'Item de valor para vender.'],
+  ['🔋','Bateria Automotiva','raro',0,null,null,'Um dos itens mais valiosos do jogo para vender. Não é a mesma coisa que a Bateria usada como moeda.'],
+  ['🧸','Ursinho de Pelúcia','raro',0,null,null,'Item de valor para vender.'],
+  ['🔩','Munição .308','raro',0,null,null,'Item de valor para vender.'],
+  ['📻','Rádio Militar','raro',0,null,null,'Item de valor para vender.'],
+  ['📐','Planta da Instalação','raro',0,null,null,'Item de valor para vender.'],
+];
+
+const FX_NOME = { fome: 'saciedade', sede: 'hidratação', vida: 'vida', estresse: 'estresse', vicio: 'vício' };
+const FX_BOM_SUBIR = { fome: true, sede: true, vida: true, estresse: false, vicio: false };
+function fxHtml(ef) {
+  return Object.entries(ef).map(([k, v]) => {
+    const val = (k === 'fome' || k === 'sede') ? -v : v;
+    const bom = FX_BOM_SUBIR[k] ? val > 0 : val < 0;
+    return `<span class="${bom ? 'pos' : 'neg'}">${val > 0 ? '+' : '−'}${Math.abs(val)} ${FX_NOME[k]}</span>`;
+  }).join(' · ');
+}
+
+const catLista = document.getElementById('cat-lista');
+const catBusca = document.getElementById('cat-busca');
+const catSoCraft = document.getElementById('cat-so-craft');
+const catChips = document.getElementById('cat-chips');
+let catFiltro = 'todos';
+const semAcento = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+[['todos', 'Todos'], ...Object.entries(CATS)].forEach(([id, nome]) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'cat-chip'; b.textContent = nome;
+  b.setAttribute('aria-pressed', id === catFiltro);
+  b.addEventListener('click', () => {
+    catFiltro = id;
+    catChips.querySelectorAll('.cat-chip').forEach(c => c.setAttribute('aria-pressed', c === b));
+    renderCatalogo();
+  });
+  catChips.appendChild(b);
+});
+
+function renderCatalogo() {
+  const q = semAcento(catBusca.value.trim());
+  const visiveis = ITENS_CAT.filter(([, nome, cat, craft, , , txt]) =>
+    (catFiltro === 'todos' || cat === catFiltro) &&
+    (!catSoCraft.checked || craft) &&
+    (!q || semAcento(nome + ' ' + txt).includes(q)));
+  document.getElementById('cat-total').textContent =
+    `${visiveis.length} de ${ITENS_CAT.length} itens · ${ITENS_CAT.filter(i => i[3]).length} fabricáveis`;
+  catLista.innerHTML = Object.entries(CATS).map(([cat, nomeCat]) => {
+    const itens = visiveis.filter(i => i[2] === cat);
+    if (!itens.length) return '';
+    return `<div class="cat-grupo"><h3>${nomeCat} <span>${itens.length}</span></h3><div class="cat-grid">${
+      itens.map(([ic, nome, c, craft, slot, ef, txt]) => `
+        <article class="cat-item${c === 'raro' ? ' raro' : ''}">
+          <span class="cat-ic" aria-hidden="true">${ic}</span>
+          <span class="cat-nome">${nome}</span>
+          <div class="cat-tags">${craft ? '<span class="tag-craft">⚒ fabricável</span>' : ''}${slot ? `<span class="tag-equip">equipável · ${SLOT[slot]}</span>` : ''}${c === 'raro' ? '<span class="tag-raro">raro</span>' : ''}</div>
+          <span class="cat-txt">${txt}</span>
+          ${ef ? `<span class="cat-fx" style="grid-column:2">${fxHtml(ef)}</span>` : ''}
+        </article>`).join('')}</div></div>`;
+  }).join('') || '<p class="cat-vazio">Nenhum item encontrado.</p>';
+}
+catBusca.addEventListener('input', renderCatalogo);
+catSoCraft.addEventListener('change', renderCatalogo);
+renderCatalogo();
+
+// Abas de tela
+const telas = [...document.querySelectorAll('.screen')];
+const nav = document.getElementById('screens');
+telas.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.role = 'tab'; b.id = 'tab-' + s.id; b.textContent = s.dataset.nome;
+  b.setAttribute('aria-controls', s.id);
+  b.addEventListener('click', () => abrir(s.id));
+  nav.appendChild(b);
+});
+function abrir(id) {
+  esconder();
+  telas.forEach(s => {
+    const on = s.id === id;
+    s.hidden = !on;
+    document.getElementById('tab-' + s.id).setAttribute('aria-selected', on);
+  });
+  try { localStorage.setItem('manual-tela', id); } catch (e) {}
+  if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+}
+let inicial = location.hash.slice(1);
+if (!document.getElementById(inicial)) { try { inicial = localStorage.getItem('manual-tela'); } catch (e) { inicial = null; } }
+abrir(document.getElementById(inicial) ? inicial : 's-jogo');
+
+// Aberto pelo jogo (nova aba): voltar = fechar esta aba, para não abrir uma segunda cópia do jogo
+document.querySelector('.voltar').addEventListener('click', e => {
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); }
+});
+
+document.getElementById('marcar').addEventListener('change', e => document.body.classList.toggle('marcar', e.target.checked));
+</script>
+</body>
+</html>

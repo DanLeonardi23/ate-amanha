@@ -4983,12 +4983,39 @@ async function iniciarJogo(nome, avatarIdx, traco) {
     verificarMercado();
     renderizarMercado();
     iniciarLoop();
+    mostrarAvisoManual();
   });
 }
 
 // ============================================================
 // LOOP
 // ============================================================
+
+// Aviso para abrir o manual, ancorado no botão "Aprenda a jogar" do topo (que pulsa enquanto o aviso está aberto)
+function mostrarAvisoManual() {
+  const aviso = document.getElementById('aviso-manual');
+  const btn   = document.querySelector('.game-header .btn-aprenda');
+  if (!aviso || !btn) return;
+
+  const posicionar = () => {
+    const r = btn.getBoundingClientRect();
+    aviso.style.top   = `${r.bottom + 12}px`;
+    aviso.style.right = `${Math.max(12, window.innerWidth - r.right)}px`;
+    aviso.style.setProperty('--seta-x', `${r.width / 2}px`);
+  };
+  const fechar = () => {
+    aviso.classList.add('oculto');
+    btn.classList.remove('pulsando');
+    window.removeEventListener('resize', posicionar);
+  };
+
+  btn.classList.add('pulsando');
+  aviso.classList.remove('oculto');
+  posicionar();
+  window.addEventListener('resize', posicionar);
+  document.getElementById('aviso-manual-ok').onclick = fechar;
+  btn.addEventListener('click', fechar, { once: true });
+}
 
 function iniciarLoop() {
   if (estado.loop) clearInterval(estado.loop);

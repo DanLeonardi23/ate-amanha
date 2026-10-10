@@ -42,6 +42,7 @@
             <button id="btn-registrar" class="btn-secundario login-btn">+ REGISTRAR</button>
           </div>
           <p class="login-acesso-info">Acesso mediante convite. Entre em contato com o administrador.</p>
+          <a class="btn-aprenda login-aprenda" href="manual.html" target="_blank">📖 Aprenda a jogar</a>
         </div>
 
         <div class="login-footer">
@@ -180,6 +181,7 @@
 
     <header class="game-header">
       <div class="header-acoes">
+        <a class="btn-aprenda" href="manual.html" target="_blank">📖 Aprenda a jogar</a>
         <span id="hdr-usuario" class="hdr-usuario oculto"></span>
         <button class="btn-ico" id="btn-som" title="Alternar som">🔊</button>
         <button class="btn-ico" id="btn-salvar" title="Salvar">💾</button>
@@ -945,6 +947,14 @@
       </section>
 
     </main>
+
+    <!-- AVISO: manual (mostrado uma vez, logo após a intro de um personagem novo) -->
+    <div id="aviso-manual" class="aviso-manual oculto" role="dialog" aria-labelledby="aviso-manual-titulo">
+      <span class="aviso-manual-seta" aria-hidden="true"></span>
+      <strong id="aviso-manual-titulo" class="aviso-manual-titulo">📖 Antes de começar</strong>
+      <p class="aviso-manual-txt">Clique em <b>Aprenda a jogar</b> para conhecer as telas e os botões do jogo. Sempre que tiver dúvida, volte a usar esse recurso.</p>
+      <button id="aviso-manual-ok" class="btn-secundario btn-sm">Entendi</button>
+    </div>
 
     <!-- TOAST -->
     <div id="toast" class="toast oculto"></div>
