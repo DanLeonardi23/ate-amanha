@@ -194,7 +194,7 @@ const TRACOS = {
   },
   economico: {
     nome: 'Econômico', icone: '🧠',
-    desc: 'Fome/sede aumentam 25% mais devagar.',
+    desc: 'Saciedade e hidratação caem 25% mais devagar.',
     efeitos: { consumoMulti: 0.75 }
   },
   medico: {
@@ -1700,6 +1700,17 @@ function esc(val) {
   ));
 }
 
+// Formata efeitos de item para exibição. fome/sede aparecem invertidos como
+// Saciedade/Hidratação, igual às barras de status (ex.: sede -35 → +35 hidratação).
+const EFEITO_EXIBICAO = { fome: 'saciedade', sede: 'hidratação' };
+function formatarEfeitos(efeitos, sep = ', ') {
+  return Object.entries(efeitos).map(([k, v]) => {
+    const nome = EFEITO_EXIBICAO[k] ?? k;
+    const val  = EFEITO_EXIBICAO[k] ? -v : v;
+    return `${val > 0 ? '+' : ''}${val} ${nome}`;
+  }).join(sep);
+}
+
 function sortearPorPeso(lista) {
   const total = lista.reduce((s, i) => s + i.peso, 0);
   let r = Math.random() * total;
@@ -2123,7 +2134,7 @@ function usarItem(id) {
   }
 
   removerItem(id, 1);
-  const fx = Object.entries(efeitos).map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${k}`).join(', ');
+  const fx = formatarEfeitos(efeitos);
   log(`Você usou: ${item.icone} ${item.nome} (${fx})`, 'log-sucesso');
   mostrarToast(`${item.icone} ${item.nome} utilizado`);
   fecharModal();
@@ -2161,7 +2172,7 @@ function abrirModal(item) {
       desc += `\n\n${item.lore || 'Uma anotação rabiscada. Use para revelar um local desconhecido.'}`;
     }
   } else if (item.efeitos && Object.keys(item.efeitos).length) {
-    const fx = Object.entries(item.efeitos).map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${k}`).join(', ');
+    const fx = formatarEfeitos(item.efeitos);
     desc += `\n\nEfeitos ao usar: ${fx}`;
     if (item.desc) desc += `\n\n${item.desc}`;
   } else {
@@ -3263,12 +3274,15 @@ function atualizarUI() {
     document.getElementById(`val-${id}`).textContent    = Math.round(val);
   }
   setBar('vida', s.vida, s.vidaMax);
-  setBar('fome', s.fome, 100);
-  setBar('sede', s.sede, 100);
+  // Internamente fome/sede crescem (100 = perigo); na tela viram Saciedade/Hidratação (100 = bem)
+  setBar('fome', 100 - s.fome, 100);
+  setBar('sede', 100 - s.sede, 100);
   setBar('estresse', s.estresse, 100);
   setBar('vicio', s.vicio, 100);
 
   document.getElementById('barra-vida').classList.toggle('barra-critica', s.vida < 25);
+  document.getElementById('barra-fome').classList.toggle('barra-critica', s.fome >= 80);
+  document.getElementById('barra-sede').classList.toggle('barra-critica', s.sede >= 80);
 
   const div = document.getElementById('avisos-status');
   div.innerHTML = '';
@@ -3695,8 +3709,7 @@ function renderizarMercado() {
     // Efeitos resumidos
     let efeitoStr = '';
     if (item.efeitos && Object.keys(item.efeitos).length) {
-      efeitoStr = Object.entries(item.efeitos)
-        .map(([k, v]) => `${v > 0 ? '+' : ''}${v} ${k}`).join(' · ');
+      efeitoStr = formatarEfeitos(item.efeitos, ' · ');
     }
 
     const semSaldo  = pilhasQtd < entrada.preco;
@@ -4866,7 +4879,7 @@ function inicializarCriacao() {
   const TRACOS_DESC = {
     resistente: 'Vida máxima +20%. Perde vida mais devagar em situações críticas.',
     ansioso:    'Estresse acumula mais rápido, mas +15% chance de loot raro.',
-    economico:  'Fome e sede aumentam 25% mais devagar. Sabe racionamento.',
+    economico:  'Saciedade e hidratação caem 25% mais devagar. Sabe racionamento.',
     medico:     'Itens de cura são 50% mais eficazes. Começa com kit de primeiros socorros.',
   };
   const descEl = document.getElementById('doc-traco-desc');
