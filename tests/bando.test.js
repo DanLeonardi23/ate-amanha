@@ -7,10 +7,10 @@ const path = require('path');
 
 function criarJogo() {
   const raiz = path.join(__dirname, '..');
-  const elementoFalso = () => ({ innerHTML: '', classList: { contains: () => false }, querySelector: () => null, addEventListener() {}, remove() {} });
+  const elementoFalso = () => ({ className: '', style: {}, innerHTML: '', classList: { contains: () => false }, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, remove() {} });
   const ctx = {
     console, Date, Array, Object, Set, JSON, parseInt, String,
-    document: { getElementById: () => null, hidden: true, createElement: elementoFalso, body: { appendChild() {} } },
+    document: { getElementById: () => null, hidden: true, createElement: elementoFalso, body: { appendChild() {} }, addEventListener() {}, removeEventListener() {} },
     estado: {
       dia: 1, inventario: [], baterias: 500, personagem: { nome: 'Ana' },
       deposito: { nivel: 1, itens: [{ id: 'faca', nome: 'Faca', icone: '🔪', tipo: 'ferramenta', qtd: 2 }] },
@@ -25,7 +25,7 @@ function criarJogo() {
     },
     SLOT_LABELS: { arma: 'Arma', cabeca: 'Cabeça', peito: 'Peito' },
     CHARS_GENERO: { 1: 'M', 2: 'H', 3: 'M', 4: 'M', 5: 'H', 6: 'H', 7: 'M', 8: 'H', 9: 'M', 10: 'H', 11: 'M', 12: 'H' },
-    logs: [],
+    logs: [], adicionados: [],
   };
   ctx.Math = Object.create(Math);
   ctx.charPath = id => `img/chars/${id}.png`;
@@ -39,7 +39,8 @@ function criarJogo() {
     if (id === 'pilha') { ctx.estado.baterias -= q; return true; }
     const i = ctx.estado.deposito.itens.find(x => x.id === id); i.qtd -= q; return true;
   };
-  ctx.adicionarItem = () => true;
+  ctx.adicionarItem = (base, qtd, op) => { ctx.adicionados.push({ id: base.id, qtd, op }); return true; };
+  ctx.renderizarDeposito = () => {};
   ctx.mudarBaterias = d => { ctx.estado.baterias += d; };
   ctx.capacidadeDeposito = () => 5;
   ctx.moradores = () => [{ parcela: ctx.estado.assentamento.parcelas[0], npc: ctx.estado.assentamento.parcelas[0].habitantes[0] }];
@@ -80,7 +81,7 @@ test('equipar tira o item do inventário e aumenta o Ataque', () => {
   const { ctx, run, a } = criarJogo();
   run('contratarRecruta(0);');
   const atqAntes = run('statsLutador(estado.assentamento.bando[0]).atq');
-  run('equiparCombatente(estado.assentamento.bando[0], "arma", "faca");');
+  run('equiparCombatente(estado.assentamento.bando[0].id, "arma", "faca");');
   assert.equal(a.bando[0].equip.arma, 'faca');
   assert.equal(ctx.estado.deposito.itens[0].qtd, 1);
   assert.equal(run('statsLutador(estado.assentamento.bando[0]).atq'), atqAntes + 3);
@@ -120,10 +121,10 @@ test('cura diária com Médico e volta de ferido para pronto', () => {
   const { run, a } = criarJogo();
   run('contratarRecruta(0);');
   const c = a.bando[0];
-  c.vida = 5; c.estado = 'ferido';
+  c.vidaMax = 40; c.vida = 5; c.estado = 'ferido';
   run('rotinaDiariaBando();'); // Médico ativo fora do Posto: +15
   assert.equal(c.vida, 20);
-  assert.equal(c.estado, c.vida >= c.vidaMax * 0.3 ? 'pronto' : 'ferido');
+  assert.equal(c.estado, 'pronto');
 });
 
 test('morte remove o combatente; defesa sem Bando devolve null', () => {
@@ -136,4 +137,66 @@ test('morte remove o combatente; defesa sem Bando devolve null', () => {
   run('contratarRecruta(0);');
   assert.equal(typeof run('defenderInvasao()'), 'boolean');
   assert.equal(a.relatorios.length, 1);
+});
+
+test('iniciarMissao ignora quem não está pronto e não faz nada se ninguém estiver', () => {
+  const { run, a } = criarJogo();
+  run('contratarRecruta(0); contratarRecruta(0);');
+  const [c1, c2] = a.bando;
+  c2.estado = 'ferido';
+  run(`iniciarMissao("acampamento", ["${c1.id}", "${c2.id}"]);`);
+  assert.deepEqual(Array.from(a.missoes.emAndamento[0].membros), [c1.id]);
+  assert.equal(c2.estado, 'ferido');
+  // ninguém pronto: não inicia nem consome a missão do dia
+  run(`iniciarMissao("mercado", ["${c1.id}", "${c2.id}"]);`);
+  assert.equal(a.missoes.emAndamento.length, 1);
+  assert.ok(!a.missoes.feitasHoje.includes('mercado'));
+});
+
+test('loot: baterias na carteira, itens no depósito ou, sem depósito, na mochila', () => {
+  const { ctx, run } = criarJogo();
+  ctx.estado.deposito.nivel = 1;
+  run('entregarLoot({ baterias: 7, itens: [{ id: "sucata", qtd: 2 }] });');
+  assert.equal(ctx.estado.baterias, 507);
+  assert.equal(ctx.estado.deposito.itens.find(i => i.id === 'sucata').qtd, 2);
+  assert.equal(ctx.adicionados.length, 0);
+  ctx.estado.deposito.nivel = 0;
+  run('entregarLoot({ baterias: 0, itens: [{ id: "madeira", qtd: 3 }] });');
+  assert.equal(ctx.adicionados.length, 1);
+  assert.equal(ctx.adicionados[0].id, 'madeira');
+  assert.equal(ctx.adicionados[0].qtd, 3);
+});
+
+test('morte em missão remove o combatente e o equipamento não volta', () => {
+  const { ctx, run, a } = criarJogo();
+  run('contratarRecruta(0);');
+  const c = a.bando[0];
+  c.equip.arma = 'faca';
+  run(`aplicarResultadoCombate({ lutadores: [{ id: "${c.id}", lado: "A", vida: 0 }] }, "A");`);
+  assert.equal(a.bando.length, 0);
+  assert.equal(ctx.adicionados.length, 0);
+});
+
+test('relatórios pendentes só são mostrados (e marcados vistos) com o jogador de volta', () => {
+  const { ctx, run, a } = criarJogo();
+  const rel = n => ({ titulo: 'T' + n, venceu: true, dia: 1, resumo: 'r', baixas: { mortos: [], feridos: [] }, linhas: [] });
+  run('registrarRelatorio(' + JSON.stringify(rel(1)) + ');');
+  assert.equal(a.relatorios[0].naoVisto, true);
+  // aba oculta: nada acontece
+  run('exibirRelatoriosPendentes();');
+  assert.equal(a.relatorios[0].naoVisto, true);
+  // exploração ativa: nada acontece
+  ctx.document.hidden = false;
+  ctx.estado.exploracao = { ativa: true };
+  run('exibirRelatoriosPendentes();');
+  assert.equal(a.relatorios[0].naoVisto, true);
+  // de volta: um relatório abre e fica visto
+  ctx.estado.exploracao = { ativa: false };
+  run('exibirRelatoriosPendentes();');
+  assert.equal(a.relatorios[0].naoVisto, false);
+  // vários: uma janela só, todos marcados
+  run('registrarRelatorio(' + JSON.stringify(rel(2)) + '); registrarRelatorio(' + JSON.stringify(rel(3)) + ');');
+  assert.equal(a.relatorios.filter(r => r.naoVisto).length, 2);
+  run('verificarMissoesConcluidas();');
+  assert.ok(a.relatorios.every(r => !r.naoVisto));
 });

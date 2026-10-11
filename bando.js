@@ -28,6 +28,11 @@ function normalizarBando(assent, personagem) {
   if (!assent.recrutas) assent.recrutas = { lista: [], dia: -99 };
   if (!assent.missoes) assent.missoes = { emAndamento: [], feitasHoje: [] };
   if (!Array.isArray(assent.relatorios)) assent.relatorios = [];
+  // Reparo: quem ficou "em missão" sem missão correspondente (erro ao resolver) volta ao Bando
+  const emCampo = new Set(assent.missoes.emAndamento.flatMap(m => m.membros || []));
+  for (const c of assent.bando) {
+    if (c.estado === 'missao' && !emCampo.has(c.id)) c.estado = estadoAposCombate(c.vida, c.vidaMax) === 'ferido' ? 'ferido' : 'pronto';
+  }
   return assent;
 }
 
@@ -84,9 +89,13 @@ function abrirJanela(html, { largura = 420 } = {}) {
   overlay.style.zIndex = '9000';
   overlay.innerHTML = `<div class="modal-conteudo janela-conteudo" style="max-width:${largura}px">${html}
     <div class="modal-acoes"><button class="btn-secundario btn-sm" data-fechar>Fechar</button></div></div>`;
+  const aoTeclar = e => { if (e.key === 'Escape') overlay.remove(); };
+  const remover = overlay.remove.bind(overlay);
+  overlay.remove = () => { document.removeEventListener('keydown', aoTeclar); remover(); };
   overlay.addEventListener('click', e => {
     if (e.target === overlay || e.target.closest('[data-fechar]')) overlay.remove();
   });
+  document.addEventListener('keydown', aoTeclar);
   document.body.appendChild(overlay);
   return overlay;
 }
@@ -175,13 +184,14 @@ function garantirMural() {
   if (r.lista.length && estado.dia - r.dia < MURAL_DIAS) return;
   r.lista = Array.from({ length: 3 }, () => gerarRecruta(Math.random, CHARS_GENERO));
   r.dia = estado.dia;
+  salvarJogo(); // senão recarregar a página sortearia outros recrutas
 }
 
 function htmlCombatente(c) {
   const cat = CATEGORIAS[c.categoria];
   const s = statsLutador(c);
   const pctVida = Math.round(c.vida / c.vidaMax * 100);
-  const [icone, texto] = c.soldoPendente ? ['🔋', 'Cobrando soldo'] : ESTADO_COMBATENTE[c.estado];
+  const [icone, texto] = c.soldoPendente ? ['🔋', 'Cobrando soldo'] : (ESTADO_COMBATENTE[c.estado] || ['❔', c.estado]);
   const emMissao = c.estado === 'missao';
   const slots = SLOTS_COMBATENTE.map(slot => {
     const it = c.equip[slot] && ITENS[c.equip[slot]];
@@ -334,12 +344,16 @@ function abrirEquipCombatente(id, slot) {
     ${atual ? `<p>Equipado: ${ITENS[atual].icone} ${esc(ITENS[atual].nome)} <button class="btn-perigo btn-sm" data-remover>Remover</button></p>` : ''}
     <div class="janela-lista">${lista}</div>`);
   j.querySelectorAll('[data-item]').forEach(b => {
-    b.onclick = () => { equiparCombatente(c, slot, b.dataset.item); j.remove(); };
+    b.onclick = () => { equiparCombatente(id, slot, b.dataset.item); j.remove(); };
   });
-  j.querySelector('[data-remover]')?.addEventListener('click', () => { desequiparCombatente(c, slot); j.remove(); });
+  j.querySelector('[data-remover]')?.addEventListener('click', () => { desequiparCombatente(id, slot); j.remove(); });
 }
 
-function equiparCombatente(c, slot, itemId) {
+// Recebem o id e buscam o combatente de novo: a janela pode ter ficado aberta enquanto ele partia ou morria
+function equiparCombatente(id, slot, itemId) {
+  const c = combatentePorId(id);
+  if (!c || c.estado === 'missao') return;
+  if (COMBATE_EQUIP[itemId]?.slot !== slot) return;
   if (!temItem(itemId, 1)) return;
   removerItem(itemId, 1);
   if (c.equip[slot]) adicionarItem(ITENS[c.equip[slot]], 1, { forcar: true });
@@ -348,7 +362,9 @@ function equiparCombatente(c, slot, itemId) {
   atualizarTelaAssentamento();
 }
 
-function desequiparCombatente(c, slot) {
+function desequiparCombatente(id, slot) {
+  const c = combatentePorId(id);
+  if (!c || c.estado === 'missao') return;
   const itemId = c.equip[slot];
   if (!itemId) return;
   adicionarItem(ITENS[itemId], 1, { forcar: true });
@@ -366,11 +382,13 @@ function abrirCuraCombatente(id) {
     : '<p class="janela-dim">Nenhum item de cura na mochila ou no depósito.</p>';
   const j = abrirJanela(`<h3>Curar ${esc(c.nome)}</h3><p class="janela-dim">Vida: ${c.vida} / ${c.vidaMax}</p><div class="janela-lista">${lista}</div>`);
   j.querySelectorAll('[data-item]').forEach(b => {
-    b.onclick = () => { curarCombatenteComItem(c, b.dataset.item); j.remove(); };
+    b.onclick = () => { curarCombatenteComItem(id, b.dataset.item); j.remove(); };
   });
 }
 
-function curarCombatenteComItem(c, itemId) {
+function curarCombatenteComItem(id, itemId) {
+  const c = combatentePorId(id);
+  if (!c || c.estado === 'missao') return;
   if (!temItem(itemId, 1)) return;
   removerItem(itemId, 1);
   const antes = c.vida;
@@ -434,6 +452,7 @@ function aplicarResultadoCombate(res, lado) {
     const est = estadoAposCombate(c.vida, c.vidaMax);
     if (est === 'morto') { mortos.push(c.nome); idsMortos.push(c.id); continue; }
     if (est === 'ferido') feridos.push(c.nome);
+    // Parados nunca lutam (não entram em combatentesProntos); a guarda fica por segurança
     if (c.estado !== 'parado') c.estado = est;
   }
   a.bando = a.bando.filter(c => !idsMortos.includes(c.id));
@@ -444,9 +463,10 @@ function guardarLootNoDeposito(base, qtd) {
   const dep = estado.deposito;
   if (!dep.nivel) return false;
   const existente = dep.itens.find(i => i.id === base.id);
-  if (existente) { existente.qtd += qtd; return true; }
-  if (dep.itens.length >= capacidadeDeposito()) return false;
-  dep.itens.push({ ...base, qtd });
+  if (existente) existente.qtd += qtd;
+  else if (dep.itens.length >= capacidadeDeposito()) return false;
+  else dep.itens.push({ ...base, qtd });
+  renderizarDeposito();
   return true;
 }
 
@@ -466,16 +486,18 @@ function descreverLoot(loot) {
 
 function registrarRelatorio(rel) {
   const lista = estado.assentamento.relatorios;
+  rel.naoVisto = true; // mostrado quando o jogador voltar (ver exibirRelatoriosPendentes)
   lista.unshift(rel);
   if (lista.length > RELATORIOS_MAX) lista.length = RELATORIOS_MAX;
 }
 
 function abrirRelatorio(rel) {
+  rel.naoVisto = false;
   const baixas = [
     rel.baixas.mortos.length ? `💀 Mortos: ${rel.baixas.mortos.map(esc).join(', ')}` : '',
     rel.baixas.feridos.length ? `🩸 Feridos: ${rel.baixas.feridos.map(esc).join(', ')}` : '',
   ].filter(Boolean).join('<br>');
-  abrirJanela(`<h3>${rel.titulo}</h3>
+  abrirJanela(`<h3>${esc(rel.titulo)}</h3>
     <p class="rel-resultado ${rel.venceu ? 'rel-vitoria' : 'rel-derrota'}">${rel.venceu ? '🏆 Vitória' : '☠️ Derrota'} · Dia ${rel.dia}</p>
     <p>${esc(rel.resumo)}</p>
     ${baixas ? `<p>${baixas}</p>` : ''}
@@ -540,6 +562,10 @@ function abrirEnvioMissao(tipo) {
 function iniciarMissao(tipo, ids) {
   const a = estado.assentamento, m = MISSOES[tipo];
   if (a.missoes.feitasHoje.includes(tipo) || a.missoes.emAndamento.some(x => x.tipo === tipo)) return;
+  // Revalida: a janela de envio pode estar velha (alguém ficou ferido, parou ou já partiu)
+  const prontos = new Set(combatentesProntos().map(c => c.id));
+  ids = ids.filter(id => prontos.has(id));
+  if (!ids.length) { mostrarToast('Nenhum combatente pronto.'); return; }
   const agora = Date.now();
   for (const c of a.bando) if (ids.includes(c.id)) c.estado = 'missao';
   a.missoes.emAndamento.push({
@@ -553,14 +579,35 @@ function iniciarMissao(tipo, ids) {
 
 // Chamada a cada segundo (atualizarStatus) e funciona também ao voltar com o jogo fechado
 function verificarMissoesConcluidas() {
+  exibirRelatoriosPendentes();
   const a = estado.assentamento;
   if (!a?.missoes?.emAndamento?.length) return;
   const agora = Date.now();
   const prontas = a.missoes.emAndamento.filter(m => agora >= m.fim);
   if (!prontas.length) return;
   a.missoes.emAndamento = a.missoes.emAndamento.filter(m => agora < m.fim);
-  for (const m of prontas) resolverMissao(m);
+  for (const m of prontas) {
+    try { resolverMissao(m); } catch (err) { console.error('Erro ao resolver missão', m, err); }
+  }
   atualizarTelaAssentamento();
+}
+
+// Mostra os relatórios que chegaram com o jogador fora (aba oculta, exploração ou jogo fechado)
+function exibirRelatoriosPendentes() {
+  if (document.hidden || estado.exploracao?.ativa) return;
+  const pendentes = (estado.assentamento?.relatorios || []).filter(r => r.naoVisto);
+  if (!pendentes.length) return;
+  if (pendentes.length === 1) {
+    abrirRelatorio(pendentes[0]);
+  } else {
+    pendentes.forEach(r => { r.naoVisto = false; });
+    const j = abrirJanela(`<h3>📋 Enquanto você estava fora</h3>
+      <div class="janela-lista">${pendentes.map((r, i) => `<button class="rel-item" data-rel="${i}">${r.venceu ? '🏆' : '☠️'} ${esc(r.titulo)} · Dia ${r.dia}</button>`).join('')}</div>`);
+    j.querySelectorAll('[data-rel]').forEach(b => {
+      b.onclick = () => abrirRelatorio(pendentes[parseInt(b.dataset.rel)]);
+    });
+  }
+  salvarJogo();
 }
 
 function resolverMissao(m) {
@@ -579,10 +626,10 @@ function resolverMissao(m) {
     ganharXpAssentamento(XP_EVENTO.derrota);
     resumo = `O Bando recuou sem nada. +${XP_EVENTO.derrota} XP`;
   }
-  const rel = { titulo: `${cfg.icone} ${cfg.nome}`, venceu, dia: estado.dia, resumo, baixas, linhas: res.relatorio };
+  const rel = { titulo: `${cfg.icone} ${cfg.nome}`, venceu, dia: estado.dia, resumo, baixas, linhas: res.relatorio, semente: m.semente };
   registrarRelatorio(rel);
   log(`${venceu ? '🏆' : '☠️'} Missão ${cfg.nome}: ${venceu ? 'vitória' : 'derrota'}.${baixas.mortos.length ? ` Mortos: ${baixas.mortos.join(', ')}.` : ''}`, venceu ? 'log-sucesso' : 'log-perigo');
-  if (!document.hidden) abrirRelatorio(rel);
+  if (!document.hidden && !estado.exploracao?.ativa) abrirRelatorio(rel);
 }
 
 ACOES_BANDO['missao'] = el => abrirEnvioMissao(el.dataset.tipo);
@@ -598,14 +645,15 @@ function defenderInvasao() {
   const defensores = combatentesProntos();
   if (!defensores.length) return null;
   const bonus = bonusDefesaAssentamento();
-  const res = simularCombate(gerarInvasores(a.nivel), defensores.map(c => statsLutador(c, bonus)), (Date.now() % 2147483647) || 1);
+  const semente = (Date.now() % 2147483647) || 1;
+  const res = simularCombate(gerarInvasores(a.nivel), defensores.map(c => statsLutador(c, bonus)), semente);
   const baixas = aplicarResultadoCombate(res, 'B');
   const venceu = res.vencedor === 'B';
   ganharXpAssentamento(venceu ? XP_EVENTO.invasaoVitoria : XP_EVENTO.derrota);
   const resumo = venceu
     ? `O Bando expulsou os invasores. Nada foi roubado. +${XP_EVENTO.invasaoVitoria} XP`
     : `Os invasores passaram pelo Bando e saquearam o depósito. +${XP_EVENTO.derrota} XP`;
-  registrarRelatorio({ titulo: '🌙 Invasão noturna', venceu, dia: estado.dia, resumo, baixas, linhas: res.relatorio });
+  registrarRelatorio({ titulo: '🌙 Invasão noturna', venceu, dia: estado.dia, resumo, baixas, linhas: res.relatorio, semente }); // relatório só abre quando o jogador voltar
   log(venceu ? `⚔️ Invasores atacaram ${a.nome}, mas o Bando os expulsou!` : `⚔️ Invasores venceram o Bando de ${a.nome}.`, venceu ? 'log-sucesso' : 'log-perigo');
   if (baixas.mortos.length) log(`💀 Mortos na defesa: ${baixas.mortos.join(', ')}.`, 'log-perigo');
   mostrarToast(venceu ? '⚔️ O Bando defendeu o assentamento!' : '⚔️ O Bando perdeu a defesa!', 3000);
@@ -623,7 +671,7 @@ SECOES_BANDO.push({
     if (!rs.length) return '';
     return `<div class="sec-bloco bando-secao">
       <h4 class="trab-secao-titulo">📋 Últimos combates</h4>
-      <div class="bando-lista">${rs.map((r, i) => `<button class="rel-item" data-acao="relatorio" data-idx="${i}">${r.venceu ? '🏆' : '☠️'} ${r.titulo} · Dia ${r.dia}</button>`).join('')}</div>
+      <div class="bando-lista">${rs.map((r, i) => `<button class="rel-item" data-acao="relatorio" data-idx="${i}">${r.venceu ? '🏆' : '☠️'} ${esc(r.titulo)} · Dia ${r.dia}</button>`).join('')}</div>
     </div>`;
   },
 });
