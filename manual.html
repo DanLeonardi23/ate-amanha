@@ -637,6 +637,43 @@ body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(
     </div>
   </section>
 
+  <!-- ═══════════ BANDO ═══════════ -->
+  <section class="screen" id="s-bando" data-nome="Bando" hidden>
+    <p class="screen-intro">Dentro do Assentamento, o <strong>Bando</strong> reúne combatentes contratados com Baterias. Eles <strong>defendem</strong> o assentamento das invasões e saem em <strong>missões</strong> atrás de saque. Quem morre em combate é perdido junto com o equipamento.</p>
+    <div class="frame stack">
+      <div class="frame-label">Aba Assentamento · sub-aba Bando</div>
+      <div class="card stack" data-h="identidade" tabindex="0">
+        <div class="row"><b style="font-size:19px;font-weight:600">🏘 Vila Esperança</b><span class="chip">✏️</span><span class="chip" style="margin-left:auto;color:var(--amber)">Nível 3</span></div>
+        <div class="bar"><i style="width:45%;background:var(--amber)"></i></div>
+        <div class="row mono dim" style="font-size:12px;justify-content:space-between"><span>340 / 450 XP</span><span style="color:var(--fg)">⚔️ 21 &nbsp; 🛡️ 17</span></div>
+      </div>
+      <div class="two">
+        <div class="card stack" data-h="combatente" tabindex="0">
+          <div class="row"><span style="font-size:26px">🧔</span><div><b style="font-weight:600">Bruno</b> <span class="chip">Veterano</span><div class="dim" style="font-size:13.5px">🟢 Pronto · ⚔️ 11 🛡️ 9</div></div></div>
+          <div class="bar"><i style="width:80%;background:var(--red)"></i></div>
+          <div class="row" data-h="comb-equip" tabindex="0"><span class="chip">🗡️ Lança</span><span class="chip">⛑️ Capacete</span><span class="chip">+ Peito</span></div>
+          <div class="row"><span class="btn sec sm" data-h="comb-curar" tabindex="0">🩹 Curar</span><span class="btn sec sm" data-h="comb-dispensar" tabindex="0">Dispensar</span></div>
+        </div>
+        <div class="card stack">
+          <div class="mini-slot" data-h="recruta" tabindex="0">👩 Jana <span class="chip">Novato</span> <span class="dim">⚔️ 4 🛡️ 2 ❤️ 40</span><span class="btn sm" style="margin-left:auto">Contratar · 18 🔋</span></div>
+          <div class="mini-slot" data-h="soldo" tabindex="0">🔋 Cobrando soldo <span class="btn sm" style="margin-left:auto">Pagar soldo (10)</span><span class="btn sec sm">Recusar</span></div>
+        </div>
+      </div>
+      <div class="two">
+        <div class="card stack" data-h="missao" tabindex="0">
+          <b style="font-weight:600">⛺ Acampamento de saqueadores</b>
+          <span class="dim" style="font-size:14px">3× Saqueador (⚔️ 5 🛡️ 2 ❤️ 39) · ⏱ 3 min</span>
+          <span class="btn sm" style="justify-self:start">Enviar Bando</span>
+        </div>
+        <div class="card stack" data-h="relatorios" tabindex="0">
+          <span class="sec-t" style="margin:0">📋 Últimos combates</span>
+          <span>🏆 ⛺ Acampamento de saqueadores · Dia 12</span>
+          <span>☠️ 🌙 Invasão noturna · Dia 11</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════ 8. ITENS E EVENTOS ═══════════ -->
   <section class="screen" id="s-itens" data-nome="Janelas e eventos" hidden>
     <p class="screen-intro">Clicar num item da mochila abre a <strong>janela do item</strong>. Durante as explorações aparecem <strong>eventos</strong> com escolhas, e nem toda escolha é segura.</p>
@@ -871,6 +908,17 @@ const H = {
   'npc-dispensar': ['Dispensar', 'Manda o morador embora e libera a moradia.'],
   pagamento: ['Pagamento', 'A cada 5 dias, cada morador cobra de <b>10 a 40 Baterias</b>. <span class="warn">Enquanto a cobrança estiver aberta, ele não trabalha.</span> Recusar deixa o morador <b>parado</b>; para ele voltar, use <b>Pagar e reativar</b> no card dele.'],
   'estruturas-assent': ['Moradias', '<b>Barraco</b> e <b>Tenda</b> abrigam 1 morador; a <b>Cabana</b> abriga <b>2</b>. Moradias especiais recebem só uma aptidão e dão bônus: <b>Estufa</b> (o Cultivador planta as sementes do seu <b>Depósito</b> sem precisar de rega, no mesmo tempo do Cultivo), <b>Posto Médico</b> (o Médico cura você +10–20 de vida por dia), <b>Torre de Vigilância</b> (o Segurança reduz saques em 20% em vez de 12%).<br>Aptidões: Coletor traz comida e água; Médico, ataduras e remédios; Mecânico, sucata e arame; Cultivador, sementes; Explorador, itens variados.'],
+
+  // Bando
+  identidade: ['Identidade do assentamento', 'Nome (troque no ✏️), <b>nível</b> e barra de XP. O assentamento ganha XP construindo moradias (+30), acolhendo moradores (+20), vencendo missões (+40 a +120) e defendendo invasões (+50). Cada nível aumenta o limite do Bando (2 no nível 1, até 8). ⚔️ e 🛡️ somam os combatentes prontos; a Defesa inclui armadilhas, moradores Segurança e a Torre de Vigilância.'],
+  combatente: ['Combatente', 'Mostra categoria (Novato, Veterano ou Elite), estado, Ataque, Defesa e vida. <b>Ferido</b> (abaixo de 30% da vida) não luta até se recuperar. <span class="warn">Vida zero é morte permanente, e o equipamento é perdido.</span>'],
+  'comb-equip': ['Equipamento do combatente', 'Três encaixes: <b>arma</b> (dá Ataque), <b>cabeça</b> e <b>peito</b> (dão Defesa). Usa os mesmos itens que você encontra, tirados da mochila ou do depósito. Ex.: Faca +3 ⚔️, Machado +8 ⚔️, Capacete Tático +5 🛡️, Colete Balístico +7 🛡️.'],
+  'comb-curar': ['Curar', 'Use um item de cura da mochila no combatente. Além disso, todo dia ele recupera vida sozinho: +5, ou +15 com um Médico no assentamento, ou +25 com o Médico no Posto Médico.'],
+  'comb-dispensar': ['Dispensar', 'Tira o combatente do Bando. O equipamento dele volta para a mochila.'],
+  recruta: ['Mural de recrutas', '3 candidatos, renovados a cada 3 dias. Pague em Baterias para contratar. Veteranos e Elites custam mais e são mais fortes. O Bando não pode passar do limite do nível do assentamento.'],
+  soldo: ['Soldo', 'A cada 5 dias cada combatente cobra soldo (Novato 5, Veterano 10, Elite 15 Baterias). <span class="warn">Enquanto não paga, ele não luta.</span> Recusar deixa o combatente parado até você pagar e reativar.'],
+  missao: ['Missão', 'Escolha quais combatentes prontos vão. Eles ficam fora pelo tempo indicado (o tempo corre mesmo com o jogo fechado). Na volta, o combate é resolvido e aparece o relatório. Vitória traz Baterias, itens (para o Depósito) e XP. Cada alvo pode ser atacado uma vez por dia; os inimigos ficam mais fortes conforme o nível do assentamento.'],
+  relatorios: ['Últimos combates', 'Os 5 últimos combates (missões e invasões). Clique para ver rodada a rodada, quem se feriu, quem morreu e o que foi saqueado. Invasões acontecem quando você está fora explorando ao anoitecer; com o Bando pronto em casa, ele luta antes de qualquer item ser roubado.'],
 
   // Itens e eventos
   'item-efeitos': ['Efeitos', 'O que acontece ao usar. Saciedade e hidratação aparecem como <b>+</b> quando enchem a barra.'],
