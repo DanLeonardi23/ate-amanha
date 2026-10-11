@@ -3128,7 +3128,6 @@ function atualizarRelogio() {
     tela.classList.toggle('fase-noite', fase === 'noite');
     tela.classList.toggle('fase-dia',   fase === 'dia');
   }
-  audio.tocarFase(fase);
 }
 
 /** Chamado no início da noite. */
@@ -5019,7 +5018,6 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   mostrarTela('tela-intro');
   mostrarIntro(() => {
     mostrarTela('tela-jogo');
-    audio.iniciar();
 
     log(`${nome} acorda em um campo aberto. Sem proteção. Sem abrigo.`, 'log-alerta');
     log(`Traço: ${td.icone} ${td.nome} — ${td.desc}`, 'log-sistema');
@@ -5130,98 +5128,6 @@ function aplicarProgressoOffline(segundos) {
 // ============================================================
 // INICIALIZAR UI
 // ============================================================
-
-// ============================================================
-// SISTEMA DE ÁUDIO
-// ============================================================
-
-const audio = {
-  dia:   null,
-  noite: null,
-  mudo:  localStorage.getItem('atéamanha_mudo') === 'true',
-  faseAtual: null,
-  iniciado: false,
-
-  init() {
-    this.dia   = document.getElementById('audio-dia');
-    this.noite = document.getElementById('audio-noite');
-    if (!this.dia || !this.noite) return;
-    this.dia.volume   = 0;
-    this.noite.volume = 0;
-    this._atualizarBotao();
-  },
-
-  // Chamado na primeira interação do usuário
-  iniciar() {
-    if (this.iniciado || !this.dia) return;
-    this.iniciado = true;
-    const fase = this.faseAtual || 'dia';
-    const el   = fase === 'noite' ? this.noite : this.dia;
-    el.volume  = 0;
-    const p = el.play();
-    if (p !== undefined) {
-      p.then(() => {
-        // Autoplay permitido — fade in
-        this._fade(el, 0, this.mudo ? 0 : 0.3, 2000);
-      }).catch(() => {
-        // Autoplay bloqueado — aguardar próximo clique do usuário
-        this.iniciado = false;
-        document.addEventListener('click', () => this.iniciar(), { once: true });
-      });
-    }
-  },
-
-  tocarFase(fase) {
-    this.faseAtual = fase;
-    if (!this.iniciado || !this.dia) return;
-
-    const entrando = fase === 'dia' ? this.dia   : this.noite;
-    const saindo   = fase === 'dia' ? this.noite : this.dia;
-
-    // Iniciar faixa que está entrando
-    if (entrando.paused) {
-      entrando.volume = 0;
-      entrando.currentTime = 0;
-      entrando.play().catch(() => {});
-    }
-
-    // Crossfade
-    this._fade(saindo,   saindo.volume,   0,                    3000);
-    this._fade(entrando, entrando.volume, this.mudo ? 0 : 0.3,  3000);
-  },
-
-  alternarMudo() {
-    this.mudo = !this.mudo;
-    localStorage.setItem('atéamanha_mudo', this.mudo);
-    const vol = this.mudo ? 0 : 0.3;
-    const ativo = this.faseAtual === 'noite' ? this.noite : this.dia;
-    if (ativo) this._fade(ativo, ativo.volume, vol, 800);
-    this._atualizarBotao();
-  },
-
-  _atualizarBotao() {
-    const btn = document.getElementById('btn-som');
-    if (btn) btn.textContent = this.mudo ? '🔇' : '🔊';
-  },
-
-  _fade(el, de, ate, ms) {
-    if (!el) return;
-    clearInterval(el._fadeTimer);
-    el.volume = Math.max(0, Math.min(1, de));
-    const passos = 30;
-    const intervalo = ms / passos;
-    const delta = (ate - de) / passos;
-    let passo = 0;
-    el._fadeTimer = setInterval(() => {
-      passo++;
-      el.volume = Math.max(0, Math.min(1, de + delta * passo));
-      if (passo >= passos) {
-        clearInterval(el._fadeTimer);
-        if (ate === 0 && !el.paused) el.pause();
-      }
-    }, intervalo);
-  }
-};
 
 // Balão flutuante para qualquer elemento com data-tooltip. Fica em position: fixed no body,
 // então não é cortado pelas colunas (que têm overflow). Prefere abrir à direita do elemento.
@@ -5382,7 +5288,6 @@ function inicializarUI() {
   });
 
   // ── Salvar / Reset ──
-  document.getElementById('btn-som')?.addEventListener('click', () => audio.alternarMudo());
 
   document.getElementById('btn-salvar').addEventListener('click', () => {
     salvarJogo();
@@ -7074,7 +6979,6 @@ function aplicarDadosSave(s) {
 
 // Restaura toda a UI após carregar um save
 function restaurarUIJogo() {
-  audio.iniciar();
   const p  = estado.personagem;
   const td = TRACOS[p.traco];
   const avatarElR = document.getElementById('hdr-avatar');
@@ -7106,7 +7010,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   inicializarUI();
   inicializarLogin();
   inicializarBazar();
-  audio.init();
 
   const sb      = getSB();
   const session = sb ? await sbGetSession() : null;
