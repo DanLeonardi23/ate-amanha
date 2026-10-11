@@ -5073,7 +5073,33 @@ function mostrarAvisoManual() {
 function iniciarLoop() {
   if (estado.loop) clearInterval(estado.loop);
   estado.loop = setInterval(atualizarStatus, TICK_MS);
+  anunciarAbaAtiva();
 }
+
+// ── Uma aba por vez ──
+// Duas abas com o mesmo jogo sobrescreviam o save uma da outra. Quando o jogo começa
+// numa aba, as outras abas deste navegador pausam e param de salvar.
+let _abaPausada = false;
+const _abaId = Math.random().toString(36).slice(2);
+const _canalAbas = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ateamanha-abas') : null;
+
+function anunciarAbaAtiva() {
+  _canalAbas?.postMessage({ tipo: 'jogo-aberto', id: _abaId });
+}
+
+_canalAbas?.addEventListener('message', e => {
+  if (e.data?.tipo !== 'jogo-aberto' || e.data.id === _abaId) return;
+  if (!estado.criado || _abaPausada) return;
+  _abaPausada = true;
+  clearInterval(estado.loop);
+  clearInterval(estado.exploracao?.timer);
+  mostrarConfirmacao(
+    '⏸ O jogo foi aberto em outra aba.<br><br>Esta aba foi pausada para não sobrescrever seu progresso.',
+    () => location.reload(),
+    null,
+    { labelSim: 'Jogar nesta aba', labelNao: 'Fechar aviso', clsSim: 'btn-primario' }
+  );
+});
 
 // ============================================================
 // SALVAMENTO
@@ -5097,7 +5123,7 @@ function montarDadosSave() {
 }
 
 function salvarJogo() {
-  if (!estado.criado) return;
+  if (!estado.criado || _abaPausada) return;
   const dados = montarDadosSave();
   localStorage.setItem('atéamanha_save', JSON.stringify(dados));
   if (_sbUser) sbSalvar(dados); // cloud save assíncrono, sem bloquear
@@ -5121,8 +5147,11 @@ function aplicarProgressoOffline(segundos) {
   // Progresso offline não reduz vida — personagem sempre está vivo ao voltar
   const antesSegundos = estado.segundos;
   estado.segundos += eff;
-  estado.dia += Math.floor(estado.segundos / CICLO_DURACAO) - Math.floor(antesSegundos / CICLO_DURACAO);
+  const diasPassados = Math.floor(estado.segundos / CICLO_DURACAO) - Math.floor(antesSegundos / CICLO_DURACAO);
   log(`Você esteve ausente por ${Math.floor(eff / 60)} minutos. O mundo não parou.`, 'log-alerta');
+  // Cada amanhecer perdido é processado de verdade: mercado, cisterna, plantas,
+  // moradores, cobranças, lamparina e saque noturno (avancarDia também soma o dia)
+  for (let i = 0; i < diasPassados; i++) avancarDia();
 }
 
 // ============================================================
@@ -5483,17 +5512,22 @@ async function renderizarBazar() {
 }
 
 let _bazarTimer     = null;
-let _bazarCountdown = 10;
+let _bazarCountdown = 30;
+
+// Atualiza as Barracas a cada 30 s (cada consulta gasta tráfego do Supabase) e
+// pausa a contagem enquanto a aba do navegador está escondida.
+const BAZAR_INTERVALO = 30;
 
 function iniciarAutoRefreshBazar() {
   pararAutoRefreshBazar();
-  _bazarCountdown = 10;
+  _bazarCountdown = BAZAR_INTERVALO;
   _bazarTimer = setInterval(() => {
+    if (document.hidden) return;
     _bazarCountdown--;
     const el = document.getElementById('bazar-countdown');
     if (el) el.textContent = _bazarCountdown;
     if (_bazarCountdown <= 0) {
-      _bazarCountdown = 10;
+      _bazarCountdown = BAZAR_INTERVALO;
       renderizarBazar();
     }
   }, 1000);
@@ -6912,6 +6946,9 @@ function inicializarLogin() {
 }
 
 function traduzirErroAuth(msg) {
+  // Servidor fora do ar, pausado ou sem internet: erro de rede em vez de resposta do Supabase
+  if (/failed to fetch|networkerror|load failed|network request failed|fetch|(^|[^0-9])5[0-9][0-9]([^0-9]|$)/i.test(msg))
+    return 'Não foi possível falar com o servidor agora. Ele pode estar fora do ar: tente de novo em alguns minutos ou use "Jogar sem conta".';
   if (msg.includes('Invalid login'))     return 'Email ou senha incorretos.';
   if (msg.includes('Email not confirmed')) return 'Confirme seu email antes de entrar.';
   if (msg.includes('User already registered')) return 'Este email já está cadastrado.';
@@ -7043,6 +7080,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   // else: Supabase configurado mas sem sessão → tela-login já está ativa
+
+  // Salva ao trocar de aba, minimizar ou fechar a página (antes perdia até 30 s)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && estado.criado) salvarJogo();
+  });
+  window.addEventListener('pagehide', () => { if (estado.criado) salvarJogo(); });
 
   setInterval(() => {
     if (!estado.criado) return;
