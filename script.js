@@ -4855,6 +4855,7 @@ function resolverTrocaNPC(aceitar) {
 // ============================================================
 
 function gameOver() {
+  document.querySelectorAll('.janela-bando').forEach(j => j.remove()); // fecha janelas do Bando abertas
   clearInterval(estado.loop);
   clearInterval(estado.exploracao.timer);
   localStorage.removeItem('atéamanha_save');
@@ -5009,6 +5010,7 @@ function inicializarCriacao() {
 // ============================================================
 
 async function iniciarJogo(nome, avatarIdx, traco) {
+  document.querySelectorAll('.janela-bando').forEach(j => j.remove()); // fecha janelas do Bando abertas
   const td     = TRACOS[traco];
   const vidaMax = td.efeitos.vidaMax || 100;
 

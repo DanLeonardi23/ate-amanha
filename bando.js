@@ -89,7 +89,7 @@ function atualizarTelaAssentamento() {
 function abrirJanela(html, { largura = 420 } = {}) {
   const overlay = document.createElement('div');
   overlay.className = 'modal janela-bando';
-  overlay.style.zIndex = '9000';
+  overlay.style.zIndex = '150';
   overlay.innerHTML = `<div class="modal-conteudo janela-conteudo" style="max-width:${largura}px">${html}
     <div class="modal-acoes"><button class="btn-secundario btn-sm" data-fechar>Fechar</button></div></div>`;
   const aoTeclar = e => {
@@ -203,14 +203,14 @@ function htmlCombatente(c) {
   const emMissao = c.estado === 'missao';
   const slots = SLOTS_COMBATENTE.map(slot => {
     const it = c.equip[slot] && ITENS[c.equip[slot]];
-    return `<button class="comb-slot" data-acao="equipar" data-id="${c.id}" data-slot="${slot}" ${emMissao ? 'disabled' : ''}>${it ? `${it.icone} ${esc(it.nome)}` : `+ ${SLOT_LABELS[slot]}`}</button>`;
+    return `<button class="comb-slot" data-acao="equipar" data-id="${esc(c.id)}" data-slot="${slot}" ${emMissao ? 'disabled' : ''}>${it ? `${it.icone} ${esc(it.nome)}` : `+ ${SLOT_LABELS[slot]}`}</button>`;
   }).join('');
   let acoes = '';
   if (c.soldoPendente) {
-    acoes = `<button class="btn-primario btn-sm" data-acao="pagar-soldo" data-id="${c.id}" ${temItem('pilha', c.soldoPendente) ? '' : 'disabled'}>🔋 Pagar soldo (${c.soldoPendente})</button>
-      <button class="btn-secundario btn-sm" data-acao="recusar-soldo" data-id="${c.id}">Recusar</button>`;
+    acoes = `<button class="btn-primario btn-sm" data-acao="pagar-soldo" data-id="${esc(c.id)}" ${temItem('pilha', c.soldoPendente) ? '' : 'disabled'}>🔋 Pagar soldo (${c.soldoPendente})</button>
+      <button class="btn-secundario btn-sm" data-acao="recusar-soldo" data-id="${esc(c.id)}">Recusar</button>`;
   } else if (c.estado === 'parado') {
-    acoes = `<button class="btn-primario btn-sm" data-acao="reativar" data-id="${c.id}" ${temItem('pilha', c.divida) ? '' : 'disabled'}>🔋 Pagar e reativar (${c.divida})</button>`;
+    acoes = `<button class="btn-primario btn-sm" data-acao="reativar" data-id="${esc(c.id)}" ${temItem('pilha', c.divida) ? '' : 'disabled'}>🔋 Pagar e reativar (${c.divida})</button>`;
   }
   return `
     <div class="comb-card${c.estado === 'ferido' ? ' comb-ferido' : ''}">
@@ -226,8 +226,8 @@ function htmlCombatente(c) {
       <div class="comb-slots">${slots}</div>
       <div class="comb-acoes">
         ${acoes}
-        <button class="btn-secundario btn-sm" data-acao="curar" data-id="${c.id}" ${c.vida >= c.vidaMax || emMissao ? 'disabled' : ''}>🩹 Curar</button>
-        <button class="btn-secundario btn-sm comb-dispensar" data-acao="dispensar" data-id="${c.id}" ${emMissao ? 'disabled' : ''}>Dispensar</button>
+        <button class="btn-secundario btn-sm" data-acao="curar" data-id="${esc(c.id)}" ${c.vida >= c.vidaMax || emMissao ? 'disabled' : ''}>🩹 Curar</button>
+        <button class="btn-secundario btn-sm comb-dispensar" data-acao="dispensar" data-id="${esc(c.id)}" ${emMissao ? 'disabled' : ''}>Dispensar</button>
       </div>
     </div>`;
 }

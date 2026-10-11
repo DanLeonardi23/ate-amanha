@@ -3815,13 +3815,6 @@ html, body {
 }
 
 /* ── ASSENTAMENTO ── */
-.assent-subtitulo {
-  font-size: .78rem;
-  color: var(--text-sec);
-  margin-top: 4px;
-  line-height: 1.5;
-}
-
 .assent-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
