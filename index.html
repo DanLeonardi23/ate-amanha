@@ -921,18 +921,29 @@
           <!-- ── ABA: ASSENTAMENTO ── -->
           <div class="aba-conteudo" id="aba-assentamento">
 
-            <div class="assent-header sec-bloco">
-              <h3 class="sec-titulo">🏘 ASSENTAMENTO</h3>
-              <p class="assent-subtitulo">Construa moradias para abrigar sobreviventes. Cada estrutura poderá receber um habitante no futuro.</p>
+            <!-- Identidade: nome, nível, XP, Ataque e Defesa (desenhada por bando.js) -->
+            <div id="assent-identidade" class="assent-identidade sec-bloco"></div>
+
+            <nav class="sub-abas-nav">
+              <button class="sub-aba-btn ativa" data-sub="sub-assent-moradores">🏘 Moradores</button>
+              <button class="sub-aba-btn" data-sub="sub-assent-bando">⚔️ Bando</button>
+            </nav>
+
+            <!-- Sub-aba: Moradores (conteúdo de antes) -->
+            <div class="sub-aba-painel" id="sub-assent-moradores">
+              <div class="sec-bloco">
+                <h4 class="trab-secao-titulo">🏗 Parcelas de Construção</h4>
+                <div id="assent-parcelas" class="assent-grid"></div>
+              </div>
+
+              <div class="assent-footer sec-bloco" style="font-size:.72rem;color:var(--text-dim);font-style:italic">
+                Sobreviventes aparecem pedindo abrigo ao longo dos dias. Aceite-os para que trabalhem pelo assentamento.
+              </div>
             </div>
 
-            <div class="sec-bloco">
-              <h4 class="trab-secao-titulo">🏗 Parcelas de Construção</h4>
-              <div id="assent-parcelas" class="assent-grid"></div>
-            </div>
-
-            <div class="assent-footer sec-bloco" style="font-size:.72rem;color:var(--text-dim);font-style:italic">
-              Sobreviventes aparecem pedindo abrigo ao longo dos dias. Aceite-os para que trabalhem pelo assentamento.
+            <!-- Sub-aba: Bando (desenhada por bando.js) -->
+            <div class="sub-aba-painel oculto" id="sub-assent-bando">
+              <div id="bando-painel" class="bando-painel"></div>
             </div>
 
           </div><!-- fim aba assentamento -->

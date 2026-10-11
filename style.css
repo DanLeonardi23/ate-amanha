@@ -4393,3 +4393,107 @@ html, body {
 }
 .fb-mensagem:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .fb-contador { justify-self: end; font-family: var(--font-mono); font-size: .7rem; color: var(--text-dim); }
+
+/* ══════════════════════════════════════════════════════
+   IDENTIDADE DO ASSENTAMENTO E BANDO (bando.js)
+══════════════════════════════════════════════════════ */
+.assent-identidade { gap: 6px; }
+.ident-topo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ident-nome { font-size: 1.15rem; font-weight: 700; color: var(--text-pri); }
+.ident-editar {
+  background: none; border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; padding: 0 6px; font-size: .8rem;
+}
+.ident-editar:hover { border-color: var(--accent); }
+.ident-nivel {
+  margin-left: auto; font-family: var(--font-mono); font-size: .8rem; color: #e2b44c;
+  border: 1px solid #5e4a1c; border-radius: var(--radius); padding: 1px 8px;
+}
+.ident-xp { height: 6px; background: var(--bg-0); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.ident-xp-fill { height: 100%; background: #e2b44c; transition: width .4s ease; }
+.ident-linha {
+  display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: .75rem; color: var(--text-sec);
+}
+.ident-poder { color: var(--text-pri); }
+
+.bando-painel { display: flex; flex-direction: column; gap: 14px; }
+.bando-secao { gap: 8px; }
+.bando-cont { font-family: var(--font-mono); font-size: .7rem; color: var(--text-dim); font-weight: 400; margin-left: 6px; }
+.bando-vazio { font-size: .85rem; color: var(--text-dim); font-style: italic; }
+.bando-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.bando-lista { display: grid; gap: 6px; }
+
+.comb-card {
+  display: grid; gap: 5px; padding: 8px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.comb-ferido { border-color: #6a2a2a; }
+.comb-topo { display: flex; gap: 8px; align-items: center; }
+.recruta-card {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 8px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.recruta-card .btn-primario { margin-left: auto; }
+.comb-avatar {
+  width: 38px; height: 38px; object-fit: cover; flex-shrink: 0;
+  border-radius: var(--radius); border: 1px solid var(--border-hi);
+}
+.comb-info { display: grid; min-width: 0; }
+.comb-nome { font-weight: 700; font-size: .9rem; }
+.comb-estado { font-size: .72rem; color: var(--text-sec); }
+.comb-cat {
+  font-family: var(--font-mono); font-size: .62rem; font-weight: 400; padding: 0 5px;
+  border-radius: 2px; border: 1px solid var(--border-hi); color: var(--text-sec);
+}
+.comb-cat-veterano { color: #8fc0ea; border-color: #2a4a6b; }
+.comb-cat-elite { color: #e2b44c; border-color: #5e4a1c; }
+.comb-vida { height: 6px; background: var(--bg-0); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.comb-vida-fill { height: 100%; background: var(--vida-cor); }
+.comb-vida-txt { font-family: var(--font-mono); font-size: .68rem; color: var(--text-sec); }
+.comb-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.comb-slot {
+  font-size: .68rem; padding: 4px 3px; cursor: pointer;
+  background: var(--bg-0); color: var(--text-sec);
+  border: 1px dashed var(--border-hi); border-radius: var(--radius);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.comb-slot:hover:not(:disabled) { border-color: var(--accent); color: var(--text-pri); }
+.comb-slot:disabled { opacity: .5; cursor: default; }
+.comb-acoes { display: flex; flex-wrap: wrap; gap: 4px; }
+.comb-dispensar { margin-left: auto; color: var(--red-l); }
+
+.missao-card {
+  display: grid; gap: 3px; padding: 8px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.missao-card .btn-primario { justify-self: start; }
+.missao-nome { font-weight: 700; font-size: .9rem; }
+.missao-info { font-size: .72rem; color: var(--text-sec); }
+.missao-status { font-size: .75rem; color: #e2b44c; }
+
+.rel-item {
+  text-align: left; font-size: .8rem; padding: 6px 8px; cursor: pointer;
+  background: var(--bg-1); color: var(--text-pri); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.rel-item:hover { border-color: var(--accent); }
+
+/* Janelas do Bando (criadas no body, fora de #tela-jogo) */
+.janela-conteudo { display: grid; gap: 10px; max-height: 85vh; overflow-y: auto; color: #bcc8b8; }
+.janela-lista { display: grid; gap: 6px; }
+.janela-opcao { text-align: left; }
+.janela-dim { color: #a8b8a2; font-size: .8rem; }
+.janela-check { display: flex; gap: 6px; align-items: center; font-size: .9rem; cursor: pointer; }
+.janela-input {
+  width: 100%; padding: 8px 10px; font-size: .95rem; color: #bcc8b8;
+  background: var(--bg-0); border: 1px solid var(--border-hi); border-radius: var(--radius);
+}
+.rel-resultado { font-weight: 700; }
+.rel-vitoria { color: var(--green-l); }
+.rel-derrota { color: var(--red-l); }
+.rel-linhas {
+  max-height: 260px; overflow-y: auto; display: grid; gap: 2px; padding: 6px 8px;
+  font-family: var(--font-mono); font-size: .72rem; color: #a8b8a2;
+  background: var(--bg-0); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.rel-rodada { color: #5fd35f; margin-top: 4px; }
