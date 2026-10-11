@@ -436,7 +436,7 @@ const ITENS_EQUIPAVEIS = {
   lanca: {
     slot: 'arma',
     efeitos: { vidaDecayMulti: 0.85 }, // menos dano em eventos
-    desc: 'Reduz dano recebido em eventos de exploração.'
+    desc: '−15% de dano recebido em eventos de exploração.'
   },
   arco: {
     slot: 'arma',
@@ -446,20 +446,27 @@ const ITENS_EQUIPAVEIS = {
   faca: {
     slot: 'arma',
     efeitos: { vidaDecayMulti: 0.9 },
-    desc: 'Alguma proteção. Menos dano em confrontos.'
+    desc: 'Alguma proteção: −10% de dano recebido em eventos de exploração.'
+  },
+
+  // Revólver: sem munição, mas quem vê não sabe — o efeito é intimidar
+  revolver: {
+    slot: 'arma',
+    efeitos: { eventoChanceMult: 0.85 },
+    desc: 'Sem munição, mas ninguém sabe disso. Intimida: −15% de eventos negativos nas explorações.'
   },
 
   machado: {
     slot: 'arma',
     efeitos: { vidaDecayMulti: 0.75, lootBonus: 0.1 },
-    desc: 'Pesado e intimidador. Reduz bastante o dano recebido e melhora o loot.'
+    desc: 'Pesado e intimidador: −25% de dano recebido em eventos e +10% de loot.'
   },
 
   // Cabeça
   capacete: {
     slot: 'cabeca',
-    efeitos: { vidaDecayMulti: 0.95 },
-    desc: '-5% de dano sofrido em eventos de exploração.'
+    efeitos: { vidaDecayMulti: 0.9 },
+    desc: '−10% de dano sofrido em eventos de exploração.'
   },
   capuz: {
     slot: 'cabeca',
@@ -475,8 +482,8 @@ const ITENS_EQUIPAVEIS = {
   },
   jaqueta_couro: {
     slot: 'peito',
-    efeitos: { vidaDecayMulti: 0.95 },
-    desc: '-5% de dano recebido em confrontos e eventos.'
+    efeitos: { vidaDecayMulti: 0.9 },
+    desc: '−10% de dano recebido em confrontos e eventos.'
   },
 
   // Mãos
@@ -1929,6 +1936,8 @@ function clicarItemMochila(item, el) {
   }
 }
 
+// Retorna true quando existe receita conhecida com os dois itens (mesmo que falte algo,
+// a mensagem já foi dada aqui); false quando a combinação não existe ou é desconhecida.
 function tentarCombinar(idA, idB) {
   // Procura receita visível que contenha ambos os itens
   const receita = RECEITAS.find(r => {
@@ -1949,10 +1958,22 @@ function tentarCombinar(idA, idB) {
       mostrarToast('🔨 Esta receita precisa de bancada.');
       log('Você sabe a receita, mas precisa construir uma bancada antes.', 'log-alerta');
     }
-    return false;
+    return true;
   }
 
-  executarCraft(receita);
+  // Confirma antes de gastar os ingredientes (evita criar um item sem querer)
+  const resultado = ITENS[receita.id];
+  const gasta = Object.entries(receita.ingredientes)
+    .map(([id, q]) => `${ITENS[id]?.icone || ''} ${ITENS[id]?.nome || id} ×${q}`).join(', ');
+  mostrarConfirmacao(
+    `Você quer criar <b>${resultado.icone} ${resultado.nome}</b>?<br><br><span style="font-size:.85em;opacity:.85">Vai usar: ${gasta}</span>`,
+    () => {
+      if (!podeCraftar(receita)) { mostrarToast('⚗️ Os ingredientes não estão mais disponíveis.'); return; }
+      executarCraft(receita);
+    },
+    null,
+    { labelSim: 'Sim', labelNao: 'Cancelar', clsSim: 'btn-primario' }
+  );
   return true;
 }
 
@@ -3066,7 +3087,23 @@ function getEfeitosEquipamento() {
     if (ef.lootRaroBonus   !== undefined) resultado.lootRaroBonus   += ef.lootRaroBonus;
   }
 
+  // Limites para o equipamento combinado não zerar o perigo:
+  // no máximo 50% menos dano e 40% menos eventos negativos
+  resultado.vidaDecayMulti   = Math.max(1 - REDUCAO_DANO_MAX,    resultado.vidaDecayMulti);
+  resultado.eventoChanceMult = Math.max(1 - REDUCAO_EVENTOS_MAX, resultado.eventoChanceMult);
   return resultado;
+}
+
+const REDUCAO_DANO_MAX    = 0.5;
+const REDUCAO_EVENTOS_MAX = 0.4;
+
+// Dano de vida vindo de eventos de exploração (ataques, quedas, confrontos).
+// Armas e armaduras reduzem esse dano; o log mostra quanto foi absorvido.
+function aplicarDanoEvento(valor) {
+  const bruto = -valor;
+  const dano  = Math.round(bruto * getEfeitosEquipamento().vidaDecayMulti);
+  estado.stats.vida = clamp(estado.stats.vida - dano, 0, estado.stats.vidaMax);
+  if (bruto - dano > 0) log(`  🛡️ Seu equipamento absorveu ${bruto - dano} de dano.`, 'log-sistema');
 }
 
 function getMultiTraco() {
@@ -3263,14 +3300,14 @@ function atualizarStatus() {
     s.estresse = clamp(s.estresse - (0.04 + eq.estresseRedux) * tatica.estresseRedux, 0, 100);
   }
 
-  // Dano por fome/sede — multiplicado pelo equipamento de proteção
+  // Dano por fome/sede (equipamento não protege; o traço Resistente sim)
   if (s.fome >= 80) {
-    const dano = (s.fome >= 95 ? 0.25 : 0.1) * m.vidaDecay * eq.vidaDecayMulti;
+    const dano = (s.fome >= 95 ? 0.25 : 0.1) * m.vidaDecay;
     s.vida     = clamp(s.vida - dano, 0, s.vidaMax);
     s.estresse = clamp(s.estresse + 0.05 * m.estresseMulti, 0, 100);
   }
   if (s.sede >= 80) {
-    const dano = (s.sede >= 95 ? 0.3 : 0.12) * m.vidaDecay * eq.vidaDecayMulti;
+    const dano = (s.sede >= 95 ? 0.3 : 0.12) * m.vidaDecay;
     s.vida     = clamp(s.vida - dano, 0, s.vidaMax);
   }
 
@@ -4394,8 +4431,10 @@ function finalizarExploracao() {
     const lista = EVENTOS_NEGATIVOS[estado.exploracao.perigo];
     const ev    = lista[randInt(0, lista.length - 1)];
     log(`⚠️ ${ev.msg}`, 'log-perigo');
-    for (const [stat, val] of Object.entries(ev.efeitos))
+    for (const [stat, val] of Object.entries(ev.efeitos)) {
+      if (stat === 'vida' && val < 0) { aplicarDanoEvento(val); continue; }
       estado.stats[stat] = clamp((estado.stats[stat] || 0) + val, 0, stat === 'vida' ? estado.stats.vidaMax : 100);
+    }
     if (ev.condicao === 'contundido' && !estado.condicoes.contundido) {
       estado.condicoes.contundido = true;
       log('🦯 Você está contundido! Use uma Tala Improvisada para tratar.', 'log-perigo');
@@ -4628,6 +4667,7 @@ function resolverEscolha(eventoId, escolhaIdx) {
   // Efeitos em stats
   if (result.efeitos) {
     for (const [stat, val] of Object.entries(result.efeitos)) {
+      if (stat === 'vida' && val < 0) { aplicarDanoEvento(val); continue; }
       s[stat] = clamp((s[stat] || 0) + val, 0, stat === 'vida' ? s.vidaMax : 100);
     }
   }

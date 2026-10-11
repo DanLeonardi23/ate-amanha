@@ -790,7 +790,7 @@ const H = {
   estresse: ['😤 Estresse', 'Sobe com eventos ruins e quando você passa fome. Baixa sozinho enquanto você está <b>na base</b> (não durante explorações). A tática Furtivo acelera a recuperação.'],
   vicio: ['💊 Vício', 'Sobe ao usar bebidas e certas substâncias, e cai devagar com o tempo. Acima de <b>30</b> aumenta o estresse; acima de <b>70</b> vira abstinência e <b>drena vida</b>.'],
   avisos: ['Avisos', 'Alertas do que precisa de atenção agora: fome, sede, vida crítica, estresse, vício e condições como intoxicação, contusão e sangramento. Cada aviso diz o que fazer.'],
-  equipado: ['Equipado', 'Resumo do que você está usando. Só aparece quando há algo equipado. Equipamentos dão bônus como menos dano em eventos, mais loot ou mais espaço na mochila.'],
+  equipado: ['Equipado', 'Resumo do que você está usando. Só aparece quando há algo equipado. Equipamentos dão bônus como menos dano em eventos, mais loot ou mais espaço na mochila. As proteções se somam até no máximo <b>50% menos dano</b> e <b>40% menos eventos negativos</b>. Elas valem contra ataques, quedas e confrontos, não contra fome e sede.'],
 
   // Centro
   log: ['Registro de eventos', 'Tudo que acontece fica anotado aqui: o que você achou, construiu, comeu e sofreu. Cores: <b style="color:var(--accent)">verde</b> sucesso, <b style="color:#7fb7e6">azul</b> loot, <b style="color:var(--amber)">amarelo</b> alerta, <b style="color:var(--red)">vermelho</b> perigo.'],
@@ -803,7 +803,7 @@ const H = {
 
   // Mochila
   mochila: ['Mochila', 'Mostra quantos <b>tipos</b> de item você carrega e o limite (começa em 10). Itens iguais se empilham sem ocupar espaço extra. As Baterias ficam fora da mochila, no mostrador abaixo da Reputação. Alguns equipamentos aumentam o limite.'],
-  combinar: ['Combinar itens', 'Clique num item e depois em outro: se existir uma receita com os dois, você fabrica na hora. É assim que se descobre receitas novas.'],
+  combinar: ['Combinar itens', 'Clique num item e depois em outro: se existir uma receita com os dois, o jogo mostra o que vai ser criado e quais itens serão gastos, e pergunta se você quer continuar (<b>Sim</b> ou <b>Cancelar</b>).'],
   item: ['Item', 'Clique para abrir a janela do item: usar, equipar, guardar no depósito ou descartar.'],
   'item-sel': ['Item selecionado', 'A borda amarela indica o primeiro item escolhido para combinar. Clique em outro item para tentar a combinação.'],
   pilha: ['🔋 Baterias', 'A <b>moeda do jogo</b>, guardada aqui e não na mochila: <b>não ocupa espaço</b>. Use no Mercado, nas Barracas, para pagar moradores, manter a Lamparina acesa e desistir de trabalhos. Também entra em algumas receitas e construções.'],
@@ -965,15 +965,15 @@ const ITENS_CAT = [
   ['🖤','Carvão Ativado','medicina',0,null,{vida:5},'O tratamento ideal para <b>intoxicação</b>.'],
   ['🦯','Tala Improvisada','medicina',1,null,{vida:5},'Trata a condição <b>contundido</b> (tornozelo torcido).'],
 
-  ['🔪','Faca de Cozinha','ferramenta',0,'arma',null,'Equipada, reduz um pouco o dano em confrontos. Também serve de ingrediente.'],
-  ['🗡️','Lança Improvisada','ferramenta',1,'arma',null,'Equipada, reduz o dano recebido em eventos de exploração.'],
+  ['🔪','Faca de Cozinha','ferramenta',0,'arma',null,'Equipada: −10% de dano em eventos de exploração. Também serve de ingrediente.'],
+  ['🗡️','Lança Improvisada','ferramenta',1,'arma',null,'Equipada: −15% de dano recebido em eventos de exploração.'],
   ['🏹','Arco Rudimentar','ferramenta',1,'arma',null,'Equipado, dá +10% de chance de loot.'],
   ['🪔','Lamparina Improvisada','ferramenta',1,'acessorio',null,'Equipada, faz o estresse baixar no dobro da velocidade enquanto você descansa. Consome <b>2 Baterias por dia</b>; sem elas, apaga e para de funcionar.'],
   ['💡','Lanterna Improvisada','ferramenta',1,'acessorio',null,'Equipada, dá um leve bônus de loot.'],
-  ['⛑️','Capacete Industrial','ferramenta',0,'cabeca',null,'−5% de dano sofrido em eventos de exploração.'],
+  ['⛑️','Capacete Industrial','ferramenta',0,'cabeca',null,'−10% de dano sofrido em eventos de exploração.'],
   ['🧣','Capuz de Lã','ferramenta',0,'cabeca',null,'Mais furtividade: reduz a chance de eventos negativos.'],
   ['🦺','Colete de Carga','ferramenta',0,'peito',null,'<b>+2 espaços na mochila</b> enquanto equipado.'],
-  ['🧥','Jaqueta de Couro','ferramenta',0,'peito',null,'−5% de dano em confrontos e eventos.'],
+  ['🧥','Jaqueta de Couro','ferramenta',0,'peito',null,'−10% de dano em confrontos e eventos.'],
   ['🧤','Luvas de Trabalho','ferramenta',0,'maos',null,'+5% de chance de achar itens raros.'],
   ['👖','Calças Reforçadas','ferramenta',0,'pernas',null,'+10 de vida máxima enquanto equipadas.'],
   ['👢','Botas de Trabalho','ferramenta',0,'pes',null,'+5% de chance de loot.'],
@@ -993,13 +993,13 @@ const ITENS_CAT = [
   ['📄','Anotação: Silo de Grãos','leitura',0,null,null,'Revela o Silo de Grãos no mapa de Locais.'],
   ['🗺️','Rota para o Setor 3','leitura',0,null,null,'Revela os três locais da Zona Militar.'],
 
-  ['🪓','Machado de Bombeiro','raro',0,'arma',null,'A melhor arma: reduz bastante o dano recebido e melhora o loot.'],
+  ['🪓','Machado de Bombeiro','raro',0,'arma',null,'A melhor arma: −25% de dano recebido em eventos e +10% de loot.'],
   ['🛡️','Colete Balístico','raro',0,'peito',null,'−30% de dano recebido e +15 de vida máxima.'],
   ['⛑️','Capacete Tático','raro',0,'cabeca',null,'−20% de dano recebido e −12% de eventos negativos.'],
   ['🥋','Farda de Combate','raro',0,'pernas',null,'+5 de vida máxima e +8% de chance de loot.'],
   ['🧬','Medicamento Experimental','raro',0,null,{vida:50,estresse:-20},'Cura muito e acalma. Também vale bem no Mercado.'],
   ['🥃','Whisky 18 Anos','raro',0,null,{estresse:-40,vicio:25,vida:-5},'Apaga o estresse, mas vicia forte. Ou venda caro.'],
-  ['🔫','Revólver .38','raro',0,null,null,'Sem munição. Vale uma fortuna no Mercado.'],
+  ['🔫','Revólver .38','raro',0,'arma',null,'Sem munição, mas intimida: equipado, reduz em 15% os eventos negativos nas explorações. Também vale uma fortuna no Mercado.'],
   ['🗡️','Faca Tática Militar','raro',0,null,null,'Item de valor para vender.'],
   ['⌚','Relógio de Ouro','raro',0,null,null,'Item de valor para vender.'],
   ['💍','Joias Diversas','raro',0,null,null,'Item de valor para vender.'],
