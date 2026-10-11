@@ -234,7 +234,7 @@ const ITENS = {
   // Craftáveis básicos (mochila)
   curativo:      { id: 'curativo',      nome: 'Curativo Caseiro',     icone: '🩸', tipo: 'medicinal',  efeitos: { vida: 20 } },
   agua_filtrada: { id: 'agua_filtrada', nome: 'Água Filtrada',        icone: '🚰', tipo: 'consumivel', efeitos: { sede: -30 } },
-  tocha:         { id: 'tocha',         nome: 'Tocha Improvisada',    icone: '🔦', tipo: 'ferramenta' },
+  tocha:         { id: 'tocha',         nome: 'Lamparina Improvisada', icone: '🪔', tipo: 'ferramenta' },
   lanterna:      { id: 'lanterna',      nome: 'Lanterna Improvisada', icone: '💡', tipo: 'ferramenta' },
 
   // Craftáveis de bancada
@@ -407,7 +407,7 @@ const CATALOGOS = {
   },
   sobrevivencia: {
     receitas: ['agua_filtrada', 'tocha', 'armadilha'],
-    nomes:    ['Água Filtrada', 'Tocha Improvisada', 'Armadilha'],
+    nomes:    ['Água Filtrada', 'Lamparina Improvisada', 'Armadilha'],
   },
   ferramentas: {
     receitas: ['lanca', 'arco', 'filtro', 'lanterna'],
@@ -525,8 +525,8 @@ const ITENS_EQUIPAVEIS = {
   },
   tocha: {
     slot: 'acessorio',
-    efeitos: { estresseRedux: 0.5 }, // estresse reduz mais rápido
-    desc: 'A luz reconforta. Estresse diminui mais depressa.'
+    efeitos: { estresseRedux: 0.04 }, // dobra a recuperação de estresse no descanso (base 0.04/s)
+    desc: 'A luz acalma: o estresse baixa no dobro da velocidade. Consome 2 Baterias por dia; sem elas, apaga.'
   },
 };
 
@@ -1676,6 +1676,9 @@ let estado = {
   ultimoSaque: null,
   mercado: { itens: [], diaGerado: 0, fatorVenda: 1 },
   equipamento: { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null },
+  lamparinaAcesa: false,
+  baterias: 0, // carteira (moeda), fora da mochila
+  ehLider: false, // reputação Líder (81+) dá acesso ao Assentamento
   exploracao: { ativa: false, zona: 'ruinas', perigo: 'baixo', duracao: 10, progresso: 0, timer: null },
   dia: 1,
   segundos: 0,
@@ -1777,8 +1780,22 @@ function mostrarConfirmacao(msg, onSim, onNao, { labelSim = 'Sim, descartar', la
 // INVENTÁRIO
 // ============================================================
 
+// ── Carteira de Baterias ──
+// A Bateria (id 'pilha') é a moeda do jogo e não ocupa a mochila: fica em estado.baterias.
+// adicionarItem/removerItem/temItem/cabeNaMochila desviam 'pilha' para cá, então o resto do
+// jogo (loot, receitas, trocas, trabalhos, mercado) continua usando o id normalmente.
+function atualizarCarteira() {
+  const el = document.getElementById('carteira-val');
+  if (el) el.textContent = estado.baterias;
+}
+function mudarBaterias(delta) {
+  estado.baterias = Math.max(0, (estado.baterias || 0) + delta);
+  atualizarCarteira();
+}
+
 // forcar: ignora a capacidade — usar só para devoluções/pagamentos que não podem se perder
 function adicionarItem(base, qtd = 1, { forcar = false } = {}) {
+  if (base.id === 'pilha') { mudarBaterias(qtd); renderizarInventario(); return true; }
   const ex = estado.inventario.find(i => i.id === base.id);
   if (ex) { ex.qtd += qtd; renderizarInventario(); return true; }
   if (!forcar && estado.inventario.length >= estado.capInventario) return false;
@@ -1803,10 +1820,15 @@ function adicionarItem(base, qtd = 1, { forcar = false } = {}) {
 
 // true se o item empilha num slot existente ou se há slot livre
 function cabeNaMochila(id) {
+  if (id === 'pilha') return true; // vai para a carteira
   return estado.inventario.some(i => i.id === id) || estado.inventario.length < estado.capInventario;
 }
 
 function removerItem(id, qtd = 1) {
+  if (id === 'pilha') {
+    if ((estado.baterias || 0) < qtd) return false;
+    mudarBaterias(-qtd); renderizarInventario(); return true;
+  }
   let restante = qtd;
 
   // 1º — consumir da mochila
@@ -1835,6 +1857,7 @@ function removerItem(id, qtd = 1) {
 }
 
 function temItem(id, qtd = 1) {
+  if (id === 'pilha') return (estado.baterias || 0) >= qtd;
   const invItem = estado.inventario.find(i => i.id === id);
   const invQtd  = invItem ? (invItem.qtd || 0) : 0;
   const depItem = estado.deposito.itens.find(i => i.id === id);
@@ -3033,6 +3056,7 @@ function getEfeitosEquipamento() {
   for (const slot of SLOTS_EQUIP) {
     const itemId = estado.equipamento[slot];
     if (!itemId) continue;
+    if (itemId === 'tocha' && !estado.lamparinaAcesa) continue; // apagada: sem efeito
     const ef = ITENS_EQUIPAVEIS[itemId]?.efeitos || {};
 
     if (ef.vidaDecayMulti  !== undefined) resultado.vidaDecayMulti  *= ef.vidaDecayMulti;
@@ -3118,6 +3142,10 @@ function avancarDia() {
   document.getElementById('hdr-dia').textContent = `Dia ${estado.dia}`;
   log(`☀ Dia ${estado.dia}. Você sobreviveu mais uma noite.`, 'log-alerta');
 
+  // Lamparina equipada consome Baterias todo amanhecer
+  if (estado.equipamento.acessorio === 'tocha') abastecerLamparina();
+  else estado.lamparinaAcesa = false; // guardada na mochila, apaga; paga de novo ao reequipar
+
   // Cisterna: acumula 1 unidade por dia
   if (baseTemEstrutura('cisterna') && estado.cisterna.aguaAcumulada < 5) {
     estado.cisterna.aguaAcumulada++;
@@ -3166,16 +3194,14 @@ function avancarDia() {
   }
 
   // NPCs do assentamento trabalham
-  if (baseTemEstrutura('cultivo') || estado.assentamento.parcelas.some(p => p?.habitante)) {
-    estado.assentamento.parcelas.forEach(p => { if (p?.habitante) trabalharNpc(p); });
-  }
+  moradores().forEach(({ parcela, npc }) => trabalharNpc(parcela, npc));
 
   // Médicos no Posto Médico curam o jogador passivamente
-  estado.assentamento.parcelas.forEach(p => {
-    if (p?.tipo === 'posto_medico' && p?.habitante && habCanonica(p.habitante.habilidade) === 'medico' && p.habitante.estadoNpc !== 'parado') {
+  moradores().forEach(({ parcela, npc }) => {
+    if (parcela.tipo === 'posto_medico' && npcAtivo(npc) && habCanonica(npc.habilidade) === 'medico') {
       const cura = randInt(10, 20);
       estado.stats.vida = Math.min(estado.stats.vidaMax, estado.stats.vida + cura);
-      log(`⚕️ ${p.habitante.nome} cuidou de você durante a noite. +${cura} de vida.`, 'log-sucesso');
+      log(`⚕️ ${npc.nome} cuidou de você durante a noite. +${cura} de vida.`, 'log-sucesso');
     }
   });
 
@@ -3184,6 +3210,9 @@ function avancarDia() {
 
   // Evento de NPC pedindo abrigo
   gerarEventoNpc();
+
+  // Aba aberta: mostra na hora quem voltou, cobranças e novos sobreviventes
+  if (document.getElementById('aba-assentamento')?.classList.contains('ativa')) renderizarAssentamento();
 
   verificarMercado();
   processarSaqueNoturno();
@@ -3274,6 +3303,7 @@ function atualizarStatus() {
 
 function atualizarUI() {
   const s = estado.stats;
+  atualizarCarteira();
   function setBar(id, val, max) {
     document.getElementById(`barra-${id}`).style.width  = clamp((val / max) * 100, 0, 100) + '%';
     document.getElementById(`val-${id}`).textContent    = Math.round(val);
@@ -3373,11 +3403,29 @@ function equiparItem(itemId) {
 
   log(`⚔️ Equipou: ${itemBase.icone} ${itemBase.nome} [${SLOT_LABELS[slot]}]`, 'log-sucesso');
   mostrarToast(`⚔️ ${itemBase.nome} equipado!`);
+  if (itemId === 'tocha' && !estado.lamparinaAcesa) abastecerLamparina();
 
   renderizarInventario();
   renderizarEquipamento();
   renderizarEquipResumo();
   salvarJogo();
+}
+
+// Lamparina Improvisada (id 'tocha'): consome Baterias para ficar acesa.
+// Paga ao ser equipada apagada e a cada amanhecer; sem Baterias, apaga e perde o efeito.
+const LAMPARINA_CUSTO_DIA = 2;
+
+function abastecerLamparina() {
+  if (temItem('pilha', LAMPARINA_CUSTO_DIA)) {
+    removerItem('pilha', LAMPARINA_CUSTO_DIA);
+    estado.lamparinaAcesa = true;
+    log(`🪔 Lamparina acesa. −${LAMPARINA_CUSTO_DIA} 🔋`, 'log-sistema');
+  } else {
+    estado.lamparinaAcesa = false;
+    log(`🪔 A lamparina está apagada. Precisa de ${LAMPARINA_CUSTO_DIA} 🔋 para acender.`, 'log-alerta');
+    mostrarToast(`🪔 Lamparina apagada: precisa de ${LAMPARINA_CUSTO_DIA} 🔋`);
+  }
+  renderizarEquipResumo();
 }
 
 /**
@@ -3483,6 +3531,7 @@ function renderizarEquipResumo() {
     const equipInfo = ITENS_EQUIPAVEIS[itemId];
 
     const tooltip = equipInfo?.desc || item?.desc || '';
+    const apagada = itemId === 'tocha' && !estado.lamparinaAcesa;
 
     const row = document.createElement('div');
     row.className = 'equip-resumo-item';
@@ -3490,7 +3539,7 @@ function renderizarEquipResumo() {
     row.innerHTML = `
       <span class="equip-resumo-slot">${SLOT_LABELS[slot]}</span>
       <span class="equip-resumo-icone">${item?.icone || '?'}</span>
-      <span class="equip-resumo-nome">${item?.nome || itemId}</span>
+      <span class="equip-resumo-nome">${item?.nome || itemId}${apagada ? ' (apagada)' : ''}</span>
       <button class="equip-resumo-btn-desequipar" title="Desequipar">✕</button>
     `;
     row.querySelector('.equip-resumo-btn-desequipar')
@@ -3674,8 +3723,7 @@ function venderItem(itemId) {
 function renderizarMercado() {
   // Saldo
   const saldoEl = document.getElementById('mercado-saldo-val');
-  const pilhas  = estado.inventario.find(i => i.id === 'pilha');
-  if (saldoEl) saldoEl.textContent = `${pilhas?.qtd || 0} 🔋`;
+  if (saldoEl) saldoEl.textContent = `${estado.baterias} 🔋`;
 
   // Texto de renovação
   const renovEl = document.getElementById('mercado-renovacao-txt');
@@ -3705,7 +3753,7 @@ function renderizarMercado() {
   }
   if (vazio) vazio.classList.add('oculto');
 
-  const pilhasQtd = pilhas?.qtd || 0;
+  const pilhasQtd = estado.baterias;
 
   itens.forEach((entrada, idx) => {
     const item = ITENS[entrada.itemId];
@@ -3898,9 +3946,9 @@ function processarSaqueNoturno() {
 
   // Jogador ausente: calcular chance de saque
   const seg = calcularSeguranca();
-  const reducaoSeg = estado.assentamento.parcelas.reduce((acc, p) => {
-    if (!p?.habitante || p.habitante.habilidade !== 'seguranca' || p.habitante.estadoNpc === 'parado') return acc;
-    return acc + (p.tipo === 'torre_vigilancia' ? 0.20 : 0.12);
+  const reducaoSeg = moradores().reduce((acc, { parcela, npc }) => {
+    if (!npcAtivo(npc) || npc.habilidade !== 'seguranca') return acc;
+    return acc + (parcela.tipo === 'torre_vigilancia' ? 0.20 : 0.12);
   }, 0);
   const chanceFinal  = Math.max(0.02, seg.chanceSaque - reducaoSeg);
 
@@ -4937,6 +4985,9 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.ultimoSaque        = null;
   estado.mercado            = { itens: [], diaGerado: 0 };
   estado.equipamento        = { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null };
+  estado.lamparinaAcesa     = false;
+  estado.baterias           = 0;
+  estado.ehLider            = false;
   estado.trabalhos          = { disponiveis: [], aceitos: [], diaGerado: 0 };
   estado.dia                = 1;
   estado.segundos           = 0;
@@ -5040,7 +5091,7 @@ function montarDadosSave() {
     locaisDesbloqueados: estado.locaisDesbloqueados, capInventario: estado.capInventario,
     exploracoesZona: estado.exploracoesZona, respawnTicks: estado.respawnTicks,
     ultimoSaque: estado.ultimoSaque, mercado: estado.mercado,
-    equipamento: estado.equipamento, trabalhos: estado.trabalhos,
+    equipamento: estado.equipamento, lamparinaAcesa: estado.lamparinaAcesa, baterias: estado.baterias, ehLider: estado.ehLider, trabalhos: estado.trabalhos,
     dia: estado.dia, segundos: estado.segundos, condicoes: estado.condicoes,
     placar: estado.placar, reputacao: estado.reputacao, assentamento: estado.assentamento,
     ultimoSave: Date.now()
@@ -5172,7 +5223,42 @@ const audio = {
   }
 };
 
+// Balão flutuante para qualquer elemento com data-tooltip. Fica em position: fixed no body,
+// então não é cortado pelas colunas (que têm overflow). Prefere abrir à direita do elemento.
+function inicializarTooltipFlutuante() {
+  const tip = document.getElementById('tooltip-flutuante');
+  if (!tip) return;
+  let alvo = null;
+
+  const posicionar = () => {
+    const r = alvo.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const m = 8, vw = window.innerWidth, vh = window.innerHeight;
+    let left = r.right + m;                                  // à direita
+    let top  = r.top + r.height / 2 - t.height / 2;
+    if (left + t.width > vw - m) {                           // sem espaço: acima ou abaixo
+      left = Math.min(Math.max(m, r.left), vw - t.width - m);
+      top  = r.top - t.height - m;
+      if (top < m) top = r.bottom + m;
+    }
+    tip.style.left = `${left}px`;
+    tip.style.top  = `${Math.min(Math.max(m, top), vh - t.height - m)}px`;
+  };
+
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-tooltip]');
+    if (el === alvo) return;
+    alvo = el;
+    if (!el) { tip.classList.add('oculto'); return; }
+    tip.textContent = el.dataset.tooltip;
+    tip.classList.remove('oculto');
+    posicionar();
+  });
+  document.addEventListener('scroll', () => { if (alvo) posicionar(); }, true);
+}
+
 function inicializarUI() {
+  inicializarTooltipFlutuante();
   // ── Abas ──
   // ── Sub-abas (Base e futuras) ──
   document.addEventListener('click', e => {
@@ -5332,8 +5418,7 @@ async function renderizarBazar() {
   const sb = getSB();
   const statusEl = document.getElementById('bazar-status');
   const saldoEl  = document.getElementById('bazar-saldo');
-  const pilhas   = estado.inventario.find(i => i.id === 'pilha');
-  if (saldoEl) saldoEl.textContent = `${pilhas?.qtd || 0} 🔋`;
+  if (saldoEl) saldoEl.textContent = `${estado.baterias} 🔋`;
 
   const anunciarBloco = document.getElementById('bazar-anunciar-bloco');
   const outrosBloco   = document.getElementById('bazar-meus-anuncios-bloco');
@@ -5464,8 +5549,7 @@ async function renderizarBazar() {
       listagemEl.querySelectorAll('.btn-comprar-bazar').forEach(btn => {
         btn.addEventListener('click', async () => {
           const preco = parseInt(btn.dataset.preco);
-          const pilhasAtuais = estado.inventario.find(i => i.id === 'pilha');
-          if (!pilhasAtuais || (pilhasAtuais.qtd || 0) < preco) {
+          if (!temItem('pilha', preco)) {
             mostrarToast(`🔋 Precisa de ${preco} Baterias.`);
             return;
           }
@@ -5988,7 +6072,7 @@ const ASSENT_ESTRUTURAS = [
     id: 'cabana',
     nome: 'Cabana',
     icone: '🏠',
-    desc: 'Construção sólida de madeira. Oferece mais segurança ao habitante.',
+    desc: 'Construção sólida de madeira. Abriga 2 moradores.',
     custo: { madeira: 20, sucata: 8, arame: 5 },
     capacidade: 2,
   },
@@ -5996,7 +6080,7 @@ const ASSENT_ESTRUTURAS = [
     id: 'estufa',
     nome: 'Estufa',
     icone: '🌿',
-    desc: 'Ambiente controlado para cultivo. Cultivadores produzem mais sementes e dispensam o uso de sementes do inventário.',
+    desc: 'Ambiente controlado para cultivo. O Cultivador planta as sementes do seu Depósito sem precisar de rega, no mesmo tempo do Cultivo.',
     custo: { madeira: 15, pano: 8, arame: 6 },
     capacidade: 1,
     bonus_hab: 'cultivador',
@@ -6062,16 +6146,68 @@ function charPath(charId) {
   return `img/chars/char${n}${gen}.png`;
 }
 
+// ── Parcelas e moradores ──
+// Cada parcela construída é { tipo, habitantes: [npc|null, ...], plantio? }, com tantas posições
+// quanto a capacidade da moradia (a Cabana abriga 2).
+function capacidadeParcela(p) {
+  return ASSENT_ESTRUTURAS.find(e => e.id === p.tipo)?.capacidade || 1;
+}
+
+// Converte o formato antigo ({ habitante }) e ajusta o tamanho da lista à capacidade
+function normalizarParcela(p) {
+  if (!p) return null;
+  if (!Array.isArray(p.habitantes)) {
+    p.habitantes = p.habitante ? [p.habitante] : [];
+    delete p.habitante;
+  }
+  while (p.habitantes.length < capacidadeParcela(p)) p.habitantes.push(null);
+  return p;
+}
+
+// Todos os moradores do assentamento: [{ parcela, idx, slot, npc }]
+function moradores() {
+  const lista = [];
+  estado.assentamento.parcelas.forEach((parcela, idx) => {
+    parcela?.habitantes?.forEach((npc, slot) => { if (npc) lista.push({ parcela, idx, slot, npc }); });
+  });
+  return lista;
+}
+
+function temVagaNoAssentamento() {
+  return estado.assentamento.parcelas.some(p => p?.habitantes?.some(h => !h));
+}
+
 function npcDisponivel(npc) {
   const avatarJogador = (estado.personagem?.avatar ?? 0) + 1;
   if (npc.charId === avatarJogador) return false;
-  return !estado.assentamento.parcelas.some(p => p?.habitante?.id === npc.id);
+  return !moradores().some(m => m.npc.id === npc.id);
+}
+
+// Primeira vaga ({ idx, slot }) que aceita a aptidão (moradias especiais só aceitam a sua), ou null
+function vagaCompativel(habilidade) {
+  const hab = habCanonica(habilidade);
+  const parcelas = estado.assentamento.parcelas;
+  // 1ª passada: moradia especial da própria aptidão (ex.: Cultivador → Estufa); 2ª: moradia comum
+  for (const especial of [true, false]) {
+    for (let idx = 0; idx < parcelas.length; idx++) {
+      const p = parcelas[idx];
+      if (!p) continue;
+      const bonus = ASSENT_ESTRUTURAS.find(e => e.id === p.tipo)?.bonus_hab;
+      if (especial ? bonus !== hab : !!bonus) continue;
+      const slot = p.habitantes.findIndex(h => !h);
+      if (slot !== -1) return { idx, slot };
+    }
+  }
+  return null;
+}
+
+// Morador só trabalha (busca, cura, patrulha) se não estiver parado nem com pagamento em aberto
+function npcAtivo(npc) {
+  return !!npc && npc.estadoNpc !== 'parado' && !npc.pagamentoPendente;
 }
 
 function verificarPagamentosNpc() {
-  estado.assentamento.parcelas.forEach(parcela => {
-    const npc = parcela?.habitante;
-    if (!npc) return;
+  moradores().forEach(({ npc }) => {
     if (npc.pagamentoPendente) return; // já tem cobrança pendente
     if (npc.estadoNpc === 'parado') return;
     if (!npc.diaPagamento) { npc.diaPagamento = estado.dia + 5; return; }
@@ -6086,14 +6222,14 @@ function verificarPagamentosNpc() {
 
 function gerarEventoNpc() {
   const assent = estado.assentamento;
-  const temVaga = assent.parcelas.some(p => p && !p.habitante);
-  if (!temVaga) return;
+  if (!temVagaNoAssentamento()) return;
   if (assent.npcPendente) return;
   const diasDesde = estado.dia - (assent.ultimoEventoNpc || 0);
   if (diasDesde < 3) return;
   if (Math.random() > 0.35) return;
 
-  const disponiveis = NPCS_POOL.filter(npcDisponivel);
+  // Só aparece quem cabe em alguma vaga livre (evita travar a fila com alguém incompatível)
+  const disponiveis = NPCS_POOL.filter(n => npcDisponivel(n) && vagaCompativel(n.habilidade));
   if (!disponiveis.length) return;
 
   assent.npcPendente = disponiveis[randInt(0, disponiveis.length - 1)];
@@ -6106,7 +6242,7 @@ function atualizarBadgeAssentamento() {
   const btn = document.getElementById('aba-btn-assentamento');
   if (!btn) return;
   const temPendente = !!estado.assentamento?.npcPendente
-    || estado.assentamento?.parcelas.some(p => p?.habitante?.pagamentoPendente);
+    || moradores().some(m => m.npc.pagamentoPendente);
   let badge = btn.querySelector('.aba-badge-npc');
   if (temPendente) {
     if (!badge) {
@@ -6138,27 +6274,36 @@ function habCanonica(h) {
   return h;
 }
 
-function trabalharNpc(parcela) {
-  const npc = parcela.habitante;
+function trabalharNpc(parcela, npc) {
   if (!npc) return;
   if (!npc.itensColetados) npc.itensColetados = [];
-  if (npc.estadoNpc === 'parado') return;
+  if (!npcAtivo(npc)) return; // parado ou esperando pagamento: o trabalho fica pausado
+
+  const hab = habCanonica(npc.habilidade);
+  if (parcela.tipo === 'estufa' && hab === 'cultivador') { cultivarEstufa(parcela, npc); return; }
+
   if ((npc.estadoNpc || 'idle') !== 'buscando') return;
   if (estado.dia <= (npc.diaInicio || 0)) return;
 
-  const hab = habCanonica(npc.habilidade);
   const itensDisponiveis = HAB_ITENS[hab];
   if (!itensDisponiveis) { npc.estadoNpc = 'idle'; return; }
 
-  const emEstufa = parcela.tipo === 'estufa' && hab === 'cultivador';
-  const numColetas = emEstufa ? randInt(2, 4) : randInt(1, 3);
+  // Cada busca pode falhar conforme a aptidão (HAB_CHANCE)
+  if (Math.random() > (HAB_CHANCE[hab] ?? 1)) {
+    npc.estadoNpc = 'idle';
+    log(`🎒 ${npc.nome} voltou de mãos vazias.`, 'log-alerta');
+    mostrarToast(`🎒 ${npc.nome} não encontrou nada.`, 2500);
+    return;
+  }
+
+  const numColetas = randInt(1, 3);
   for (let c = 0; c < numColetas; c++) {
     const itemId = (npc.foco && itensDisponiveis.includes(npc.foco))
       ? npc.foco
       : itensDisponiveis[randInt(0, itensDisponiveis.length - 1)];
     const item = ITENS[itemId];
     if (!item) continue;
-    const qtd = hab === 'mecanico' ? randInt(1, 2) : emEstufa ? randInt(1, 2) : 1;
+    const qtd = hab === 'mecanico' ? randInt(1, 2) : 1;
     const existente = npc.itensColetados.find(i => i.id === itemId);
     if (existente) existente.qtd += qtd;
     else npc.itensColetados.push({ id: itemId, qtd });
@@ -6170,17 +6315,62 @@ function trabalharNpc(parcela) {
   mostrarToast(`📦 ${npc.nome} voltou com itens!`, 2500);
 }
 
+// ── Estufa ──
+// O Cultivador planta, uma de cada vez, as sementes guardadas no Depósito (o foco escolhe
+// qual tem prioridade). Não precisa de rega; o tempo de crescimento é o mesmo do Cultivo.
+function plantarEstufa(parcela, npc) {
+  if (parcela.plantio) return false;
+  const dep = estado.deposito.itens;
+  const sementes = Object.keys(CULTIVO_CONFIG);
+  const ordem = npc.foco && sementes.includes(npc.foco) ? [npc.foco, ...sementes.filter(s => s !== npc.foco)] : sementes;
+  const sementeId = ordem.find(id => dep.some(i => i.id === id && i.qtd > 0));
+  if (!sementeId) return false;
+
+  const it = dep.find(i => i.id === sementeId);
+  it.qtd--;
+  if (it.qtd <= 0) dep.splice(dep.indexOf(it), 1);
+  parcela.plantio = { sementeId, diasRestantes: CULTIVO_CONFIG[sementeId].dias };
+  log(`🌱 ${npc.nome} plantou ${ITENS[sementeId].nome} na Estufa.`, 'log-sistema');
+  renderizarDeposito();
+  return true;
+}
+
+function cultivarEstufa(parcela, npc) {
+  const p = parcela.plantio;
+  if (p) {
+    p.diasRestantes--;
+    if (p.diasRestantes > 0) return;
+    const cfg = CULTIVO_CONFIG[p.sementeId];
+    parcela.plantio = null;
+    const existente = npc.itensColetados.find(i => i.id === cfg.itemId);
+    if (existente) existente.qtd += cfg.qtd;
+    else npc.itensColetados.push({ id: cfg.itemId, qtd: cfg.qtd });
+    npc.estadoNpc = 'pronto';
+    log(`🌿 ${npc.nome} colheu ${cfg.icone} ${cfg.nome} ×${cfg.qtd} na Estufa.`, 'log-sucesso');
+    mostrarToast(`🌿 Colheita pronta na Estufa!`, 2500);
+  }
+  plantarEstufa(parcela, npc);
+}
+
+// O Assentamento só abre para quem é Líder (reputação 81+). Perder a liderança fecha a aba
+// até a reputação voltar; os moradores continuam lá.
 function verificarAssentamento() {
   const btn = document.getElementById('aba-btn-assentamento');
   if (!btn) return;
-  const desbloqueado = (estado.reputacao ?? 50) >= 81;
-  if (desbloqueado && btn.classList.contains('aba-bloqueada')) {
-    btn.classList.remove('aba-bloqueada');
+  const lider = (estado.reputacao ?? 50) >= 81;
+
+  if (lider && !estado.ehLider) {
     log('🏘 Assentamento desbloqueado! Sua reputação como Líder abre novas possibilidades.', 'log-sucesso');
     mostrarToast('🏘 Assentamento desbloqueado!', 3000);
-  } else if (!desbloqueado) {
-    btn.classList.add('aba-bloqueada');
+  } else if (!lider && estado.ehLider) {
+    log('👑 Você foi destituído do cargo de Líder. O Assentamento fica fechado até você recuperar a reputação.', 'log-perigo');
+    mostrarToast('👑 Você foi destituído do cargo de Líder', 3500);
+    // Estava com a aba aberta: volta para Locais
+    if (document.getElementById('aba-assentamento')?.classList.contains('ativa'))
+      document.querySelector('.aba-btn[data-aba="locais"]')?.click();
   }
+  estado.ehLider = lider;
+  btn.classList.toggle('aba-bloqueada', !lider);
 }
 
 function renderizarAssentamento() {
@@ -6218,26 +6408,24 @@ function renderizarAssentamento() {
     container.appendChild(cardNpc);
 
     cardNpc.querySelector('.btn-aceitar-npc').addEventListener('click', () => {
-      const habNpc = habCanonica(npc.habilidade);
-      const vaga = assent.parcelas.findIndex(p => {
-        if (!p || p.habitante) return false;
-        const est = ASSENT_ESTRUTURAS.find(e => e.id === p.tipo);
-        return !est?.bonus_hab || est.bonus_hab === habNpc;
-      });
-      if (vaga === -1) {
-        const vagaOcupada = assent.parcelas.some(p => p && !p.habitante);
-        const msg = vagaOcupada
-          ? `Nenhuma moradia compatível com a aptidão de ${npc.nome} (${habNpc}). Construa uma estrutura adequada.`
+      const vaga = vagaCompativel(npc.habilidade);
+      if (!vaga) {
+        const msg = temVagaNoAssentamento()
+          ? `Nenhuma moradia compatível com a aptidão de ${npc.nome} (${hab.label || npc.habilidade}). Construa uma estrutura adequada.`
           : 'Nenhuma vaga disponível. Construa uma moradia primeiro.';
         mostrarToast(msg, 3500);
         return;
       }
-      assent.parcelas[vaga].habitante = { id: npc.id, nome: npc.nome, charId: npc.charId, habilidade: npc.habilidade, estadoNpc: 'idle', foco: null, itensColetados: [], diaInicio: null, diaPagamento: estado.dia + 5, pagamentoPendente: null };
+      const parcela = assent.parcelas[vaga.idx];
+      const novo = { id: npc.id, nome: npc.nome, charId: npc.charId, habilidade: npc.habilidade, estadoNpc: 'idle', foco: null, itensColetados: [], diaInicio: null, diaPagamento: estado.dia + 5, pagamentoPendente: null };
+      parcela.habitantes[vaga.slot] = novo;
       assent.npcPendente      = null;
       assent.ultimoEventoNpc  = estado.dia;
       atualizarBadgeAssentamento();
-      log(`🏘 ${npc.nome} foi aceito e se mudou para a Parcela ${vaga + 1}.`, 'log-sucesso');
+      log(`🏘 ${npc.nome} foi aceito e se mudou para a Parcela ${vaga.idx + 1}.`, 'log-sucesso');
       mostrarToast(`🏘 ${npc.nome} entrou no assentamento!`, 3000);
+      // Cultivador na Estufa já começa plantando, se houver semente no Depósito
+      if (parcela.tipo === 'estufa') plantarEstufa(parcela, novo);
       salvarJogo();
       renderizarAssentamento();
     });
@@ -6246,16 +6434,18 @@ function renderizarAssentamento() {
       assent.npcPendente     = null;
       assent.ultimoEventoNpc = estado.dia;
       atualizarBadgeAssentamento();
-      log(`🚪 Você recusou ${npc.nome}. Ele seguiu seu caminho.`, 'log-sistema');
+      log(`🚪 Você recusou ${npc.nome}, que seguiu seu caminho.`, 'log-sistema');
       salvarJogo();
       renderizarAssentamento();
     });
   }
 
+  // Morador pelo par (parcela, posição) guardado nos data-attributes do botão
+  const npcDoBotao = btn => parcelas[parseInt(btn.dataset.idx)]?.habitantes?.[parseInt(btn.dataset.slot)];
+
   // ── Cards de cobrança de NPCs ──
-  parcelas.forEach((parcela, idx) => {
-    const npc = parcela?.habitante;
-    if (!npc?.pagamentoPendente) return;
+  moradores().forEach(({ idx, slot, npc }) => {
+    if (!npc.pagamentoPendente) return;
     const hab = HAB_INFO[habCanonica(npc.habilidade)] || {};
     const temBateria = temItem('pilha', npc.pagamentoPendente);
     const cardPag = document.createElement('div');
@@ -6265,13 +6455,13 @@ function renderizarAssentamento() {
       <div class="npc-pend-info">
         <span class="npc-pend-nome">${npc.nome}</span>
         <span class="npc-pend-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
-        <span class="npc-pend-desc">🔋 Cobra <strong>${npc.pagamentoPendente}× Bateria</strong> pelos serviços desta semana.</span>
+        <span class="npc-pend-desc">🔋 Cobra <strong>${npc.pagamentoPendente}× Bateria</strong> pelos serviços desta semana. Até você pagar, ${npc.nome} não trabalha.</span>
       </div>
       <div class="npc-pend-acoes">
-        <button class="btn-pagar-npc btn-primario btn-sm" data-idx="${idx}" ${temBateria ? '' : 'disabled style="opacity:.4"'}>
+        <button class="btn-pagar-npc btn-primario btn-sm" data-idx="${idx}" data-slot="${slot}" ${temBateria ? '' : 'disabled style="opacity:.4"'}>
           🔋 Pagar (${npc.pagamentoPendente}×)
         </button>
-        <button class="btn-recusar-pagamento btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">
+        <button class="btn-recusar-pagamento btn-secundario btn-sm" data-idx="${idx}" data-slot="${slot}" style="color:var(--perigo,#e55)">
           ✖ Recusar
         </button>
       </div>
@@ -6291,6 +6481,7 @@ function renderizarAssentamento() {
     });
 
     cardPag.querySelector('.btn-recusar-pagamento').addEventListener('click', () => {
+      npc.divida = npc.pagamentoPendente; // fica devendo: pagar depois reativa
       npc.pagamentoPendente = null;
       npc.estadoNpc = 'parado';
       log(`⛔ ${npc.nome} parou de trabalhar por falta de pagamento.`, 'log-alerta');
@@ -6301,123 +6492,14 @@ function renderizarAssentamento() {
     });
   });
 
-  // ── Parcelas ──
+  // ── Parcelas: um card por morador; posições livres de uma moradia viram card "vago" ──
   parcelas.forEach((parcela, idx) => {
-    const card = document.createElement('div');
-
-    if (parcela) {
-      const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
-      const npc = parcela.habitante;
-      const hab = npc ? (HAB_INFO[npc.habilidade] || {}) : null;
-      const npcEstado = npc?.estadoNpc || 'idle';
-      const totalItens = npc?.itensColetados?.reduce((s, i) => s + i.qtd, 0) || 0;
-      const habKey = npc ? habCanonica(npc.habilidade) : null;
-      const opcoesHab = habKey ? (HAB_ITENS[habKey] || []) : [];
-      const isSeguranca = habKey === 'seguranca';
-
-      // Expandir automaticamente se precisa de atenção
-      const autoExpand = npcEstado === 'pronto' || npcEstado === 'parado';
-
-      const statusTexto = isSeguranca
-        ? (parcela.tipo === 'torre_vigilancia' ? '🗼 Torre (-20% saques)' : '🛡️ Patrulhando (-12% saques)')
-        : npcEstado === 'parado'   ? '⛔ Parado'
-        : npcEstado === 'buscando' ? '🔍 Em busca...'
-        : npcEstado === 'pronto'   ? `✅ Itens prontos (${totalItens})`
-        : (habKey === 'medico' && parcela.tipo === 'posto_medico') ? '⚕️ Cura passiva'
-        : (habKey === 'cultivador' && parcela.tipo === 'estufa') ? '🌿 Estufa ativa'
-        : '💤 Aguardando';
-
-      const dotClass = npcEstado === 'pronto' ? 'dot-verde'
-        : npcEstado === 'buscando' ? 'dot-amarelo'
-        : npcEstado === 'parado'   ? 'dot-vermelho'
-        : isSeguranca              ? 'dot-azul'
-        : 'dot-cinza';
-
-      card.className = `assent-parcela construida${autoExpand ? ' expandido' : ''}`;
-
-      if (npc) {
-        const focoSelect = (opcoesHab.length && !isSeguranca)
-          ? `<div class="assent-npc-foco">
-               <span class="assent-npc-foco-label">🎯 Foco:</span>
-               <select class="sel-foco-npc" data-idx="${idx}" ${npcEstado !== 'idle' ? 'disabled' : ''}>
-                 <option value="" ${!npc.foco ? 'selected' : ''}>Aleatório</option>
-                 ${opcoesHab.map(id => {
-                   const it = ITENS[id];
-                   return `<option value="${id}" ${npc.foco === id ? 'selected' : ''}>${it?.icone || ''} ${it?.nome || id}</option>`;
-                 }).join('')}
-               </select>
-             </div>`
-          : '';
-
-        const itensGuardados = (npcEstado === 'pronto' && npc.itensColetados?.length)
-          ? `<div class="assent-npc-itens">
-               ${npc.itensColetados.map(i => {
-                 const it = ITENS[i.id];
-                 return `<span class="assent-npc-item-tag">${it?.icone || ''} ${it?.nome || i.id} ×${i.qtd}</span>`;
-               }).join('')}
-             </div>`
-          : '';
-
-        const acoes = isSeguranca
-          ? ''
-          : npcEstado === 'parado'
-            ? `<span style="font-size:.65rem;color:var(--perigo,#e55)">Pague o débito para reativar.</span>`
-            : npcEstado === 'idle'
-              ? `<button class="btn-iniciar-npc btn-primario btn-sm" data-idx="${idx}">▶ Iniciar</button>`
-              : npcEstado === 'buscando'
-                ? `<button class="btn-sm btn-secundario" disabled style="opacity:.4;flex:1">⏳ Em busca...</button>`
-                : `<button class="btn-recolher-npc btn-primario btn-sm" data-idx="${idx}">📥 Coletar</button>`;
-
-        card.innerHTML = `
-          <div class="assent-compacto-row btn-toggle-assent" data-idx="${idx}">
-            <span class="assent-parcela-icone" style="font-size:1.1rem">${est?.icone || '🏠'}</span>
-            <img src="${charPath(npc.charId)}" class="assent-avatar-mini" alt="${npc.nome}" />
-            <div style="flex:1;min-width:0">
-              <span class="assent-npc-nome" style="font-size:.8rem">${npc.nome}</span>
-              <span style="font-size:.68rem;color:var(--text-dim);display:block">${hab.icone || ''} ${statusTexto}</span>
-            </div>
-            <span class="assent-dot ${dotClass}"></span>
-            <span class="assent-toggle-icone">▼</span>
-          </div>
-          <div class="assent-npc-detalhe">
-            <div class="assent-habitante-card">
-              <img src="${charPath(npc.charId)}" class="assent-npc-avatar" alt="${npc.nome}" />
-              <div class="assent-npc-info">
-                <span class="assent-npc-nome">${npc.nome}</span>
-                <span class="assent-npc-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
-                <span class="assent-npc-status">${statusTexto}</span>
-              </div>
-            </div>
-            ${focoSelect}
-            ${itensGuardados}
-            <div class="assent-npc-acoes">
-              ${acoes}
-              <button class="btn-expulsar-npc btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55)">🚪 Dispensar</button>
-              <button class="btn-sm btn-secundario" disabled style="opacity:.35;font-size:.65rem" title="Dispense o habitante antes de demolir">🔨</button>
-            </div>
-          </div>`;
-      } else {
-        card.innerHTML = `
-          <div class="assent-compacto-row btn-toggle-assent" data-idx="${idx}">
-            <span class="assent-parcela-icone" style="font-size:1.1rem">${est?.icone || '🏠'}</span>
-            <div style="flex:1">
-              <span style="font-size:.8rem;font-weight:700">${est?.nome}</span>
-              <span style="font-size:.68rem;color:var(--text-dim);display:block">👤 Vago</span>
-            </div>
-            <span class="assent-toggle-icone">▼</span>
-          </div>
-          <div class="assent-npc-detalhe">
-            <span class="assent-parcela-status" style="font-size:.72rem;color:var(--text-dim)">✔ Construída — aguardando habitante</span>
-            <div style="margin-top:6px;text-align:right">
-              <button class="btn-demolir-assent btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55);font-size:.65rem">🔨 Demolir</button>
-            </div>
-          </div>`;
-      }
-    } else {
+    if (!parcela) {
+      const card = document.createElement('div');
       card.className = 'assent-parcela';
       const custoStr = e => Object.entries(e.custo).map(([id, q]) => `${q}× ${ITENS[id]?.icone || id}`).join(' ');
       card.innerHTML = `
-        <div class="assent-compacto-row btn-toggle-assent" data-idx="${idx}">
+        <div class="assent-compacto-row btn-toggle-assent">
           <span style="font-size:1rem">🏗</span>
           <div style="flex:1">
             <span style="font-size:.8rem;font-weight:700;color:var(--text-dim)">Parcela ${idx + 1}</span>
@@ -6433,25 +6515,158 @@ function renderizarAssentamento() {
                 data-idx="${idx}" data-tipo="${e.id}"
                 ${temRecursos ? '' : 'disabled style="opacity:.45"'}
                 title="${e.nome} · ${custoStr(e)}">
-                ${e.icone} ${e.nome} <span style="font-size:.65rem;color:var(--text-dim)">(${custoStr(e)})</span>
+                ${e.icone} ${e.nome}${e.capacidade > 1 ? ` · ${e.capacidade} moradores` : ''} <span style="font-size:.65rem;color:var(--text-dim)">(${custoStr(e)})</span>
               </button>`;
             }).join('')}
           </div>
         </div>`;
+      card.querySelector('.btn-toggle-assent').addEventListener('click', () => card.classList.toggle('expandido'));
+      container.appendChild(card);
+      return;
     }
 
-    // Toggle expand/collapse
-    card.querySelector('.btn-toggle-assent')?.addEventListener('click', () => {
-      card.classList.toggle('expandido');
-    });
+    const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
+    const vazia = parcela.habitantes.every(h => !h);
+    const cap = parcela.habitantes.length;
 
-    container.appendChild(card);
+    parcela.habitantes.forEach((npc, slot) => {
+      const card = document.createElement('div');
+      const rotuloVaga = cap > 1 ? ` · vaga ${slot + 1}/${cap}` : '';
+
+      if (!npc) {
+        card.className = 'assent-parcela construida';
+        card.innerHTML = `
+          <div class="assent-compacto-row btn-toggle-assent">
+            <span class="assent-parcela-icone" style="font-size:1.1rem">${est?.icone || '🏠'}</span>
+            <div style="flex:1">
+              <span style="font-size:.8rem;font-weight:700">${est?.nome}${rotuloVaga}</span>
+              <span style="font-size:.68rem;color:var(--text-dim);display:block">👤 Vago</span>
+            </div>
+            <span class="assent-toggle-icone">▼</span>
+          </div>
+          <div class="assent-npc-detalhe">
+            <span class="assent-parcela-status" style="font-size:.72rem;color:var(--text-dim)">✔ Construída — aguardando morador</span>
+            ${vazia && slot === 0 ? `<div style="margin-top:6px;text-align:right">
+              <button class="btn-demolir-assent btn-secundario btn-sm" data-idx="${idx}" style="color:var(--perigo,#e55);font-size:.65rem">🔨 Demolir</button>
+            </div>` : ''}
+          </div>`;
+        card.querySelector('.btn-toggle-assent').addEventListener('click', () => card.classList.toggle('expandido'));
+        container.appendChild(card);
+        return;
+      }
+
+      const hab = HAB_INFO[npc.habilidade] || {};
+      const npcEstado = npc.estadoNpc || 'idle';
+      const totalItens = npc.itensColetados?.reduce((s, i) => s + i.qtd, 0) || 0;
+      const habKey = habCanonica(npc.habilidade);
+      const opcoesHab = HAB_ITENS[habKey] || [];
+      const isSeguranca = habKey === 'seguranca';
+      const naEstufa = parcela.tipo === 'estufa' && habKey === 'cultivador';
+      const divida = npc.divida ?? 20; // saves antigos: parado sem valor registrado
+
+      // Estufa: o que está plantado (ou por que está parada)
+      const plantio = parcela.plantio;
+      const cfgPlantio = plantio ? CULTIVO_CONFIG[plantio.sementeId] : null;
+      const temSementeDep = Object.keys(CULTIVO_CONFIG).some(id => estado.deposito.itens.some(i => i.id === id && i.qtd > 0));
+      const estufaTxt = cfgPlantio
+        ? `🌱 ${cfgPlantio.nome}: ${plantio.diasRestantes} dia(s)`
+        : (temSementeDep ? '🌱 Pronta para plantar' : '🌱 Sem sementes no Depósito');
+
+      const autoExpand = npcEstado === 'pronto' || npcEstado === 'parado' || !!npc.pagamentoPendente;
+
+      const statusTexto = npcEstado === 'parado' ? '⛔ Parado'
+        : npc.pagamentoPendente ? '🔋 Esperando pagamento'
+        : npcEstado === 'pronto' ? `✅ Itens prontos (${totalItens})`
+        : naEstufa ? estufaTxt
+        : isSeguranca
+        ? (parcela.tipo === 'torre_vigilancia' ? '🗼 Torre (-20% saques)' : '🛡️ Patrulhando (-12% saques)')
+        : npcEstado === 'buscando' ? '🔍 Em busca...'
+        : (habKey === 'medico' && parcela.tipo === 'posto_medico') ? '⚕️ Cura passiva'
+        : '💤 Aguardando';
+
+      const dotClass = npcEstado === 'parado' || npc.pagamentoPendente ? 'dot-vermelho'
+        : npcEstado === 'pronto'   ? 'dot-verde'
+        : npcEstado === 'buscando' || (naEstufa && cfgPlantio) ? 'dot-amarelo'
+        : isSeguranca              ? 'dot-azul'
+        : 'dot-cinza';
+
+      card.className = `assent-parcela construida${autoExpand ? ' expandido' : ''}`;
+
+      // Foco: na Estufa escolhe qual semente plantar primeiro (vale a qualquer momento)
+      const focoLivre = naEstufa || npcEstado === 'idle';
+      const focoSelect = (opcoesHab.length && !isSeguranca)
+        ? `<div class="assent-npc-foco">
+             <span class="assent-npc-foco-label">🎯 ${naEstufa ? 'Plantar primeiro' : 'Foco'}:</span>
+             <select class="sel-foco-npc" data-idx="${idx}" data-slot="${slot}" ${focoLivre ? '' : 'disabled'}>
+               <option value="" ${!npc.foco ? 'selected' : ''}>${naEstufa ? 'Qualquer semente' : 'Aleatório'}</option>
+               ${opcoesHab.map(id => {
+                 const it = ITENS[id];
+                 return `<option value="${id}" ${npc.foco === id ? 'selected' : ''}>${it?.icone || ''} ${it?.nome || id}</option>`;
+               }).join('')}
+             </select>
+           </div>`
+        : '';
+
+      const itensGuardados = (npcEstado === 'pronto' && npc.itensColetados?.length)
+        ? `<div class="assent-npc-itens">
+             ${npc.itensColetados.map(i => {
+               const it = ITENS[i.id];
+               return `<span class="assent-npc-item-tag">${it?.icone || ''} ${it?.nome || i.id} ×${i.qtd}</span>`;
+             }).join('')}
+           </div>`
+        : '';
+
+      const dados = `data-idx="${idx}" data-slot="${slot}"`;
+      const acoes = npcEstado === 'parado'
+        ? `<button class="btn-reativar-npc btn-primario btn-sm" ${dados} ${temItem('pilha', divida) ? '' : 'disabled style="opacity:.45"'}>🔋 Pagar e reativar (${divida}×)</button>`
+        : npc.pagamentoPendente
+          ? `<span style="font-size:.65rem;color:var(--perigo,#e55)">Pague a cobrança acima para continuar.</span>`
+        : npcEstado === 'pronto'
+          ? `<button class="btn-recolher-npc btn-primario btn-sm" ${dados}>📥 Coletar</button>`
+        : naEstufa
+          ? (!cfgPlantio && temSementeDep ? `<button class="btn-plantar-estufa btn-primario btn-sm" ${dados}>🌱 Plantar agora</button>` : '')
+        : isSeguranca
+          ? ''
+        : npcEstado === 'idle'
+          ? `<button class="btn-iniciar-npc btn-primario btn-sm" ${dados}>▶ Iniciar</button>`
+          : `<button class="btn-sm btn-secundario" disabled style="opacity:.4;flex:1">⏳ Em busca...</button>`;
+
+      card.innerHTML = `
+        <div class="assent-compacto-row btn-toggle-assent">
+          <span class="assent-parcela-icone" style="font-size:1.1rem">${est?.icone || '🏠'}</span>
+          <img src="${charPath(npc.charId)}" class="assent-avatar-mini" alt="${npc.nome}" />
+          <div style="flex:1;min-width:0">
+            <span class="assent-npc-nome" style="font-size:.8rem">${npc.nome}<span style="font-weight:400;color:var(--text-dim)">${rotuloVaga}</span></span>
+            <span style="font-size:.68rem;color:var(--text-dim);display:block">${hab.icone || ''} ${statusTexto}</span>
+          </div>
+          <span class="assent-dot ${dotClass}"></span>
+          <span class="assent-toggle-icone">▼</span>
+        </div>
+        <div class="assent-npc-detalhe">
+          <div class="assent-habitante-card">
+            <img src="${charPath(npc.charId)}" class="assent-npc-avatar" alt="${npc.nome}" />
+            <div class="assent-npc-info">
+              <span class="assent-npc-nome">${npc.nome}</span>
+              <span class="assent-npc-hab">${hab.icone || ''} ${hab.label || npc.habilidade}</span>
+              <span class="assent-npc-status">${statusTexto}</span>
+            </div>
+          </div>
+          ${focoSelect}
+          ${itensGuardados}
+          <div class="assent-npc-acoes">
+            ${acoes}
+            <button class="btn-expulsar-npc btn-secundario btn-sm" ${dados} style="color:var(--perigo,#e55)">🚪 Dispensar</button>
+            <button class="btn-sm btn-secundario" disabled style="opacity:.35;font-size:.65rem" title="Dispense os moradores antes de demolir">🔨</button>
+          </div>
+        </div>`;
+      card.querySelector('.btn-toggle-assent').addEventListener('click', () => card.classList.toggle('expandido'));
+      container.appendChild(card);
+    });
   });
 
   container.querySelectorAll('.btn-iniciar-npc').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx);
-      const npc = estado.assentamento.parcelas[idx]?.habitante;
+      const npc = npcDoBotao(btn);
       if (!npc || npc.estadoNpc !== 'idle') return;
       npc.estadoNpc = 'buscando';
       npc.diaInicio = estado.dia;
@@ -6463,11 +6678,38 @@ function renderizarAssentamento() {
     });
   });
 
+  container.querySelectorAll('.btn-plantar-estufa').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const npc = npcDoBotao(btn);
+      const parcela = parcelas[parseInt(btn.dataset.idx)];
+      if (!npc || !parcela) return;
+      if (!plantarEstufa(parcela, npc)) mostrarToast('🌱 Não há sementes no Depósito.');
+      salvarJogo();
+      renderizarAssentamento();
+    });
+  });
+
+  container.querySelectorAll('.btn-reativar-npc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const npc = npcDoBotao(btn);
+      if (!npc || npc.estadoNpc !== 'parado') return;
+      const divida = npc.divida ?? 20;
+      if (!temItem('pilha', divida)) { mostrarToast(`🔋 Precisa de ${divida} Baterias.`); return; }
+      removerItem('pilha', divida);
+      npc.divida = null;
+      // Volta como estava: com itens guardados fica "pronto"; senão, aguardando ordem
+      npc.estadoNpc = npc.itensColetados?.length ? 'pronto' : 'idle';
+      npc.diaPagamento = estado.dia + 5;
+      log(`🔋 Você pagou ${divida}× Bateria. ${npc.nome} voltou ao trabalho.`, 'log-sucesso');
+      mostrarToast(`✅ ${npc.nome} voltou ao trabalho!`);
+      salvarJogo();
+      renderizarAssentamento();
+    });
+  });
+
   container.querySelectorAll('.btn-recolher-npc').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx);
-      const parcela = estado.assentamento.parcelas[idx];
-      const npc = parcela?.habitante;
+      const npc = npcDoBotao(btn);
       if (!npc?.itensColetados?.length) return;
       // Itens que não couberem ficam com o NPC para recolher depois
       npc.itensColetados = npc.itensColetados.filter(i => {
@@ -6490,8 +6732,7 @@ function renderizarAssentamento() {
 
   container.querySelectorAll('.sel-foco-npc').forEach(sel => {
     sel.addEventListener('change', () => {
-      const idx = parseInt(sel.dataset.idx);
-      const npc = estado.assentamento.parcelas[idx]?.habitante;
+      const npc = npcDoBotao(sel);
       if (!npc) return;
       npc.foco = sel.value || null;
       const label = sel.value ? (ITENS[sel.value]?.nome || sel.value) : 'aleatório';
@@ -6502,16 +6743,19 @@ function renderizarAssentamento() {
 
   container.querySelectorAll('.btn-expulsar-npc').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx);
-      const parcela = estado.assentamento.parcelas[idx];
-      if (!parcela?.habitante) return;
-      const nome = parcela.habitante.nome;
+      const idx = parseInt(btn.dataset.idx), slot = parseInt(btn.dataset.slot);
+      const parcela = parcelas[idx];
+      const npc = parcela?.habitantes?.[slot];
+      if (!npc) return;
+      const perde = npc.itensColetados?.length ? ' Os itens guardados com esse morador serão perdidos.' : '';
       mostrarConfirmacao(
-        `Dispensar ${nome} do assentamento?`,
+        `Dispensar ${npc.nome} do assentamento?${perde}`,
         () => {
-          parcela.habitante = null;
-          log(`🚪 ${nome} foi dispensado do assentamento.`, 'log-sistema');
-          mostrarToast(`🚪 ${nome} saiu.`);
+          parcela.habitantes[slot] = null;
+          if (parcela.tipo === 'estufa') parcela.plantio = null; // sem cultivador, a plantação se perde
+          log(`🚪 ${npc.nome} foi dispensado do assentamento.`, 'log-sistema');
+          mostrarToast(`🚪 ${npc.nome} saiu.`);
+          atualizarBadgeAssentamento();
           salvarJogo();
           renderizarAssentamento();
         }
@@ -6522,13 +6766,13 @@ function renderizarAssentamento() {
   container.querySelectorAll('.btn-demolir-assent').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.idx);
-      const parcela = estado.assentamento.parcelas[idx];
-      if (!parcela) return;
+      const parcela = parcelas[idx];
+      if (!parcela || parcela.habitantes.some(h => h)) return;
       const est = ASSENT_ESTRUTURAS.find(e => e.id === parcela.tipo);
       mostrarConfirmacao(
         `Demolir ${est?.nome || 'esta construção'}? A parcela voltará a ficar vazia.`,
         () => {
-          estado.assentamento.parcelas[idx] = null;
+          parcelas[idx] = null;
           log(`🔨 ${est?.nome || 'Construção'} demolida. Parcela ${idx + 1} liberada.`, 'log-sistema');
           mostrarToast(`🔨 Construção demolida.`);
           salvarJogo();
@@ -6548,7 +6792,7 @@ function renderizarAssentamento() {
         if (!temItem(id, q)) { mostrarToast(`Sem recursos suficientes.`); return; }
       }
       for (const [id, q] of Object.entries(est.custo)) removerItem(id, q);
-      estado.assentamento.parcelas[idx] = { tipo, habitante: null };
+      parcelas[idx] = normalizarParcela({ tipo, habitantes: [] });
       log(`🏘 Construiu ${est.icone} ${est.nome} na Parcela ${idx + 1}.`, 'log-sucesso');
       mostrarToast(`${est.icone} ${est.nome} construída!`);
       renderizarAssentamento();
@@ -6780,9 +7024,15 @@ function aplicarDadosSave(s) {
   estado.base               = s.base               || [];
   estado.tatica             = s.tatica             || 'furtivo';
   estado.deposito           = s.deposito           || { nivel: 0, itens: [] };
-  // Saves guardam cópia do ícone: atualiza pelo catálogo atual para refletir trocas de ícone
+  // Carteira: saves antigos guardavam Baterias como item na mochila/depósito — move tudo para a carteira
+  estado.baterias = s.baterias ?? 0;
+  for (const lista of [estado.inventario, estado.deposito.itens]) {
+    const idx = lista.findIndex(i => i.id === 'pilha');
+    if (idx !== -1) { estado.baterias += lista[idx].qtd || 0; lista.splice(idx, 1); }
+  }
+  // Saves guardam cópia do ícone e do nome: atualiza pelo catálogo atual para refletir renomeações
   for (const i of [...estado.inventario, ...estado.deposito.itens]) {
-    if (ITENS[i.id]) i.icone = ITENS[i.id].icone;
+    if (ITENS[i.id]) { i.icone = ITENS[i.id].icone; i.nome = ITENS[i.id].nome; }
   }
   estado.cisterna           = s.cisterna           || { aguaAcumulada: 0 };
   estado.filtroInstalado    = s.filtroInstalado    || { diasRestantes: 0, quantidade: 0 };
@@ -6802,6 +7052,7 @@ function aplicarDadosSave(s) {
   estado.ultimoSaque        = s.ultimoSaque        || null;
   estado.mercado            = s.mercado            || { itens: [], diaGerado: 0 };
   estado.equipamento        = s.equipamento        || { cabeca: null, peito: null, maos: null, pernas: null, pes: null, arma: null, acessorio: null };
+  estado.lamparinaAcesa     = s.lamparinaAcesa     ?? true; // saves antigos: lamparina já equipada segue acesa até o próximo amanhecer
   estado.trabalhos          = s.trabalhos          || { disponiveis: [], aceitos: [], diaGerado: 0 };
   estado.dia                = s.dia                || 1;
   estado.segundos           = s.segundos           || 0;
@@ -6809,6 +7060,9 @@ function aplicarDadosSave(s) {
   estado.placar             = s.placar || { exploracoes: 0, crafts: 0, construcoes: 0 };
   estado.reputacao          = s.reputacao ?? 50;
   estado.assentamento       = s.assentamento ?? { parcelas: [null, null, null, null], npcPendente: null, ultimoEventoNpc: 0 };
+  // Parcelas no formato com lista de moradores (Cabana abriga 2); saves antigos tinham { habitante }
+  estado.assentamento.parcelas = estado.assentamento.parcelas.map(normalizarParcela);
+  estado.ehLider            = s.ehLider ?? (estado.reputacao >= 81);
   if (!estado.assentamento.npcPendente)     estado.assentamento.npcPendente     = null;
   if (!estado.assentamento.ultimoEventoNpc) estado.assentamento.ultimoEventoNpc = 0;
   estado.criado             = true;

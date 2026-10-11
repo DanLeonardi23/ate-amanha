@@ -373,6 +373,9 @@ body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(
             <div class="sec-t" style="margin:0 0 5px">Reputação <span style="color:var(--fg)">Neutro</span></div>
             <div class="bar"><i style="width:52%;background:var(--amber)"></i></div>
           </div>
+          <div class="card row" data-h="pilha" tabindex="0" style="padding:8px;justify-content:space-between">
+            <span class="sec-t" style="margin:0">Baterias</span><span class="saldo" style="font-size:17px">23 🔋</span>
+          </div>
           <div class="card" data-h="relogio" tabindex="0" style="padding:8px">
             <div class="relogio"><b style="font-weight:400">Dia 4</b><span>☀ 14:20</span><div class="bar"><i style="width:58%;background:var(--amber)"></i></div></div>
           </div>
@@ -415,14 +418,13 @@ body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(
         </div>
 
         <div class="card stack" style="align-content:start">
-          <div class="sec-t" style="margin:0" data-h="mochila" tabindex="0">Mochila <span class="mono" style="color:var(--fg)">7/10</span></div>
+          <div class="sec-t" style="margin:0" data-h="mochila" tabindex="0">Mochila <span class="mono" style="color:var(--fg)">6/10</span></div>
           <div class="dim" style="font-size:13.5px" data-h="combinar" tabindex="0">Clique num item e depois em outro para combinar.</div>
           <div class="inv">
             <div class="item" data-h="item" tabindex="0"><span class="ic">🥫</span><div><div class="nm">Comida Enlatada</div><div class="q">×3 · clique para opções</div></div></div>
             <div class="item sel" data-h="item-sel" tabindex="0"><span class="ic">🔩</span><div><div class="nm">Sucata</div><div class="q">×6</div></div></div>
             <div class="item"><span class="ic">🌳</span><div><div class="nm">Madeira</div><div class="q">×4</div></div></div>
             <div class="item"><span class="ic">🧻</span><div><div class="nm">Trapo</div><div class="q">×2</div></div></div>
-            <div class="item" data-h="pilha" tabindex="0"><span class="ic">🔋</span><div><div class="nm">Bateria</div><div class="q">×23</div></div></div>
             <div class="item raro" data-h="raro" tabindex="0"><span class="ic">⌚</span><div><div class="nm">Relógio de Ouro <span class="pill p-medio">raro</span></div><div class="q">×1</div></div></div>
             <div class="item"><span class="ic">📔</span><div><div class="nm">Revista em Quadrinhos</div><div class="q">×1</div></div></div>
           </div>
@@ -797,14 +799,14 @@ const H = {
   'aba-mercado': ['Aba Mercado', 'Loja do jogo: compre itens com Baterias e venda o que sobra. O estoque muda todo dia.'],
   'aba-barracas': ['Aba Barracas', 'Comércio com <b>outros jogadores</b>. Exige estar logado.'],
   'aba-trabalhos': ['Aba Trabalhos', 'Encomendas de outros sobreviventes. Entregue os itens pedidos e receba recompensas e reputação.'],
-  'aba-assent': ['Aba Assentamento', 'Fica <b>bloqueada</b> até sua reputação chegar a <b>Líder (81+)</b>. Lá você constrói moradias e acolhe moradores.'],
+  'aba-assent': ['Aba Assentamento', 'Fica <b>bloqueada</b> até sua reputação chegar a <b>Líder (81+)</b>. Lá você constrói moradias e acolhe moradores. <span class="warn">Se a reputação cair abaixo de 81, você é destituído do cargo de Líder e a aba fecha</span> até você recuperar a liderança.'],
 
   // Mochila
-  mochila: ['Mochila', 'Mostra quantos <b>tipos</b> de item você carrega e o limite (começa em 10). Itens iguais se empilham sem ocupar espaço extra. Algumas mochilas equipáveis aumentam o limite.'],
+  mochila: ['Mochila', 'Mostra quantos <b>tipos</b> de item você carrega e o limite (começa em 10). Itens iguais se empilham sem ocupar espaço extra. As Baterias ficam fora da mochila, no mostrador abaixo da Reputação. Alguns equipamentos aumentam o limite.'],
   combinar: ['Combinar itens', 'Clique num item e depois em outro: se existir uma receita com os dois, você fabrica na hora. É assim que se descobre receitas novas.'],
   item: ['Item', 'Clique para abrir a janela do item: usar, equipar, guardar no depósito ou descartar.'],
   'item-sel': ['Item selecionado', 'A borda amarela indica o primeiro item escolhido para combinar. Clique em outro item para tentar a combinação.'],
-  pilha: ['🔋 Bateria', 'A <b>moeda do jogo</b>. Use no Mercado, nas Barracas, para pagar moradores e para desistir de trabalhos.'],
+  pilha: ['🔋 Baterias', 'A <b>moeda do jogo</b>, guardada aqui e não na mochila: <b>não ocupa espaço</b>. Use no Mercado, nas Barracas, para pagar moradores, manter a Lamparina acesa e desistir de trabalhos. Também entra em algumas receitas e construções.'],
   raro: ['Item raro', 'Achados especiais, com moldura roxa. Não servem para muito na sobrevivência, mas valem bem no Mercado. O preço varia muito de um dia para o outro.'],
 
   // Locais
@@ -844,7 +846,7 @@ const H = {
   'chance-saque': ['Chance de saque', 'Chance de a base ser atacada <b>esta noite</b>, mas só se você estiver <b>fora explorando</b> quando a noite cai. Estando em casa, você vigia e nada acontece. Nunca fica abaixo de 2%.'],
 
   // Comércio
-  saldo: ['Saldo', 'Quantas Baterias você tem, somando mochila e depósito.'],
+  saldo: ['Saldo', 'Quantas Baterias você tem. É o mesmo número mostrado abaixo da Reputação.'],
   fator: ['Renovação e preço do dia', 'O estoque muda a cada novo dia. O multiplicador mostra quanto o mercado paga hoje pelo que você vende: varia entre <b>×0,70 e ×1,30</b>. Vale esperar um dia bom para vender itens caros.'],
   oferta: ['Item à venda', 'Até 5 itens por dia. A seta mostra se o preço está <b style="color:var(--red)">acima ▲</b> ou <b style="color:var(--accent)">abaixo ▼</b> do normal. Precisa ter espaço na mochila para comprar.'],
   vender: ['Vender', 'Vende <b>1 unidade</b> pelo preço do dia. Itens fabricados valem a soma dos ingredientes e mais um pouco.'],
@@ -861,14 +863,14 @@ const H = {
   'trab-disp': ['Trabalhos do dia', 'Até 5 encomendas novas por dia. Aceite as que você consegue cumprir.'],
 
   // Assentamento
-  'npc-chega': ['Pedido de abrigo', 'De tempos em tempos (no mínimo a cada 3 dias), aparece alguém pedindo abrigo, desde que você tenha moradia livre. Cada morador tem uma aptidão. Aceitar exige uma moradia compatível com ela.'],
+  'npc-chega': ['Pedido de abrigo', 'De tempos em tempos (no mínimo a cada 3 dias), aparece alguém pedindo abrigo, desde que você tenha uma moradia livre que combine com a aptidão dele. Moradias especiais (Estufa, Posto Médico, Torre) só recebem a aptidão de cada uma.'],
   'parcela-vazia': ['Parcela', 'São 4 terrenos. Construa uma moradia em cada para receber moradores.'],
-  morador: ['Morador', 'O ponto colorido mostra o estado: pronto, buscando, parado ou cobrando. Toque no card para expandir. Mande o morador buscar itens e depois recolha o que ele trouxe.'],
+  morador: ['Morador', 'O ponto colorido mostra o estado: pronto, buscando, parado ou cobrando. Toque no card para expandir. Use <b>Iniciar</b> para mandar o morador buscar itens; ele volta no dia seguinte e você recolhe com <b>Coletar</b>. <span class="warn">Nem toda busca dá certo</span>: às vezes o morador volta de mãos vazias.'],
   foco: ['Foco', 'Escolhe que item o morador deve priorizar entre os da aptidão dele. "Aleatório" traz de tudo um pouco.'],
   'npc-coletar': ['Coletar', 'Leva para a mochila o que o morador juntou. O que não couber fica guardado com ele.'],
   'npc-dispensar': ['Dispensar', 'Manda o morador embora e libera a moradia.'],
-  pagamento: ['Pagamento', 'A cada poucos dias, cada morador cobra de <b>10 a 40 Baterias</b>. <span class="warn">Recusar faz ele parar de trabalhar.</span>'],
-  'estruturas-assent': ['Moradias', '<b>Barraco</b>, <b>Tenda</b> e <b>Cabana</b> (a cabana abriga 2) são moradias comuns. Moradias especiais dão bônus para uma aptidão: <b>Estufa</b> (cultivador colhe mais), <b>Posto Médico</b> (médico cura você +10–20 de vida por dia), <b>Torre de Vigilância</b> (segurança reduz saques em 20% em vez de 12%).<br>Aptidões: Coletor traz comida e água; Médico, ataduras e remédios; Mecânico, sucata e arame; Cultivador, sementes; Explorador, itens variados.'],
+  pagamento: ['Pagamento', 'A cada 5 dias, cada morador cobra de <b>10 a 40 Baterias</b>. <span class="warn">Enquanto a cobrança estiver aberta, ele não trabalha.</span> Recusar deixa o morador <b>parado</b>; para ele voltar, use <b>Pagar e reativar</b> no card dele.'],
+  'estruturas-assent': ['Moradias', '<b>Barraco</b> e <b>Tenda</b> abrigam 1 morador; a <b>Cabana</b> abriga <b>2</b>. Moradias especiais recebem só uma aptidão e dão bônus: <b>Estufa</b> (o Cultivador planta as sementes do seu <b>Depósito</b> sem precisar de rega, no mesmo tempo do Cultivo), <b>Posto Médico</b> (o Médico cura você +10–20 de vida por dia), <b>Torre de Vigilância</b> (o Segurança reduz saques em 20% em vez de 12%).<br>Aptidões: Coletor traz comida e água; Médico, ataduras e remédios; Mecânico, sucata e arame; Cultivador, sementes; Explorador, itens variados.'],
 
   // Itens e eventos
   'item-efeitos': ['Efeitos', 'O que acontece ao usar. Saciedade e hidratação aparecem como <b>+</b> quando enchem a barra.'],
@@ -936,7 +938,7 @@ const ITENS_CAT = [
   ['🌳','Madeira','material',0,null,null,'Base de quase todas as construções: Fogueira, Cisterna, Cultivo, Depósito e moradias do Assentamento.'],
   ['🧻','Trapo','material',1,null,null,'Tecido para construções e receitas. Também é pedido em trabalhos.'],
   ['〰️','Arame','material',1,null,null,'Usado em estruturas mais resistentes, no Depósito de nível alto e em receitas de Bancada.'],
-  ['🔋','Bateria','material',0,null,null,'A moeda do jogo. Compra no Mercado e nas Barracas, paga moradores e trabalhos. Também entra em receitas.'],
+  ['🔋','Bateria','material',0,null,null,'A moeda do jogo. Fica no mostrador abaixo da Reputação e <b>não ocupa a mochila</b>. Compra no Mercado e nas Barracas e paga moradores. Também entra em receitas.'],
   ['🌱','Semente de Cânhamo','material',0,null,null,'Plante no Cultivo. Cresce em 2 dias com 1 rega.'],
   ['🌿','Semente de Erva','material',0,null,null,'Plante no Cultivo. Cresce em 3 dias com 2 regas.'],
   ['🎃','Semente de Abóbora','material',0,null,null,'Plante no Cultivo. Cresce em 2 dias com 3 regas.'],
@@ -966,7 +968,7 @@ const ITENS_CAT = [
   ['🔪','Faca de Cozinha','ferramenta',0,'arma',null,'Equipada, reduz um pouco o dano em confrontos. Também serve de ingrediente.'],
   ['🗡️','Lança Improvisada','ferramenta',1,'arma',null,'Equipada, reduz o dano recebido em eventos de exploração.'],
   ['🏹','Arco Rudimentar','ferramenta',1,'arma',null,'Equipado, dá +10% de chance de loot.'],
-  ['🔦','Tocha Improvisada','ferramenta',1,'acessorio',null,'Equipada, faz o estresse baixar mais depressa.'],
+  ['🪔','Lamparina Improvisada','ferramenta',1,'acessorio',null,'Equipada, faz o estresse baixar no dobro da velocidade enquanto você descansa. Consome <b>2 Baterias por dia</b>; sem elas, apaga e para de funcionar.'],
   ['💡','Lanterna Improvisada','ferramenta',1,'acessorio',null,'Equipada, dá um leve bônus de loot.'],
   ['⛑️','Capacete Industrial','ferramenta',0,'cabeca',null,'−5% de dano sofrido em eventos de exploração.'],
   ['🧣','Capuz de Lã','ferramenta',0,'cabeca',null,'Mais furtividade: reduz a chance de eventos negativos.'],

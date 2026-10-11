@@ -1288,25 +1288,8 @@ html, body {
 }
 .equip-resumo-item:hover { background: var(--bg-2); color: var(--text-pri); }
 
-/* tooltip ao hover */
-.equip-resumo-item[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 4px);
-  z-index: 20;
-  background: var(--bg-3);
-  border: 1px solid var(--accent-d);
-  border-radius: var(--radius);
-  padding: 6px 9px;
-  font-size: .69rem;
-  color: var(--text-sec);
-  line-height: 1.5;
-  white-space: normal;
-  width: 200px;
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,.4);
-}
+/* tooltip ao hover: balão flutuante via JS (#tooltip-flutuante), fora das colunas com overflow */
+.equip-resumo-item[data-tooltip] { cursor: help; }
 
 .equip-resumo-slot  { display: none; }
 .equip-resumo-icone { font-size: 1.1rem; flex-shrink: 0; }
@@ -4226,4 +4209,67 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .btn-aprenda.pulsando { animation: none; background: var(--accent-d); }
   .aviso-manual { animation: none; }
+}
+
+/* Carteira de Baterias (abaixo da Reputação) */
+.carteira-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.carteira-titulo {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+}
+.carteira-saldo {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: #d4b84a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Balão flutuante para [data-tooltip] — fixo na tela, nunca cortado pelas colunas */
+.tooltip-flutuante {
+  position: fixed;
+  z-index: 300;
+  max-width: min(260px, calc(100vw - 16px));
+  background: var(--bg-3);
+  border: 1px solid var(--accent-d);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-size: .78rem;
+  line-height: 1.45;
+  color: var(--text-pri);
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,.55);
+}
+
+/* ══════════════════════════════════════════════════════
+   CENÁRIO DE FUNDO (img/bg.jpg) — esmaecido sobre a cor do dia/noite
+   A cor de fundo de #tela-jogo continua transitando por baixo; a imagem
+   fica com baixa opacidade e, à noite, escurece e puxa para o azul.
+══════════════════════════════════════════════════════ */
+.cena-fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url('img/bg.jpg') center bottom / cover no-repeat;
+  opacity: .18;
+  filter: grayscale(.35) brightness(.9);
+  transition: opacity 10s ease, filter 10s ease;
+}
+#tela-jogo.fase-noite .cena-fundo {
+  opacity: .13;
+  filter: grayscale(.5) brightness(.55) sepia(.35) hue-rotate(185deg);
+}
+/* Conteúdo acima do cenário */
+#tela-jogo > .game-header,
+#tela-jogo > .game-main {
+  position: relative;
+  z-index: 1;
 }
