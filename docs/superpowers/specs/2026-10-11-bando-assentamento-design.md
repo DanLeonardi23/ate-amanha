@@ -80,7 +80,7 @@ Mesma mecânica dos moradores: a cada 5 dias aparece a cobrança; enquanto não 
 
 ### Equipamento
 
-Encaixes: arma, cabeça, peito. Usa os itens equipáveis existentes, retirados da mochila ou do Depósito; desequipar devolve à mochila (forçando, se cheia). Cada item equipável ganha `combate: { atq, def }`:
+Encaixes: arma, cabeça, peito. Usa os itens equipáveis existentes, retirados da mochila ou do Depósito; desequipar devolve à mochila (forçando, se cheia). Os valores de combate ficam na tabela `COMBATE_EQUIP` de `bando-regras.js`:
 
 | Item | Encaixe | Ataque | Defesa |
 |---|---|---|---|
@@ -118,7 +118,7 @@ Funções puras, sem acesso ao estado do jogo:
 Cada lutador: `{ id, nome, atq, def, vida }` (vida atual na entrada). Regras:
 
 1. Até 5 rodadas. Em cada rodada, na ordem alternada A/B, cada lutador de pé ataca um inimigo de pé sorteado.
-2. Dano = `max(1, round(atq × (0,7 + 0,6 × rng()) − def_alvo × 0,5))`.
+2. Golpe: 20% de chance de **errar** (dano 0); 12% de chance de **crítico** (dano ×2); nos demais casos, normal. Dano de um golpe que acerta = `max(1, round((atq × (0,6 + 0,8 × rng()) − def_alvo × 0,5) × multiplicador))`. A ordem de consumo do RNG é: sorteio do alvo, sorteio erro/crítico, sorteio da variação.
 3. Vida não fica abaixo de 0. Lutador com vida 0 está fora.
 4. Fim antecipado: um lado sem lutadores de pé, ou com vida total abaixo de 25% da vida inicial do lado (esse lado **recua** e perde).
 5. Após 5 rodadas: vence o lado com maior porcentagem de vida restante (empate favorece o defensor, lado B).
@@ -131,11 +131,13 @@ O relatório é uma lista de linhas legíveis (ex.: "Rafa acerta Saqueador 2: 7 
 
 Quadro com 3 alvos, renovado a cada amanhecer. Inimigos gerados conforme o nível do assentamento (`n`):
 
+Com `h = ⌊n/2⌋`:
+
 | Alvo | Inimigos | Cada inimigo (Atq / Def / Vida) | Duração real | Recompensa (vitória) |
 |---|---|---|---|---|
-| Acampamento de saqueadores | 2 + ⌊n/3⌋ | 4+n / 1+⌊n/2⌋ / 30+3n | 3 min | 10–20 🔋 + materiais; +40 XP |
-| Posto de bandidos | 3 + ⌊n/3⌋ | 6+n / 3+⌊n/2⌋ / 40+4n | 6 min | 20–35 🔋 + itens médicos ou armas; +80 XP |
-| Depósito militar abandonado | 4 + ⌊n/3⌋ | 8+n / 5+⌊n/2⌋ / 50+5n | 10 min | 35–60 🔋 + 30% de chance de item raro; +120 XP |
+| Acampamento de saqueadores | 2 + h | 4+h / 1+h / 30+3n | 3 min | 10–20 🔋 + materiais; +40 XP |
+| Posto de bandidos | 3 + h | 5+h / 2+h / 36+4n | 6 min | 20–35 🔋 + itens médicos ou armas; +80 XP |
+| Depósito militar abandonado | 4 + h | 6+h / 3+h / 42+5n | 10 min | 35–60 🔋 + 30% de chance de item raro; +120 XP |
 
 - O jogador escolhe quais combatentes **prontos** vão (pelo menos 1). Eles ficam em estado **missão**.
 - Cada alvo só pode receber uma missão por vez.
@@ -143,12 +145,12 @@ Quadro com 3 alvos, renovado a cada amanhecer. Inimigos gerados conforme o níve
 - Loot vai para o Depósito; sem Depósito, para a mochila (forçando, se cheia). Baterias vão para a carteira.
 - Derrota: sem recompensa, +10 XP.
 
-Os números acima são o ponto de partida; a simulação de equilíbrio (seção 6) pode ajustá-los.
+Números calibrados por simulação (3.000 combates por cenário): Bando cheio de Novatos equipados vence o Acampamento até o nível 6; o Posto pede Veteranos; o Depósito militar pede o Bando cheio de Veteranos equipados (≈90% no nível 1, ≈30% no nível 8); no nível 8 só Elites seguram tudo.
 
 ### Defesa contra invasões
 
 - O gatilho continua o do saque noturno atual (jogador fora explorando ao anoitecer, com a chance de saque de hoje).
-- Se houver combatentes prontos em casa, acontece um combate: Bando (defensores, lado B) contra saqueadores (lado A), com `3 + ⌊n/2⌋` inimigos de Atq `5+n`, Def `2+⌊n/2⌋`, Vida `35+4n`.
+- Se houver combatentes prontos em casa, acontece um combate: Bando (defensores, lado B) contra saqueadores (lado A), com `2 + h` inimigos de Atq `4+h`, Def `1+h`, Vida `30+3n` (h = ⌊n/2⌋).
 - Bônus de defesa do assentamento, somado à Defesa de cada defensor: +1 por armadilha instalada, +1 por morador Segurança ativo, +2 se houver Torre de Vigilância com morador.
 - Vitória: nada é roubado, +50 XP. Derrota: o saque acontece como hoje; defensores podem se ferir ou morrer; +10 XP.
 - Sem combatentes prontos: comportamento atual, sem mudança.
@@ -174,7 +176,7 @@ Dados novos em `estado.assentamento`: `nome`, `xp`, `nivel`, `bando` (lista de c
 ## 6. Testes
 
 - **Motor (Node):** mesma semente → mesmo resultado; time mais forte vence a maioria; Defesa reduz dano; recuo abaixo de 25%; dano mínimo 1; vida nunca negativa; empate favorece B.
-- **Equilíbrio (Node):** milhares de simulações por cenário. Metas: 2 Novatos sem equipamento vencem o Acampamento no nível 1 em ~70%; o Depósito militar no nível 1 só é vencido com Bando equipado; a invasão no nível 1 é vencida por 2 Novatos com equipamento básico em ~60%.
+- **Equilíbrio (Node):** 3.000 simulações por cenário, no nível 1. Metas: 2 Novatos sem equipamento vencem o Acampamento em 75–95%; 2 Novatos com faca e capacete vencem o Posto em 20–50%; 2 Veteranos com lança e capacete tático vencem o Depósito militar em ≥ 80%; 2 Novatos sem equipamento defendem a invasão em 75–95%.
 - **Manual (navegador):** roteiro cobrindo recrutar, equipar, missão, ferimento, cura, morte, invasão, soldo e carregamento de save antigo.
 
 ## Fora desta etapa
