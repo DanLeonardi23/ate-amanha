@@ -3243,6 +3243,7 @@ function avancarDia() {
 
   // Cobranças de NPCs
   verificarPagamentosNpc();
+  rotinaDiariaBando();
 
   // Evento de NPC pedindo abrigo
   gerarEventoNpc();
@@ -3329,6 +3330,9 @@ function atualizarStatus() {
 
   // ── Transição noite → dia (fim do ciclo) ──
   if (cicloAgora === 0 && estado.segundos > 0) avancarDia();
+
+  // Missões do Bando que terminaram (usa hora real; resolve também ao voltar com o jogo fechado)
+  verificarMissoesConcluidas();
 
   // ── Relógio ──
   atualizarRelogio();
@@ -3996,6 +4000,9 @@ function processarSaqueNoturno() {
     atualizarDefesaUI();
     return;
   }
+
+  // O Bando defende antes do saque: vitória = nada é roubado (ver bando.js)
+  if (defenderInvasao() === true) { atualizarDefesaUI(); return; }
 
   // ── SAQUE ACONTECE — roba do depósito ──
   const temArmadilha = estado.seguranca.armadilhasInstaladas > 0;
@@ -5034,6 +5041,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   estado.placar             = { exploracoes: 0, crafts: 0, construcoes: 0 };
   estado.reputacao          = 50;
   estado.assentamento       = { parcelas: [null, null, null, null], npcPendente: null, ultimoEventoNpc: 0 };
+  normalizarBando(estado.assentamento, estado.personagem);
   estado.criado             = true;
 
   adicionarItem(ITENS.comida,    2);
@@ -6293,7 +6301,8 @@ function atualizarBadgeAssentamento() {
   const btn = document.getElementById('aba-btn-assentamento');
   if (!btn) return;
   const temPendente = !!estado.assentamento?.npcPendente
-    || moradores().some(m => m.npc.pagamentoPendente);
+    || moradores().some(m => m.npc.pagamentoPendente)
+    || (estado.assentamento?.bando || []).some(c => c.soldoPendente);
   let badge = btn.querySelector('.aba-badge-npc');
   if (temPendente) {
     if (!badge) {
@@ -6412,6 +6421,7 @@ function verificarAssentamento() {
 
   if (lider && !estado.ehLider) {
     log('🏘 Assentamento desbloqueado! Sua reputação como Líder abre novas possibilidades.', 'log-sucesso');
+    log('✏️ Dê um nome ao seu assentamento: aba Assentamento, botão ✏️ ao lado do nome.', 'log-info');
     mostrarToast('🏘 Assentamento desbloqueado!', 3000);
   } else if (!lider && estado.ehLider) {
     log('👑 Você foi destituído do cargo de Líder. O Assentamento fica fechado até você recuperar a reputação.', 'log-perigo');
@@ -6427,6 +6437,8 @@ function verificarAssentamento() {
 function renderizarAssentamento() {
   const container = document.getElementById('assent-parcelas');
   if (!container) return;
+  renderizarIdentidadeAssentamento();
+  renderizarBando();
 
   const assent  = estado.assentamento;
   const parcelas = assent.parcelas;
@@ -6474,6 +6486,7 @@ function renderizarAssentamento() {
       assent.ultimoEventoNpc  = estado.dia;
       atualizarBadgeAssentamento();
       log(`🏘 ${npc.nome} foi aceito e se mudou para a Parcela ${vaga.idx + 1}.`, 'log-sucesso');
+      ganharXpAssentamento(XP_EVENTO.morador);
       mostrarToast(`🏘 ${npc.nome} entrou no assentamento!`, 3000);
       // Cultivador na Estufa já começa plantando, se houver semente no Depósito
       if (parcela.tipo === 'estufa') plantarEstufa(parcela, novo);
@@ -6845,6 +6858,7 @@ function renderizarAssentamento() {
       for (const [id, q] of Object.entries(est.custo)) removerItem(id, q);
       parcelas[idx] = normalizarParcela({ tipo, habitantes: [] });
       log(`🏘 Construiu ${est.icone} ${est.nome} na Parcela ${idx + 1}.`, 'log-sucesso');
+      ganharXpAssentamento(XP_EVENTO.moradia);
       mostrarToast(`${est.icone} ${est.nome} construída!`);
       renderizarAssentamento();
       salvarJogo();
@@ -7116,6 +7130,7 @@ function aplicarDadosSave(s) {
   estado.assentamento       = s.assentamento ?? { parcelas: [null, null, null, null], npcPendente: null, ultimoEventoNpc: 0 };
   // Parcelas no formato com lista de moradores (Cabana abriga 2); saves antigos tinham { habitante }
   estado.assentamento.parcelas = estado.assentamento.parcelas.map(normalizarParcela);
+  normalizarBando(estado.assentamento, estado.personagem);
   estado.ehLider            = s.ehLider ?? (estado.reputacao >= 81);
   if (!estado.assentamento.npcPendente)     estado.assentamento.npcPendente     = null;
   if (!estado.assentamento.ultimoEventoNpc) estado.assentamento.ultimoEventoNpc = 0;

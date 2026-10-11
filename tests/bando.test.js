@@ -149,9 +149,9 @@ test('iniciarMissao ignora quem não está pronto e não faz nada se ninguém es
   assert.deepEqual(Array.from(a.missoes.emAndamento[0].membros), [c1.id]);
   assert.equal(c2.estado, 'ferido');
   // ninguém pronto: não inicia nem consome a missão do dia
-  run(`iniciarMissao("mercado", ["${c1.id}", "${c2.id}"]);`);
+  run(`iniciarMissao("posto", ["${c1.id}", "${c2.id}"]);`);
   assert.equal(a.missoes.emAndamento.length, 1);
-  assert.ok(!a.missoes.feitasHoje.includes('mercado'));
+  assert.ok(!a.missoes.feitasHoje.includes('posto'));
 });
 
 test('loot: baterias na carteira, itens no depósito ou, sem depósito, na mochila', () => {
