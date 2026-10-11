@@ -5,7 +5,7 @@
  * Depende de combate.js e bando-regras.js (carregados antes) e das funções globais de
  * script.js (estado, ITENS, SLOT_LABELS, CHARS_GENERO, charPath, esc, log, mostrarToast,
  * mostrarConfirmacao, salvarJogo, temItem, removerItem, adicionarItem, mudarBaterias,
- * capacidadeDeposito, moradores, npcAtivo, habCanonica, renderizarAssentamento,
+ * capacidadeDeposito, renderizarDeposito, moradores, npcAtivo, habCanonica, renderizarAssentamento,
  * atualizarBadgeAssentamento). Essas funções só são chamadas depois que tudo carregou.
  */
 'use strict';
@@ -31,7 +31,10 @@ function normalizarBando(assent, personagem) {
   // Reparo: quem ficou "em missão" sem missão correspondente (erro ao resolver) volta ao Bando
   const emCampo = new Set(assent.missoes.emAndamento.flatMap(m => m.membros || []));
   for (const c of assent.bando) {
-    if (c.estado === 'missao' && !emCampo.has(c.id)) c.estado = estadoAposCombate(c.vida, c.vidaMax) === 'ferido' ? 'ferido' : 'pronto';
+    if (c.estado === 'missao' && !emCampo.has(c.id)) {
+      const est = estadoAposCombate(c.vida, c.vidaMax);
+      if (est === 'morto') { c.vida = 1; c.estado = 'ferido'; } else c.estado = est;
+    }
   }
   return assent;
 }
@@ -89,7 +92,12 @@ function abrirJanela(html, { largura = 420 } = {}) {
   overlay.style.zIndex = '9000';
   overlay.innerHTML = `<div class="modal-conteudo janela-conteudo" style="max-width:${largura}px">${html}
     <div class="modal-acoes"><button class="btn-secundario btn-sm" data-fechar>Fechar</button></div></div>`;
-  const aoTeclar = e => { if (e.key === 'Escape') overlay.remove(); };
+  const aoTeclar = e => {
+    if (e.key !== 'Escape') return;
+    const todas = document.querySelectorAll('.janela-bando'); // Esc fecha só a janela do topo
+    if (todas[todas.length - 1] !== overlay) return;
+    overlay.remove();
+  };
   const remover = overlay.remove.bind(overlay);
   overlay.remove = () => { document.removeEventListener('keydown', aoTeclar); remover(); };
   overlay.addEventListener('click', e => {
@@ -590,6 +598,7 @@ function verificarMissoesConcluidas() {
     try { resolverMissao(m); } catch (err) { console.error('Erro ao resolver missão', m, err); }
   }
   atualizarTelaAssentamento();
+  exibirRelatoriosPendentes(); // uma janela só, mesmo que várias missões tenham terminado juntas
 }
 
 // Mostra os relatórios que chegaram com o jogador fora (aba oculta, exploração ou jogo fechado)
@@ -629,7 +638,6 @@ function resolverMissao(m) {
   const rel = { titulo: `${cfg.icone} ${cfg.nome}`, venceu, dia: estado.dia, resumo, baixas, linhas: res.relatorio, semente: m.semente };
   registrarRelatorio(rel);
   log(`${venceu ? '🏆' : '☠️'} Missão ${cfg.nome}: ${venceu ? 'vitória' : 'derrota'}.${baixas.mortos.length ? ` Mortos: ${baixas.mortos.join(', ')}.` : ''}`, venceu ? 'log-sucesso' : 'log-perigo');
-  if (!document.hidden && !estado.exploracao?.ativa) abrirRelatorio(rel);
 }
 
 ACOES_BANDO['missao'] = el => abrirEnvioMissao(el.dataset.tipo);

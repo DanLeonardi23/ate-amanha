@@ -10,7 +10,7 @@ function criarJogo() {
   const elementoFalso = () => ({ className: '', style: {}, innerHTML: '', classList: { contains: () => false }, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, remove() {} });
   const ctx = {
     console, Date, Array, Object, Set, JSON, parseInt, String,
-    document: { getElementById: () => null, hidden: true, createElement: elementoFalso, body: { appendChild() {} }, addEventListener() {}, removeEventListener() {} },
+    document: { getElementById: () => null, hidden: true, createElement: elementoFalso, querySelectorAll: () => [], body: { appendChild() {} }, addEventListener() {}, removeEventListener() {} },
     estado: {
       dia: 1, inventario: [], baterias: 500, personagem: { nome: 'Ana' },
       deposito: { nivel: 1, itens: [{ id: 'faca', nome: 'Faca', icone: '🔪', tipo: 'ferramenta', qtd: 2 }] },
@@ -22,6 +22,7 @@ function criarJogo() {
       sucata: { id: 'sucata', nome: 'Sucata', icone: '🔩', tipo: 'material' },
       madeira: { id: 'madeira', nome: 'Madeira', icone: '🌳', tipo: 'material' },
       pano: { id: 'pano', nome: 'Trapo', icone: '🧻', tipo: 'material' },
+      kit: { id: 'kit', nome: 'Kit', icone: '🩹', tipo: 'medicinal', efeitos: { vida: 35 } },
     },
     SLOT_LABELS: { arma: 'Arma', cabeca: 'Cabeça', peito: 'Peito' },
     CHARS_GENERO: { 1: 'M', 2: 'H', 3: 'M', 4: 'M', 5: 'H', 6: 'H', 7: 'M', 8: 'H', 9: 'M', 10: 'H', 11: 'M', 12: 'H' },
@@ -199,4 +200,49 @@ test('relatórios pendentes só são mostrados (e marcados vistos) com o jogador
   assert.equal(a.relatorios.filter(r => r.naoVisto).length, 2);
   run('verificarMissoesConcluidas();');
   assert.ok(a.relatorios.every(r => !r.naoVisto));
+});
+
+test('reparo: quem ficou em missão sem missão volta pronto, ou ferido com 1 de vida se estava sem vida', () => {
+  const { run, a } = criarJogo();
+  run('contratarRecruta(0); contratarRecruta(0);');
+  const [c1, c2] = a.bando;
+  c1.estado = 'missao';
+  c2.estado = 'missao'; c2.vida = 0;
+  a.missoes.emAndamento = [];
+  run('normalizarBando(estado.assentamento, estado.personagem);');
+  assert.equal(c1.estado, 'pronto');
+  assert.equal(c2.estado, 'ferido');
+  assert.equal(c2.vida, 1);
+});
+
+test('equipar no slot errado não muda nada', () => {
+  const { ctx, run, a } = criarJogo();
+  run('contratarRecruta(0);');
+  run(`equiparCombatente("${a.bando[0].id}", "cabeca", "faca");`);
+  assert.equal(a.bando[0].equip.cabeca, null);
+  assert.equal(ctx.estado.deposito.itens[0].qtd, 2);
+});
+
+test('curar combatente em missão não consome o item', () => {
+  const { ctx, run, a } = criarJogo();
+  ctx.estado.deposito.itens.push({ id: 'kit', nome: 'Kit', icone: '🩹', tipo: 'medicinal', qtd: 1 });
+  run('contratarRecruta(0);');
+  const c = a.bando[0];
+  c.vida = 1; c.estado = 'missao';
+  run(`curarCombatenteComItem("${c.id}", "kit");`);
+  assert.equal(ctx.estado.deposito.itens.find(i => i.id === 'kit').qtd, 1);
+  assert.equal(c.vida, 1);
+});
+
+test('duas missões concluídas juntas deixam os dois relatórios vistos', () => {
+  const { ctx, run, a } = criarJogo();
+  ctx.document.hidden = false;
+  ctx.estado.exploracao = { ativa: false };
+  run('contratarRecruta(0); contratarRecruta(0);');
+  const [c1, c2] = a.bando;
+  run(`iniciarMissao("acampamento", ["${c1.id}"]); iniciarMissao("posto", ["${c2.id}"]);`);
+  assert.equal(a.missoes.emAndamento.length, 2);
+  run('estado.assentamento.missoes.emAndamento.forEach(m => { m.fim = 0; }); verificarMissoesConcluidas();');
+  assert.equal(a.relatorios.length, 2);
+  assert.ok(a.relatorios.every(r => r.naoVisto === false));
 });
