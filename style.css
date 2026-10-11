@@ -4332,3 +4332,29 @@ html, body {
   padding: 8px 10px;
   border-radius: var(--radius);
 }
+
+/* ══════════════════════════════════════════════════════
+   CONTRASTE DOS TEXTOS SOBRE OS PAINÉIS
+   Os tons "apagados" (--text-dim 1,6:1 e --text-sec 3,4:1) ficavam ilegíveis sobre
+   o fundo escuro. Dentro do jogo eles clareiam, e os títulos de seção ganham o
+   verde de destaque. Contraste medido sobre o painel de dia e de noite.
+══════════════════════════════════════════════════════ */
+#tela-jogo {
+  --text-sec: #a8b8a2;   /* texto secundário: ~8,8:1 */
+  --text-dim: #8a9c85;   /* dicas, rótulos, legendas: ~6,3:1 */
+}
+
+/* Títulos de seção e rótulos de painel em verde de destaque (~9,6:1) */
+#tela-jogo .sec-titulo,
+#tela-jogo .rep-titulo,
+#tela-jogo .carteira-titulo,
+#tela-jogo .avatar-display-label-txt,
+#tela-jogo .log-label-txt,
+#tela-jogo .trab-secao-titulo,
+#tela-jogo .base-mapa-label,
+#tela-jogo .mercado-secao-titulo {
+  color: #5fd35f;
+}
+
+/* Traço do personagem (era verde-escuro) */
+#tela-jogo .pc-traco { color: #7fb36f; }
