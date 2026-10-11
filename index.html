@@ -182,6 +182,7 @@
     <header class="game-header">
       <div class="header-acoes">
         <a class="btn-aprenda" href="manual.html" target="_blank">📖 Aprenda a jogar</a>
+        <button class="btn-reportar" id="btn-reportar" title="Enviar um problema ou sugestão para o desenvolvedor">🐞 Reportar</button>
         <span id="hdr-usuario" class="hdr-usuario oculto"></span>
         <button class="btn-ico" id="btn-salvar" title="Salvar">💾</button>
         <button class="btn-ico" id="btn-reset" title="Reiniciar">🔄</button>
@@ -963,6 +964,25 @@
 
     <!-- Balão de descrição para elementos com data-tooltip (ex.: itens equipados) -->
     <div id="tooltip-flutuante" class="tooltip-flutuante oculto" role="tooltip"></div>
+
+    <!-- MODAL DE FEEDBACK (testadores) -->
+    <div id="modal-feedback" class="modal oculto" role="dialog" aria-labelledby="fb-titulo">
+      <div class="modal-conteudo fb-conteudo">
+        <h3 id="fb-titulo">🐞 Reportar</h3>
+        <p class="fb-ajuda">Encontrou um problema ou tem uma ideia? Conte o que aconteceu e o que você esperava. O dia, seu status e as últimas mensagens do registro vão junto automaticamente.</p>
+        <div class="fb-tipos" role="radiogroup" aria-label="Tipo">
+          <label><input type="radio" name="fb-tipo" value="bug" checked> 🐞 Problema</label>
+          <label><input type="radio" name="fb-tipo" value="sugestao"> 💡 Sugestão</label>
+          <label><input type="radio" name="fb-tipo" value="outro"> 💬 Outro</label>
+        </div>
+        <textarea id="fb-mensagem" class="fb-mensagem" maxlength="2000" rows="6" placeholder="Ex.: cliquei em Coletar no Assentamento e os itens não apareceram na mochila."></textarea>
+        <span class="fb-contador" id="fb-contador">0 / 2000</span>
+        <div class="modal-acoes">
+          <button id="fb-enviar" class="btn-primario">Enviar</button>
+          <button id="fb-cancelar" class="btn-secundario">Cancelar</button>
+        </div>
+      </div>
+    </div>
 
     <!-- TOAST -->
     <div id="toast" class="toast oculto"></div>

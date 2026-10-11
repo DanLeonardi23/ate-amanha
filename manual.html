@@ -350,6 +350,7 @@ body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(
       <div class="game">
         <div class="hdr">
           <span class="mono dim" style="font-size:12px;margin-right:auto" data-h="usuario" tabindex="0">sobrevivente@zona.br</span>
+          <span class="btn sec sm" data-h="reportar" tabindex="0" style="color:var(--amber);border-color:#5e4a1c">🐞 Reportar</span>
           <span class="ico" data-h="salvar" tabindex="0">💾</span>
           <span class="ico" data-h="reiniciar" tabindex="0">🔄</span>
           <span class="ico" data-h="sair" tabindex="0">🚪</span>
@@ -770,7 +771,8 @@ const H = {
 
   // Tela principal: topo
   usuario: ['Conta conectada', 'O e-mail da conta em uso. Não aparece quando você joga sem conta.'],
-  salvar: ['Salvar', 'Salva na hora. O jogo também salva sozinho a cada <b>30 segundos</b>.'],
+  reportar: ['Reportar', 'Abre uma janela para enviar um <b>problema</b>, uma <b>sugestão</b> ou outro comentário direto para o desenvolvedor. O dia, seu status e as últimas mensagens do registro vão junto, para ajudar a entender o que aconteceu.'],
+  salvar: ['Salvar', 'Salva na hora. O jogo também salva sozinho a cada <b>30 segundos</b> e sempre que você troca de aba ou fecha a página.'],
   reiniciar: ['Reiniciar', '<span class="warn">Apaga o progresso e começa do zero.</span> O jogo pede confirmação antes.'],
   sair: ['Sair da conta', 'Desconecta e volta para a tela de login. Só aparece quando você está logado.'],
 

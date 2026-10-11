@@ -5192,8 +5192,80 @@ function inicializarTooltipFlutuante() {
   document.addEventListener('scroll', () => { if (alvo) posicionar(); }, true);
 }
 
+// ── Feedback dos testadores ──
+// Grava na tabela `feedback` do Supabase (só inserção; leitura pelo painel do Supabase).
+// Junto vai um retrato do momento: dia, status, aba, tela e as últimas linhas do registro.
+const VERSAO_JOGO = '2026-10-11';
+
+async function sbEnviarFeedback(tipo, mensagem, contexto) {
+  const sb = getSB();
+  if (!sb) return { ok: false, erro: 'Servidor indisponível.' };
+  const { error } = await sb.from('feedback').insert({
+    tipo,
+    mensagem,
+    email: _sbUser?.email || null,
+    contexto,
+  });
+  if (error) return { ok: false, erro: traduzirErroAuth(error.message) };
+  return { ok: true };
+}
+
+function contextoFeedback() {
+  const s = estado.stats || {};
+  const ultimasLinhas = [...document.querySelectorAll('#log-eventos .log-item')]
+    .slice(-15).map(p => p.textContent.slice(0, 200));
+  return {
+    versao:     VERSAO_JOGO,
+    dia:        estado.dia,
+    fase:       getFase().fase,
+    personagem: estado.personagem ? { nome: estado.personagem.nome, traco: estado.personagem.traco } : null,
+    stats:      { vida: Math.round(s.vida), saciedade: Math.round(100 - s.fome), hidratacao: Math.round(100 - s.sede), estresse: Math.round(s.estresse), vicio: Math.round(s.vicio) },
+    baterias:   estado.baterias,
+    reputacao:  estado.reputacao,
+    aba:        document.querySelector('.aba-btn.ativa')?.dataset.aba || null,
+    online:     !!_sbUser,
+    navegador:  navigator.userAgent.slice(0, 200),
+    tela:       `${window.innerWidth}x${window.innerHeight}`,
+    log:        ultimasLinhas,
+  };
+}
+
+function inicializarFeedback() {
+  const modal  = document.getElementById('modal-feedback');
+  const txt    = document.getElementById('fb-mensagem');
+  const cont   = document.getElementById('fb-contador');
+  const enviar = document.getElementById('fb-enviar');
+  if (!modal) return;
+
+  const fechar = () => modal.classList.add('oculto');
+  document.getElementById('btn-reportar')?.addEventListener('click', () => {
+    modal.classList.remove('oculto');
+    txt.focus();
+  });
+  document.getElementById('fb-cancelar').addEventListener('click', fechar);
+  modal.addEventListener('click', e => { if (e.target === modal) fechar(); });
+  txt.addEventListener('input', () => { cont.textContent = `${txt.value.length} / 2000`; });
+
+  enviar.addEventListener('click', async () => {
+    const mensagem = txt.value.trim();
+    if (mensagem.length < 3) { mostrarToast('Escreva o que aconteceu antes de enviar.'); return; }
+    const tipo = modal.querySelector('input[name="fb-tipo"]:checked')?.value || 'outro';
+    enviar.disabled = true;
+    enviar.textContent = 'Enviando...';
+    const res = await sbEnviarFeedback(tipo, mensagem, contextoFeedback());
+    enviar.disabled = false;
+    enviar.textContent = 'Enviar';
+    if (!res.ok) { mostrarToast(`❌ Não foi possível enviar. ${res.erro}`, 4000); return; }
+    txt.value = '';
+    cont.textContent = '0 / 2000';
+    fechar();
+    mostrarToast('✅ Obrigado! Sua mensagem foi enviada.', 3000);
+  });
+}
+
 function inicializarUI() {
   inicializarTooltipFlutuante();
+  inicializarFeedback();
   // ── Abas ──
   // ── Sub-abas (Base e futuras) ──
   document.addEventListener('click', e => {

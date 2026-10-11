@@ -1,0 +1,31 @@
+# Mantém o projeto do Supabase (plano gratuito) ativo.
+# Projetos gratuitos são pausados após ~7 dias sem uso; esta tarefa faz uma consulta
+# leve a cada 3 dias. A URL e a chave pública (anon) são lidas do config.js do repositório,
+# então não precisa configurar segredos. Também dá para rodar à mão na aba Actions.
+name: Manter Supabase ativo
+
+on:
+  schedule:
+    - cron: '0 12 */3 * *'   # a cada 3 dias, 12:00 UTC (09:00 em Brasília)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Consultar o banco
+        run: |
+          URL=$(grep -oE "SUPABASE_URL *= *'[^']+'" config.js | cut -d"'" -f2)
+          KEY=$(grep -oE "SUPABASE_ANON_KEY *= *'[^']+'" config.js | cut -d"'" -f2)
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "Não encontrei SUPABASE_URL/SUPABASE_ANON_KEY no config.js"; exit 1
+          fi
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$URL/rest/v1/bazar?select=id&limit=1" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          echo "Resposta do Supabase: HTTP $STATUS"
+          # 200 = ativo. Outro código (ex.: projeto já pausado) faz a tarefa falhar,
+          # e o GitHub avisa por e-mail.
+          [ "$STATUS" = "200" ]
