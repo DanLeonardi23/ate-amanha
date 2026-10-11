@@ -4273,3 +4273,62 @@ html, body {
   position: relative;
   z-index: 1;
 }
+
+/* ══════════════════════════════════════════════════════
+   PAINÉIS SOBRE O CENÁRIO
+   Fundo escuro com 80% de opacidade no topo, nas barras de abas e nos blocos com
+   texto, para separar a leitura do bg. O espaço entre os blocos continua mostrando
+   o cenário. À noite o tom acompanha o azul petróleo.
+══════════════════════════════════════════════════════ */
+#tela-jogo { --painel: rgba(8, 13, 8, .8); }
+#tela-jogo.fase-noite { --painel: rgba(6, 12, 20, .8); }
+
+/* Topo e navegação */
+#tela-jogo .game-header,
+#tela-jogo .abas-nav { background: var(--painel); }
+#tela-jogo .sub-abas-nav {
+  background: var(--painel);
+  padding: 4px;
+  border-radius: var(--radius);
+}
+
+/* Blocos de texto (o bloco do log já tem o próprio terminal e a barra de abas) */
+#tela-jogo .sec-bloco:not(.sec-log) {
+  background: var(--painel);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+}
+#tela-jogo .rep-card,
+#tela-jogo .carteira-card {
+  background: var(--painel);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+#tela-jogo .avatar-dia-relogio,
+#tela-jogo .equip-resumo-bloco { background: var(--painel); }
+
+/* Títulos e linhas de texto soltas dentro das abas */
+#tela-jogo .setor-titulo,
+#tela-jogo .mercado-header,
+#tela-jogo .mercado-renovacao,
+#tela-jogo .mercado-secao-titulo {
+  background: var(--painel);
+  padding: 8px 10px;
+  border-radius: var(--radius);
+}
+
+#tela-jogo .rep-card,
+#tela-jogo .carteira-card,
+#tela-jogo .setor-titulo,
+#tela-jogo .mercado-header,
+#tela-jogo .sub-abas-nav {
+  transition: background-color 10s ease;
+}
+
+/* Avisos soltos nas abas ("Loja fechada", "Nada para vender") */
+#tela-jogo .aba-conteudo > .inventario-vazio {
+  background: var(--painel);
+  padding: 8px 10px;
+  border-radius: var(--radius);
+}
