@@ -50,6 +50,29 @@ function ganharXpAssentamento(qtd) {
   }
 }
 
+// Demolir uma moradia tira o XP que ela deu. Se o nível cair e o Bando passar do novo limite,
+// ninguém é removido: os combatentes ficam e só novas contratações são barradas (ver contratarRecruta).
+function perderXpAssentamento(qtd) {
+  const a = estado.assentamento;
+  const antes = a.nivel;
+  a.xp = Math.max(0, a.xp - qtd);
+  a.nivel = nivelPorXp(a.xp);
+  if (a.nivel < antes) log(`🏘 ${a.nome} caiu para o nível ${a.nivel}.`, 'log-alerta');
+}
+
+// Sem liderança o Bando se desfaz: os combatentes vão embora levando o equipamento (nada volta).
+// Chamada por verificarAssentamento (perda da liderança e carga de save sem Líder).
+function dissolverBando() {
+  const a = estado.assentamento;
+  const n = a?.bando?.length || 0;
+  if (!n) return;
+  a.bando = [];
+  if (a.missoes) a.missoes.emAndamento = []; // missões em curso são canceladas; feitasHoje fica como está
+  log(`⚔️ Sem liderança, o Bando se dissolveu. ${n} combatente(s) partiram levando o equipamento.`, 'log-perigo');
+  salvarJogo();
+  atualizarBadgeAssentamento();
+}
+
 function combatentePorId(id) {
   return estado.assentamento.bando.find(c => c.id === id);
 }

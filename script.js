@@ -6433,6 +6433,8 @@ function verificarAssentamento() {
       document.querySelector('.aba-btn[data-aba="locais"]')?.click();
   }
   estado.ehLider = lider;
+  // Sem liderança não há Bando (vale também ao carregar um save em que o jogador já não é Líder)
+  if (!lider && estado.assentamento?.bando?.length) dissolverBando();
   btn.classList.toggle('aba-bloqueada', !lider);
 }
 
@@ -6840,6 +6842,7 @@ function renderizarAssentamento() {
         () => {
           parcelas[idx] = null;
           log(`🔨 ${est?.nome || 'Construção'} demolida. Parcela ${idx + 1} liberada.`, 'log-sistema');
+          perderXpAssentamento(XP_EVENTO.moradia);
           mostrarToast(`🔨 Construção demolida.`);
           salvarJogo();
           renderizarAssentamento();

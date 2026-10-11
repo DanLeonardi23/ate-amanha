@@ -234,6 +234,39 @@ test('curar combatente em missão não consome o item', () => {
   assert.equal(c.vida, 1);
 });
 
+test('dissolverBando esvazia o Bando, cancela missões e não devolve equipamento', () => {
+  const { ctx, run, a } = criarJogo();
+  run('contratarRecruta(0); contratarRecruta(0);');
+  a.bando[0].equip.arma = 'faca';
+  run('iniciarMissao("acampamento", [estado.assentamento.bando[0].id]);');
+  assert.equal(a.missoes.emAndamento.length, 1);
+  run('dissolverBando();');
+  assert.equal(a.bando.length, 0);
+  assert.equal(a.missoes.emAndamento.length, 0);
+  assert.ok(a.missoes.feitasHoje.includes('acampamento'));
+  assert.equal(ctx.adicionados.length, 0);
+  assert.ok(ctx.logs.some(l => l.includes('o Bando se dissolveu. 2 combatente(s)')));
+});
+
+test('dissolverBando com Bando vazio não faz nada', () => {
+  const { ctx, run } = criarJogo();
+  run('dissolverBando();');
+  assert.ok(!ctx.logs.some(l => l.includes('dissolveu')));
+});
+
+test('perderXpAssentamento baixa XP e nível, não passa de zero e avisa a queda', () => {
+  const { ctx, run, a } = criarJogo();
+  a.xp = 110; a.nivel = run('nivelPorXp(110)');
+  assert.equal(a.nivel, 2);
+  run('perderXpAssentamento(30);');
+  assert.equal(a.xp, 80);
+  assert.equal(a.nivel, 1);
+  assert.ok(ctx.logs.some(l => l.includes('caiu para o nível 1')));
+  run('perderXpAssentamento(500);');
+  assert.equal(a.xp, 0);
+  assert.equal(a.nivel, 1);
+});
+
 test('duas missões concluídas juntas deixam os dois relatórios vistos', () => {
   const { ctx, run, a } = criarJogo();
   ctx.document.hidden = false;
