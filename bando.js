@@ -33,6 +33,8 @@ function normalizarBando(assent, personagem) {
   // Reparo: quem ficou "em missão" sem missão nem ataque correspondente (erro ao resolver) volta ao Bando
   const emCampo = new Set([...assent.missoes.emAndamento, ...assent.ataquesEnviados].flatMap(m => m.membros || []));
   for (const c of assent.bando) {
+    if (!c.nivel) c.nivel = 1;                     // evolução dos combatentes
+    if (typeof c.xp !== 'number') c.xp = 0;
     if (c.estado === 'missao' && !emCampo.has(c.id)) {
       const est = estadoAposCombate(c.vida, c.vidaMax);
       if (est === 'morto') { c.vida = 1; c.estado = 'ferido'; } else c.estado = est;
@@ -230,6 +232,17 @@ function htmlCombatente(c) {
     const it = c.equip[slot] && ITENS[c.equip[slot]];
     return `<button class="comb-slot" data-acao="equipar" data-id="${esc(c.id)}" data-slot="${slot}" ${emMissao ? 'disabled' : ''}>${it ? `${it.icone} ${esc(it.nome)}` : `+ ${SLOT_LABELS[slot]}`}</button>`;
   }).join('');
+  const prox = proximoTreino(c);
+  const base = NIVEIS_COMBATENTE[(c.nivel || 1) - 1].xp;
+  const pctXp = prox ? Math.min(100, Math.round((c.xp - base) / (prox.xp - base) * 100)) : 100;
+  const treino = podeTreinar(c, estado.baterias || 0);
+  const xpHtml = prox
+    ? `<div class="comb-xp" title="${c.xp} / ${prox.xp} XP"><div class="comb-xp-fill" style="width:${Math.max(0, pctXp)}%"></div></div>
+       <span class="comb-xp-txt">⭐ ${c.xp} / ${prox.xp} XP</span>`
+    : '<span class="comb-xp-txt">⭐ Nível máximo</span>';
+  const botaoTreino = prox && c.xp >= prox.xp
+    ? `<button class="btn-primario btn-sm" data-acao="treinar" data-id="${esc(c.id)}" ${treino.ok ? '' : `disabled title="${esc(treino.motivo)}"`}>⭐ Treinar → Nv ${prox.nivel} (${prox.custo} 🔋)</button>`
+    : '';
   let acoes = '';
   if (c.soldoPendente) {
     acoes = `<button class="btn-primario btn-sm" data-acao="pagar-soldo" data-id="${esc(c.id)}" ${temItem('pilha', c.soldoPendente) ? '' : 'disabled'}>🔋 Pagar soldo (${c.soldoPendente})</button>
@@ -242,14 +255,16 @@ function htmlCombatente(c) {
       <div class="comb-topo">
         <img src="${charPath(c.charId)}" class="comb-avatar" alt="">
         <div class="comb-info">
-          <span class="comb-nome">${esc(c.nome)} <span class="comb-cat comb-cat-${c.categoria}">${cat.nome}</span></span>
+          <span class="comb-nome">${esc(c.nome)} <span class="comb-cat comb-cat-${c.categoria}">${cat.nome}</span> <span class="comb-nivel">Nv ${c.nivel || 1}</span></span>
           <span class="comb-estado">${icone} ${texto} · ⚔️ ${s.atq} 🛡️ ${s.def}</span>
         </div>
       </div>
       <div class="comb-vida" title="${c.vida} / ${c.vidaMax} de vida"><div class="comb-vida-fill" style="width:${pctVida}%"></div></div>
       <span class="comb-vida-txt">❤️ ${c.vida} / ${c.vidaMax}</span>
+      ${xpHtml}
       <div class="comb-slots">${slots}</div>
       <div class="comb-acoes">
+        ${botaoTreino}
         ${acoes}
         <button class="btn-secundario btn-sm" data-acao="curar" data-id="${esc(c.id)}" ${c.vida >= c.vidaMax || emMissao ? 'disabled' : ''}>🩹 Curar</button>
         <button class="btn-secundario btn-sm comb-dispensar" data-acao="dispensar" data-id="${esc(c.id)}" ${emMissao ? 'disabled' : ''}>Dispensar</button>
@@ -304,6 +319,7 @@ function contratarRecruta(idx) {
     atqBase: rec.atqBase, defBase: rec.defBase, vida: rec.vida, vidaMax: rec.vidaMax,
     equip: { arma: null, cabeca: null, peito: null },
     estado: 'pronto', diaSoldo: estado.dia + DIAS_SOLDO, soldoPendente: null, divida: null,
+    nivel: 1, xp: 0,
   });
   a.recrutas.lista.splice(idx, 1);
   log(`⚔️ ${rec.nome} (${CATEGORIAS[rec.categoria].nome}) entrou para o Bando por ${rec.preco} 🔋.`, 'log-sucesso');
@@ -355,6 +371,23 @@ function reativarCombatente(id) {
   atualizarTelaAssentamento();
 }
 
+// Treino: com o XP completo, paga Baterias e sobe um nível (+5 de vida máxima e de vida)
+function treinarCombatente(id) {
+  const c = combatentePorId(id);
+  if (!c) return;
+  const t = podeTreinar(c, estado.baterias || 0);
+  if (!t.ok) { mostrarToast(t.motivo); return; }
+  const prox = proximoTreino(c);
+  removerItem('pilha', prox.custo);
+  c.nivel = prox.nivel;
+  c.vidaMax += BONUS_NIVEL.vida;
+  c.vida = Math.min(c.vidaMax, c.vida + BONUS_NIVEL.vida);
+  log(`⭐ ${c.nome} treinou e chegou ao nível ${c.nivel}.`, 'log-sucesso');
+  mostrarToast(`⭐ ${c.nome} agora é nível ${c.nivel}!`);
+  atualizarTelaAssentamento();
+}
+
+ACOES_BANDO['treinar']       = el => treinarCombatente(el.dataset.id);
 ACOES_BANDO['contratar']     = el => contratarRecruta(parseInt(el.dataset.idx));
 ACOES_BANDO['dispensar']     = el => dispensarCombatente(el.dataset.id);
 ACOES_BANDO['pagar-soldo']   = el => pagarSoldo(el.dataset.id);
@@ -446,7 +479,7 @@ function rotinaDiariaBando() {
   for (const c of a.bando) {
     if (c.estado === 'parado' || c.estado === 'missao' || c.soldoPendente) continue;
     if (estado.dia >= c.diaSoldo) {
-      c.soldoPendente = CATEGORIAS[c.categoria].soldo;
+      c.soldoPendente = soldoDe(c);
       log(`🔋 ${c.nome} cobra o soldo: ${c.soldoPendente} Baterias.`, 'log-alerta');
     }
   }
@@ -473,10 +506,12 @@ function rotinaDiariaBando() {
 
 const RELATORIOS_MAX = 5;
 
-// Aplica as vidas finais do lado do Bando; mortos saem do Bando com o equipamento
-function aplicarResultadoCombate(res, lado) {
+// Aplica as vidas finais do lado do Bando; mortos saem do Bando com o equipamento.
+// Com 'venceu' informado, quem sobreviveu ganha XP de combate (vitória/derrota).
+function aplicarResultadoCombate(res, lado, venceu) {
   const a = estado.assentamento;
-  const mortos = [], feridos = [], idsMortos = [];
+  const mortos = [], feridos = [], idsMortos = [], ganharam = [];
+  const xpGanho = venceu === undefined ? 0 : (venceu ? XP_COMBATE.vitoria : XP_COMBATE.derrota);
   for (const l of res.lutadores) {
     if (l.lado !== lado) continue;
     const c = combatentePorId(l.id);
@@ -485,11 +520,18 @@ function aplicarResultadoCombate(res, lado) {
     const est = estadoAposCombate(c.vida, c.vidaMax);
     if (est === 'morto') { mortos.push(c.nome); idsMortos.push(c.id); continue; }
     if (est === 'ferido') feridos.push(c.nome);
+    if (xpGanho) {
+      const prox = proximoTreino(c);
+      const podiaAntes = prox && c.xp >= prox.xp;
+      c.xp = (c.xp || 0) + xpGanho;
+      ganharam.push(c.nome);
+      if (prox && !podiaAntes && c.xp >= prox.xp) log(`⭐ ${c.nome} pode treinar para o nível ${prox.nivel}.`, 'log-sucesso');
+    }
     // Parados nunca lutam (não entram em combatentesProntos); a guarda fica por segurança
     if (c.estado !== 'parado') c.estado = est;
   }
   a.bando = a.bando.filter(c => !idsMortos.includes(c.id));
-  return { mortos, feridos };
+  return { mortos, feridos, xp: xpGanho, ganharam };
 }
 
 function guardarLootNoDeposito(base, qtd) {
@@ -532,6 +574,7 @@ function abrirRelatorio(rel) {
   const baixas = [
     rel.baixas.mortos.length ? `💀 Mortos: ${rel.baixas.mortos.map(esc).join(', ')}` : '',
     rel.baixas.feridos.length ? `🩸 Feridos: ${rel.baixas.feridos.map(esc).join(', ')}` : '',
+    rel.baixas.ganharam?.length ? `⭐ +${rel.baixas.xp} XP: ${rel.baixas.ganharam.map(esc).join(', ')}` : '',
   ].filter(Boolean).join('<br>');
   abrirJanela(`<h3>${esc(rel.titulo)}</h3>
     <p class="rel-resultado ${rel.venceu ? 'rel-vitoria' : 'rel-derrota'}">${rel.venceu ? '🏆 Vitória' : '☠️ Derrota'} · Dia ${rel.dia}</p>
@@ -651,8 +694,8 @@ function resolverMissao(m) {
   const cfg = MISSOES[m.tipo];
   const membros = estado.assentamento.bando.filter(c => m.membros.includes(c.id));
   const res = simularCombate(membros.map(c => statsLutador(c)), gerarInimigos(m.tipo, m.nivel), m.semente);
-  const baixas = aplicarResultadoCombate(res, 'A');
   const venceu = res.vencedor === 'A';
+  const baixas = aplicarResultadoCombate(res, 'A', venceu);
   let resumo;
   if (venceu) {
     const loot = sortearLoot(m.tipo, criarRng(m.semente + 1));
@@ -683,8 +726,8 @@ function defenderInvasao() {
   const bonus = bonusDefesaAssentamento();
   const semente = (Date.now() % 2147483647) || 1;
   const res = simularCombate(gerarInvasores(a.nivel), defensores.map(c => statsLutador(c, bonus)), semente);
-  const baixas = aplicarResultadoCombate(res, 'B');
   const venceu = res.vencedor === 'B';
+  const baixas = aplicarResultadoCombate(res, 'B', venceu);
   ganharXpAssentamento(venceu ? XP_EVENTO.invasaoVitoria : XP_EVENTO.derrota);
   const resumo = venceu
     ? `O Bando expulsou os invasores. Nada foi roubado. +${XP_EVENTO.invasaoVitoria} XP`
