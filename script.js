@@ -296,7 +296,7 @@ const ITENS = {
   // Entretenimento
   revista_hq: {
     id: 'revista_hq',
-    nome: 'Revisita em Quadrinhos',
+    nome: 'Revista em Quadrinhos',
     icone: '📔',
     tipo: 'consumivel',
     efeitos: { estresse: -25 },
