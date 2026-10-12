@@ -159,6 +159,20 @@ test('defensor vencedor com Bando: aplica vidas do lado B e ganha XP de defesa',
   assert.equal(ctx.estado.baterias, 100);
 });
 
+test('ataque online: combatentes do jogador que sobrevivem ganham XP de combate', () => {
+  const { ctx, run, a } = criarJogo();
+  a.bando.forEach(c => { c.estado = 'missao'; c.xp = 0; });
+  a.ataquesEnviados.push({ id: 'atq1', membros: ['c1', 'c2'] });
+  ctx.ataque = ataqueResolvido('A');
+  run('aplicarResultadoAtaque(ataque, "atacante")');
+  assert.deepEqual(simples(a.bando.map(c => [c.id, c.xp])), [['c1', 20]]); // c2 morreu
+  assert.deepEqual(simples(a.relatorios[0].baixas.ganharam), ['Rafa']);
+  const d = criarJogo();
+  d.ctx.ataque = ataqueResolvido('A', { lutadores: [{ id: 'z1', lado: 'A', vida: 5 }, { id: 'c1', lado: 'B', vida: 20 }, { id: 'c2', lado: 'B', vida: 40 }] });
+  d.run('aplicarResultadoAtaque(ataque, "defensor")');
+  assert.deepEqual(simples(d.a.bando.map(c => c.xp)), [8, 8]); // defensor derrotado
+});
+
 test('normalizarBando não "repara" quem está em ataque em andamento', () => {
   const { run, a } = criarJogo();
   a.bando[0].estado = 'missao';

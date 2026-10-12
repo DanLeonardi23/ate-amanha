@@ -169,7 +169,7 @@ function aplicarResultadoAtaque(at, papel) {
   const partes = [];
 
   if (souAtacante) {
-    baixas = aplicarResultadoCombate(res, 'A');
+    baixas = aplicarResultadoCombate(res, 'A', venceu);
     if (venceu) {
       entregarLoot(res.saque);
       partes.push(`Saque: ${descreverLoot(res.saque)}`);
@@ -178,7 +178,7 @@ function aplicarResultadoAtaque(at, papel) {
     ganharXpAssentamento(venceu ? PVP.xp.vitoria : PVP.xp.derrota);
     partes.push(`+${venceu ? PVP.xp.vitoria : PVP.xp.derrota} XP · ${venceu ? `+${PVP.pontos.vitoria}` : PVP.pontos.derrota} pontos`);
   } else {
-    if (!res.milicia) baixas = aplicarResultadoCombate(res, 'B');
+    if (!res.milicia) baixas = aplicarResultadoCombate(res, 'B', venceu);
     else partes.push('Sem Bando em casa: os moradores defenderam como milícia.');
     if (!venceu) {
       const perdas = perderSaque(res.saque);
