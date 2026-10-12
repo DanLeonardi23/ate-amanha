@@ -649,8 +649,9 @@ body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(
       </div>
       <div class="two">
         <div class="card stack" data-h="combatente" tabindex="0">
-          <div class="row"><span style="font-size:26px">🧔</span><div><b style="font-weight:600">Bruno</b> <span class="chip">Veterano</span><div class="dim" style="font-size:13.5px">🟢 Pronto · ⚔️ 11 🛡️ 9</div></div></div>
+          <div class="row"><span style="font-size:26px">🧔</span><div><b style="font-weight:600">Bruno</b> <span class="chip">Veterano</span> <span class="chip" style="color:var(--amber)">Nv 2</span><div class="dim" style="font-size:13.5px">🟢 Pronto · ⚔️ 11 🛡️ 9</div></div></div>
           <div class="bar"><i style="width:80%;background:var(--red)"></i></div>
+          <div class="stack" data-h="comb-treinar" tabindex="0"><div class="bar" style="height:4px"><i style="width:100%;background:var(--amber)"></i></div><span class="mono dim" style="font-size:12px">⭐ 128 / 120 XP</span><span class="btn sm" style="justify-self:start">⭐ Treinar → Nv 3 (30 🔋)</span></div>
           <div class="row" data-h="comb-equip" tabindex="0"><span class="chip">🗡️ Lança</span><span class="chip">⛑️ Capacete</span><span class="chip">+ Peito</span></div>
           <div class="row"><span class="btn sec sm" data-h="comb-curar" tabindex="0">🩹 Curar</span><span class="btn sec sm" data-h="comb-dispensar" tabindex="0">Dispensar</span></div>
         </div>
@@ -933,12 +934,13 @@ const H = {
 
   // Bando
   identidade: ['Identidade do assentamento', 'Nome (troque no ✏️), <b>nível</b> e barra de XP. O assentamento ganha XP construindo moradias (+30), acolhendo moradores (+20), vencendo missões (+40 a +120) e defendendo invasões (+50). Demolir uma moradia tira os 30 de XP que ela deu. Cada nível aumenta o limite do Bando (2 no nível 1, até 8). ⚔️ e 🛡️ somam os combatentes prontos; a Defesa inclui armadilhas, moradores Segurança e a Torre de Vigilância.'],
-  combatente: ['Combatente', 'Mostra categoria (Novato, Veterano ou Elite), estado, Ataque, Defesa e vida. <b>Ferido</b> (abaixo de 30% da vida) não luta até se recuperar. <span class="warn">Vida zero é morte permanente, e o equipamento é perdido.</span>'],
+  combatente: ['Combatente', 'Mostra categoria (Novato, Veterano ou Elite), <b>nível</b> (Nv 1 a 5), estado, Ataque, Defesa e vida. <b>Ferido</b> (abaixo de 30% da vida) não luta até se recuperar. <span class="warn">Vida zero é morte permanente, e o equipamento é perdido.</span>'],
+  'comb-treinar': ['Evolução e treino', 'Quem <b>sobrevive</b> a um combate ganha ⭐ XP: <b>+20</b> na vitória, <b>+8</b> na derrota (missões, invasões e ataques online). Com o XP do próximo nível, aparece o botão <b>Treinar</b>, que custa Baterias: Nv 2 (50 XP, 15 🔋), Nv 3 (120 XP, 30 🔋), Nv 4 (220 XP, 50 🔋), Nv 5 (350 XP, 80 🔋). Cada nível dá <b>+1 ⚔️, +1 🛡️ e +5 ❤️ máx.</b> Não dá para treinar quem está em missão ou parado. <span class="warn">O soldo sobe 2 Baterias por nível.</span>'],
   'comb-equip': ['Equipamento do combatente', 'Três encaixes: <b>arma</b> (dá Ataque), <b>cabeça</b> e <b>peito</b> (dão Defesa). Usa os mesmos itens que você encontra, tirados da mochila ou do depósito. Ex.: Faca +3 ⚔️, Machado +8 ⚔️, Capacete Tático +5 🛡️, Colete Balístico +7 🛡️.'],
   'comb-curar': ['Curar', 'Use um item de cura da mochila no combatente. Além disso, todo dia ele recupera vida sozinho: +5, ou +15 com um Médico no assentamento, ou +25 com o Médico no Posto Médico.'],
   'comb-dispensar': ['Dispensar', 'Tira o combatente do Bando. O equipamento dele volta para a mochila.'],
   recruta: ['Mural de recrutas', '3 candidatos, renovados a cada 3 dias. Pague em Baterias para contratar. Veteranos e Elites custam mais e são mais fortes. O Bando não pode passar do limite do nível do assentamento.'],
-  soldo: ['Soldo', 'A cada 5 dias cada combatente cobra soldo (Novato 5, Veterano 10, Elite 15 Baterias). <span class="warn">Enquanto não paga, ele não luta.</span> Recusar deixa o combatente parado até você pagar e reativar.'],
+  soldo: ['Soldo', 'A cada 5 dias cada combatente cobra soldo (Novato 5, Veterano 10, Elite 15 Baterias, mais 2 por nível acima do 1). <span class="warn">Enquanto não paga, ele não luta.</span> Recusar deixa o combatente parado até você pagar e reativar.'],
   missao: ['Missão', 'Escolha quais combatentes prontos vão. Eles ficam fora pelo tempo indicado (o tempo corre mesmo com o jogo fechado). Na volta, o combate é resolvido e aparece o relatório. Vitória traz Baterias, itens (para o Depósito) e XP. Cada alvo pode ser atacado uma vez por dia; os inimigos ficam mais fortes conforme o nível do assentamento.'],
   relatorios: ['Últimos combates', 'Os 5 últimos combates (missões e invasões). Clique para ver rodada a rodada, quem se feriu, quem morreu e o que foi saqueado. Invasões acontecem quando você está fora explorando ao anoitecer; com o Bando pronto em casa, ele luta antes de qualquer item ser roubado.'],
 

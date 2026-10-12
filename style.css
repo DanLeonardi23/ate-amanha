@@ -4444,6 +4444,10 @@ html, body {
 .comb-vida { height: 6px; background: var(--bg-0); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
 .comb-vida-fill { height: 100%; background: var(--vida-cor); }
 .comb-vida-txt { font-family: var(--font-mono); font-size: .68rem; color: var(--text-sec); }
+.comb-nivel { font-family: var(--font-mono); font-size: .62rem; font-weight: 400; color: #e2b44c; }
+.comb-xp { height: 4px; background: var(--bg-0); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.comb-xp-fill { height: 100%; background: #e2b44c; transition: width .4s ease; }
+.comb-xp-txt { font-family: var(--font-mono); font-size: .64rem; color: var(--text-sec); }
 .comb-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .comb-slot {
   font-size: .68rem; padding: 4px 3px; cursor: pointer;
