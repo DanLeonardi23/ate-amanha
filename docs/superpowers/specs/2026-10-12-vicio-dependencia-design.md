@@ -1,7 +1,7 @@
 # Vício como dependência (redesenho)
 
 Data: 2026-10-12
-Status: aprovado em conversa, aguardando revisão do documento
+Status: aprovado; plano em docs/superpowers/plans/2026-10-12-vicio-dependencia.md
 
 ## Objetivo
 
@@ -28,7 +28,7 @@ A barra continua sendo `estado.stats.vicio` (0–100), exibida como **Vício** (
 | Whisky 18 Anos (`whisky_fino`) | +25 |
 | Analgésico (`remedio`) | +4 |
 
-- O valor `vicio` sai dos `efeitos` desses itens em `ITENS` e passa a vir da tabela acima (fonte única). O Analgésico ganha a dependência; os demais efeitos dos três itens ficam iguais.
+- A dose continua em `efeitos.vicio` de cada item em `ITENS` (fonte única, e as dicas dos itens seguem mostrando "+N vício"): a Bebida passa de 10 para 12 e o Analgésico ganha 4. Os demais efeitos dos três itens ficam iguais. Em `usarItem`, `vicio` deixa de ser somado direto e vira a dose.
 - A dependência **cai continuamente** 12 por dia de jogo (`12 / 420` por segundo). Com um Médico ativo, cai o dobro.
 
 ## 2. Abstinência
@@ -75,14 +75,14 @@ O `vicio` guardado vira a dependência atual. `semUso` ausente começa em 0.
 
 | Arquivo | Mudança |
 |---|---|
-| `vicio-regras.js` (novo) | Regras puras: tabela de doses, constantes, `estagioAbstinencia`, `tickVicio`, `aliviarComTolerancia`, `minutosParaAbstinencia`; exporta para Node como `bando-regras.js` |
+| `vicio-regras.js` (novo) | Regras puras: constantes, `estagioDependencia`, `estagioAbstinencia`, `tickVicio`, `aliviarComTolerancia`, `aplicarDose`, `minutosParaAbstinencia`; exporta para Node como `bando-regras.js` |
 | `index.html` | Carrega `vicio-regras.js` antes de `script.js` |
-| `script.js` | `ITENS` sem `vicio` nos efeitos; `usarItem` aplica tolerância, dose e zera `semUso`; `atualizarStatus` usa `tickVicio`; avisos; causa da morte; `aplicarProgressoOffline`; save antigo |
+| `script.js` | Doses em `ITENS` (Bebida 12, Analgésico 4); `usarItem` aplica tolerância, dose e zera `semUso`; `atualizarStatus` usa `tickVicio`; avisos; causa da morte; `aplicarProgressoOffline`; save antigo |
 | `manual.html` | Textos do Vício e dos itens |
 
 ## 9. Testes
 
-- **Node (regras puras):** doses por item; queda por segundo com e sem Médico; abstinência só com `vicio >= 25` e `semUso >= 210`; estágios e efeitos por estágio; metade dos efeitos com Médico; tolerância (0 → alívio cheio, 100 → metade); minutos até a abstinência.
+- **Node (regras puras):** dose (soma até 100 e zera o tempo sem usar); queda por segundo com e sem Médico; abstinência só com `vicio >= 25` e `semUso >= 210`; estágios e efeitos por estágio; metade dos efeitos com Médico; tolerância (0 → alívio cheio, 100 → metade); minutos até a abstinência.
 - **Node (jogo simulado com `script.js` não é viável hoje):** a integração em `script.js` fica coberta pela revisão de código e por teste no navegador pelo usuário (beber várias vezes, esperar a abstinência, ver os avisos e o alívio menor).
 
 ## Fora desta etapa
