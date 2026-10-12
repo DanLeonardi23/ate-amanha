@@ -1,0 +1,8 @@
+{
+  "name": "ateamanha-testes-servidor",
+  "private": true,
+  "description": "Testes do SQL do Bando online num PostgreSQL local (PGlite). Não faz parte do jogo.",
+  "dependencies": {
+    "@electric-sql/pglite": "0.2.17"
+  }
+}
