@@ -222,10 +222,10 @@ const ITENS = {
   comida:       { id: 'comida',       nome: 'Comida Enlatada',     icone: '🥫', tipo: 'consumivel', efeitos: { fome: -30 } },
   agua_suja:    { id: 'agua_suja',    nome: 'Água Suja',           icone: '🚱', tipo: 'consumivel', efeitos: { sede: -20, vida: -5 } },
   agua_limpa:   { id: 'agua_limpa',   nome: 'Água Limpa',          icone: '💧', tipo: 'consumivel', efeitos: { sede: -35 } },
-  bebida:       { id: 'bebida',       nome: 'Bebida Alcoólica',    icone: '🍶', tipo: 'consumivel', efeitos: { estresse: -20, vida: -5, vicio: 10 } },
+  bebida:       { id: 'bebida',       nome: 'Bebida Alcoólica',    icone: '🍶', tipo: 'consumivel', efeitos: { estresse: -20, vida: -5, vicio: 12 } },
 
   // Medicinais de campo
-  remedio:      { id: 'remedio',      nome: 'Analgésico',          icone: '💊', tipo: 'medicinal',  efeitos: { vida: 15, estresse: -5 } },
+  remedio:      { id: 'remedio',      nome: 'Analgésico',          icone: '💊', tipo: 'medicinal',  efeitos: { vida: 15, estresse: -5, vicio: 4 } },
   kit:          { id: 'kit',          nome: 'Kit Primeiros Socorros', icone: '🩹', tipo: 'medicinal', efeitos: { vida: 35, estresse: -5 } },
   soro:         { id: 'soro',         nome: 'Soro Fisiológico',    icone: '💉', tipo: 'medicinal',  efeitos: { sede: -40, vida: 10 } },
   atadura:      { id: 'atadura',      nome: 'Atadura',             icone: '🩺', tipo: 'medicinal',  efeitos: { vida: 10 } },
@@ -1662,7 +1662,7 @@ const nomesZona = {
 let estado = {
   criado: false,
   personagem: { nome: 'Sobrevivente', avatar: 0, traco: 'resistente' },
-  stats: { vida: 100, vidaMax: 100, fome: 0, sede: 0, estresse: 0, vicio: 0 },
+  stats: { vida: 100, vidaMax: 100, fome: 0, sede: 0, estresse: 0, vicio: 0, semUso: 0 },
   inventario: [],
   capInventario: 10,
   receitasAprendidas: [],
@@ -2143,14 +2143,19 @@ function usarItem(id) {
 
   const efeitos   = item.efeitos || {};
   const tracoData = TRACOS[estado.personagem.traco];
+  const dose      = efeitos.vicio || 0; // substância que vicia (Bebida, Whisky, Analgésico)
 
   for (const [stat, val] of Object.entries(efeitos)) {
+    if (stat === 'vicio') continue;      // aplicado abaixo como dose
     let v = val;
+    if (dose && stat === 'estresse') v = aliviarComTolerancia(v, estado.stats.vicio);
     if (val > 0 && stat === 'vida' && tracoData.efeitos.curaBonus)
       v = Math.round(v * tracoData.efeitos.curaBonus);
     estado.stats[stat] = clamp((estado.stats[stat] || 0) + v, 0,
       stat === 'vida' ? estado.stats.vidaMax : 100);
   }
+
+  if (dose) aplicarDose(estado.stats, dose);
 
   // Água suja → intoxicação (90 ticks de efeito)
   if (id === 'agua_suja') {
@@ -3264,15 +3269,8 @@ function atualizarStatus() {
   s.fome = clamp(s.fome + 0.15 * m.consumoMulti, 0, 100);
   s.sede = clamp(s.sede + 0.22 * m.consumoMulti, 0, 100);
 
-  if (s.vicio > 0) s.vicio = clamp(s.vicio - 0.05, 0, 100);
-
-  // Vício → pressiona estresse e drena vida em abstinência
-  if (s.vicio > 30) {
-    const fatorVicio = (s.vicio - 30) / 70;
-    s.estresse = clamp(s.estresse + fatorVicio * 0.08 * m.estresseMulti, 0, 100);
-    if (s.vicio > 70)
-      s.vida = clamp(s.vida - fatorVicio * 0.06 * m.vidaDecay, 0, s.vidaMax);
-  }
+  // Vício: abstinência (sem usar, dependente) e queda da dependência
+  tickVicio(s, 1, { medico: temMedicoAtivo(), estresseMulti: m.estresseMulti, vidaDecay: m.vidaDecay });
 
   // Intoxicação (água suja) → drena vida e acelera fome
   if (estado.condicoes.intoxicado > 0) {
@@ -3366,8 +3364,9 @@ function atualizarUI() {
   if (s.fome >= 80)     av('🍖 Com muita fome!', s.fome >= 95 ? 'perigo' : 'alerta');
   if (s.sede >= 80)     av('💧 Com muita sede!', s.sede >= 95 ? 'perigo' : 'alerta');
   if (s.estresse >= 75) av('😤 Estresse elevado', 'alerta');
-  if (s.vicio >= 70)    av('💊 Abstinência! Vício drenando vida', 'perigo');
-  else if (s.vicio >= 50) av('💊 Dependência se formando', 'alerta');
+  const abst = estagioAbstinencia(s.vicio, s.semUso);
+  if (abst) av(`🍶 Abstinência ${abst.nome}${abst.vida ? ', drenando vida' : ''}: beber alivia, ficar limpo cura`, abst.id === 'leve' ? 'alerta' : 'perigo');
+  else if (estagioDependencia(s.vicio)) av(`💊 Dependente: abstinência em ${minutosParaAbstinencia(s.semUso)} min sem usar`, 'alerta');
   if (estado.condicoes.intoxicado > 0) av('🤢 Intoxicado! Use Carvão Ativado, Soro ou Kit Avançado', 'perigo');
   if (estado.condicoes.contundido)     av('🦯 Contundido! Use uma Tala Improvisada', 'perigo');
   if (estado.condicoes.sangramento)    av('🩸 Sangrando! Use uma bandagem ou curativo', 'perigo');
@@ -4881,7 +4880,7 @@ function gameOver() {
   } else if (s.fome >= 80) {
     causa = 'inanição';
     causaDesc = 'A fome lenta e silenciosa te derrubou no fim.';
-  } else if (s.vicio > 70) {
+  } else if (estagioAbstinencia(s.vicio, s.semUso)?.id === 'grave') {
     causa = 'abstinência';
     causaDesc = 'O vício destruiu o que a ruína não conseguiu.';
   } else {
@@ -5015,7 +5014,7 @@ async function iniciarJogo(nome, avatarIdx, traco) {
   const vidaMax = td.efeitos.vidaMax || 100;
 
   estado.personagem         = { nome, avatar: avatarIdx, traco };
-  estado.stats              = { vida: vidaMax, vidaMax, fome: 0, sede: 0, estresse: 0, vicio: 0 };
+  estado.stats              = { vida: vidaMax, vidaMax, fome: 0, sede: 0, estresse: 0, vicio: 0, semUso: 0 };
   estado.inventario         = [];
   estado.receitasAprendidas = [];
   estado.temBancada         = false;
@@ -5195,6 +5194,7 @@ function aplicarProgressoOffline(segundos) {
   const eff = Math.min(segundos, 3600);
   s.fome = clamp(s.fome + eff * 0.15 * m.consumoMulti, 0, 100);
   s.sede = clamp(s.sede + eff * 0.22 * m.consumoMulti, 0, 100);
+  tickVicio(s, eff, { medico: temMedicoAtivo(), efeitos: false });
   // Progresso offline não reduz vida — personagem sempre está vivo ao voltar
   const antesSegundos = estado.segundos;
   estado.segundos += eff;
@@ -6227,6 +6227,10 @@ function normalizarParcela(p) {
 }
 
 // Todos os moradores do assentamento: [{ parcela, idx, slot, npc }]
+function temMedicoAtivo() {
+  return moradores().some(({ npc }) => npcAtivo(npc) && habCanonica(npc.habilidade) === 'medico');
+}
+
 function moradores() {
   const lista = [];
   estado.assentamento.parcelas.forEach((parcela, idx) => {
@@ -7095,6 +7099,7 @@ function traduzirErroAuth(msg) {
 function aplicarDadosSave(s) {
   estado.personagem         = s.personagem;
   estado.stats              = s.stats;
+  if (typeof estado.stats.semUso !== 'number') estado.stats.semUso = 0; // vício como dependência
   estado.inventario         = s.inventario         || [];
   estado.receitasAprendidas = s.receitasAprendidas || [];
   estado.temBancada         = s.temBancada         || false;
