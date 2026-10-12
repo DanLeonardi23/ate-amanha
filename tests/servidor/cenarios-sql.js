@@ -41,7 +41,7 @@ const C = '00000000-0000-0000-0000-00000000000c';
     await erro(A, 'select iniciar_ataque($1, $2)', [A, JSON.stringify([lut('a1', 12, 8, 55)])], /próprio/);
     await erro(A, 'select iniciar_ataque($1, $2)', [C, JSON.stringify([lut('a1', 12, 8, 55)])], /faixa/);
     await erro(A, 'select iniciar_ataque($1, $2)', [B, JSON.stringify([lut('a1', 12, 8, 55), lut('a2', 1, 1, 1), lut('a3', 1, 1, 1), lut('a4', 1, 1, 1)])], /inválido/); // nível 2 → máx 3
-    await erro(A, 'select iniciar_ataque($1, $2)', [B, JSON.stringify([lut('a1', 18, 8, 55)])], /inválido/);
+    await erro(A, 'select iniciar_ataque($1, $2)', [B, JSON.stringify([lut('a1', 22, 8, 55)])], /inválido/);
   });
 
   let ataque;
@@ -161,6 +161,17 @@ const C = '00000000-0000-0000-0000-00000000000c';
     const ok9 = await sob(() => db.query('select simular_combate_publico($1, $2, 1) as r', [JSON.stringify([lut('a', 5, 2, 40)]), JSON.stringify([lut('b', 5, 1, 33)])]));
     assert.ok(ok9.rows[0].r.vencedor);
     await sob(async () => { await rpc(F, 'select publicar_perfil($1)', [perfil('Vila F', 0, [lut('f1', 5, 2, 40)])]); });
+  });
+
+  await caso('evolução: limites 21/22/90 (supabase_bando_evolucao.sql) e helper continua fechado', async () => {
+    await db.exec(fs.readFileSync(path.join(__dirname, '..', '..', 'supabase_bando_evolucao.sql'), 'utf8'));
+    await rpc(F, 'select publicar_perfil($1)', [perfil('Vila F', 0, [lut('f1', 21, 22, 90)])]);
+    assert.deepEqual((await ler(F)).defensores, [lut('f1', 21, 22, 90)]);
+    await erro(F, 'select publicar_perfil($1)', [perfil('Vila F', 0, [lut('f1', 22, 22, 90)])], /defensores/);
+    await erro(F, 'select publicar_perfil($1)', [perfil('Vila F', 0, [lut('f1', 21, 23, 90)])], /defensores/);
+    await erro(F, 'select publicar_perfil($1)', [perfil('Vila F', 0, [lut('f1', 21, 22, 91)])], /defensores/);
+    await db.exec('set role authenticated');
+    try { await assert.rejects(db.query("select _lutador_valido('{}')"), /permission denied/); } finally { await db.exec('reset role'); }
   });
 
   console.log(`\n${ok} cenários ok`);
