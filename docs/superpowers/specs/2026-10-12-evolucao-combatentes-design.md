@@ -1,7 +1,7 @@
 # Evolução dos combatentes do Bando
 
 Data: 2026-10-12
-Status: aprovado em conversa, aguardando revisão do documento
+Status: aprovado; plano em docs/superpowers/plans/2026-10-12-evolucao-combatentes.md
 Depende de: Bando Etapa 1 (`2026-10-11-bando-assentamento-design.md`) e Etapa 2 (`2026-10-11-bando-online-design.md`), já publicadas
 
 ## Objetivo
