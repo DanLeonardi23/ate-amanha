@@ -28,8 +28,10 @@ function normalizarBando(assent, personagem) {
   if (!assent.recrutas) assent.recrutas = { lista: [], dia: -99 };
   if (!assent.missoes) assent.missoes = { emAndamento: [], feitasHoje: [] };
   if (!Array.isArray(assent.relatorios)) assent.relatorios = [];
-  // Reparo: quem ficou "em missão" sem missão correspondente (erro ao resolver) volta ao Bando
-  const emCampo = new Set(assent.missoes.emAndamento.flatMap(m => m.membros || []));
+  if (!Array.isArray(assent.ataquesEnviados)) assent.ataquesEnviados = [];   // Etapa 2 (online.js)
+  if (!Array.isArray(assent.ataquesAplicados)) assent.ataquesAplicados = [];
+  // Reparo: quem ficou "em missão" sem missão nem ataque correspondente (erro ao resolver) volta ao Bando
+  const emCampo = new Set([...assent.missoes.emAndamento, ...assent.ataquesEnviados].flatMap(m => m.membros || []));
   for (const c of assent.bando) {
     if (c.estado === 'missao' && !emCampo.has(c.id)) {
       const est = estadoAposCombate(c.vida, c.vidaMax);

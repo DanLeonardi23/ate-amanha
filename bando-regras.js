@@ -153,10 +153,60 @@
     return { baterias: intEntre(rng, m.baterias[0], m.baterias[1]), itens };
   }
 
+  // ── Online (Etapa 2) ── espelho das regras do servidor (supabase_bando_online.sql);
+  // aqui só servem para a interface explicar bloqueios antes de chamar o servidor.
+  const LIMITES_LUTADOR = { atq: 17, def: 18, vida: 70 };
+  const PVP = {
+    viagemMin: 5, escudoHoras: 6, ataquesPorDia: 3, faixaNivel: 2, onlineMin: 5,
+    saquePct: 0.15, saqueMaxBaterias: 200, saqueItens: 3, saqueItemPct: 0.25,
+    milicia: { atq: 2, def: 1, vida: 25 },
+    pontos: { vitoria: 10, defesa: 5, derrota: -3 },
+    xp: { vitoria: 60, defesa: 50, derrota: 10 },
+  };
+
+  // Moradores lutam como milícia quando não há defensores (no mínimo 1 miliciano)
+  function montarMilicia(moradores, bonusDef) {
+    return Array.from({ length: Math.max(1, moradores) }, (_, i) => ({
+      id: `milicia-${i + 1}`, nome: `Miliciano ${i + 1}`,
+      atq: PVP.milicia.atq, def: PVP.milicia.def + bonusDef, vida: PVP.milicia.vida,
+    }));
+  }
+
+  // Dia de jogo dos limites diários (horário de Brasília), no formato AAAA-MM-DD
+  function hojeBrasilia(agora) {
+    return agora.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  }
+
+  function estaOnline(vistoEm, agora) {
+    return agora - new Date(vistoEm) < PVP.onlineMin * 60000;
+  }
+
+  // ⚔️/🛡️ estimados de um perfil público (defensores com bônus, ou a milícia)
+  function poderPerfil(perfil) {
+    const time = perfil.defensores?.length
+      ? perfil.defensores.map(l => ({ ...l, def: l.def + (perfil.bonus_def || 0) }))
+      : montarMilicia(perfil.moradores || 0, perfil.bonus_def || 0);
+    return time.reduce((p, l) => ({ atq: p.atq + l.atq, def: p.def + l.def }), { atq: 0, def: 0 });
+  }
+
+  // Motivo para não poder atacar (null = pode). eu/alvo: linhas de assentamentos_publicos.
+  function motivoBloqueio(eu, alvo, agora, temProntos) {
+    if (!temProntos) return 'Sem combatentes prontos';
+    if (Math.abs(eu.nivel - alvo.nivel) > PVP.faixaNivel) return 'Fora da sua faixa de nível';
+    if (alvo.escudo_ate && new Date(alvo.escudo_ate) > agora) {
+      return `Protegido até ${new Date(alvo.escudo_ate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    const mesmoDia = eu.ataques_dia === hojeBrasilia(agora);
+    if (mesmoDia && eu.ataques_qtd >= PVP.ataquesPorDia) return `Limite de ${PVP.ataquesPorDia} ataques hoje`;
+    if (mesmoDia && (eu.alvos_dia || []).includes(alvo.user_id)) return 'Já atacado hoje';
+    return null;
+  }
+
   const api = {
     XP_NIVEIS, NIVEL_MAX, XP_EVENTO, CATEGORIAS, COMBATE_EQUIP, SLOTS_COMBATENTE, NOMES_COMBATENTE, MISSOES,
     nivelPorXp, xpParaNivel, limiteBando, sortearCategoria, gerarRecruta, statsLutador,
     gerarInimigos, gerarInvasores, curaDiaria, estadoAposCombate, sortearLoot,
+    LIMITES_LUTADOR, PVP, montarMilicia, hojeBrasilia, estaOnline, poderPerfil, motivoBloqueio,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(raiz, api);
