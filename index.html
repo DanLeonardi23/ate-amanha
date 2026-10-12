@@ -927,6 +927,7 @@
             <nav class="sub-abas-nav">
               <button class="sub-aba-btn ativa" data-sub="sub-assent-moradores">🏘 Moradores</button>
               <button class="sub-aba-btn" data-sub="sub-assent-bando">⚔️ Bando</button>
+              <button class="sub-aba-btn" data-sub="sub-assent-online">🌐 Ataques</button>
             </nav>
 
             <!-- Sub-aba: Moradores (conteúdo de antes) -->
@@ -944,6 +945,11 @@
             <!-- Sub-aba: Bando (desenhada por bando.js) -->
             <div class="sub-aba-painel oculto" id="sub-assent-bando">
               <div id="bando-painel" class="bando-painel"></div>
+            </div>
+
+            <!-- Sub-aba: Ataques online (desenhada por online.js) -->
+            <div class="sub-aba-painel oculto" id="sub-assent-online">
+              <div id="online-painel" class="bando-painel"></div>
             </div>
 
           </div><!-- fim aba assentamento -->
@@ -1109,6 +1115,7 @@
   <script src="combate.js"></script>
   <script src="bando-regras.js"></script>
   <script src="bando.js"></script>
+  <script src="online.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

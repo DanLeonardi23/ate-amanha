@@ -5177,6 +5177,7 @@ function salvarJogo() {
   const dados = montarDadosSave();
   localStorage.setItem('atéamanha_save', JSON.stringify(dados));
   if (_sbUser) sbSalvar(dados); // cloud save assíncrono, sem bloquear
+  if (_sbUser) publicarPerfilOnline(); // perfil público do assentamento (no máximo a cada 20 s)
 }
 
 function carregarJogo() {
@@ -5345,7 +5346,7 @@ function inicializarUI() {
       if (aba === 'bazar') { renderizarBazar(); iniciarAutoRefreshBazar(); }
       else pararAutoRefreshBazar();
       if (aba === 'trabalhos') renderizarTrabalhos();
-      if (aba === 'assentamento') renderizarAssentamento();
+      if (aba === 'assentamento') { renderizarAssentamento(); carregarListaOnline(); iniciarAtualizacaoOnline(); }
     });
   });
 
@@ -6304,7 +6305,8 @@ function atualizarBadgeAssentamento() {
   if (!btn) return;
   const temPendente = !!estado.assentamento?.npcPendente
     || moradores().some(m => m.npc.pagamentoPendente)
-    || (estado.assentamento?.bando || []).some(c => c.soldoPendente);
+    || (estado.assentamento?.bando || []).some(c => c.soldoPendente)
+    || online.contra.length > 0;
   let badge = btn.querySelector('.aba-badge-npc');
   if (temPendente) {
     if (!badge) {
@@ -6443,6 +6445,7 @@ function renderizarAssentamento() {
   if (!container) return;
   renderizarIdentidadeAssentamento();
   renderizarBando();
+  renderizarOnline();
 
   const assent  = estado.assentamento;
   const parcelas = assent.parcelas;
@@ -7172,6 +7175,7 @@ function restaurarUIJogo() {
   renderizarMercado();
   atualizarUI();
   iniciarLoop();
+  verificarAtaquesOnline(); // ataques sofridos ou terminados enquanto o jogo estava fechado
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -7223,5 +7227,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!estado.criado) return;
     salvarJogo();
     resgatarCreditosBazar(); // vendas feitas enquanto o jogador está online
+    verificarAtaquesOnline(); // ataques a resolver/aplicar (Bando online)
   }, 30000);
 });
