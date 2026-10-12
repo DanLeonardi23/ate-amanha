@@ -11,6 +11,7 @@
 
 const PUBLICAR_INTERVALO_MS = 20000;  // salvarJogo roda muito; o perfil sobe no máximo a cada 20 s
 const APLICADOS_MAX = 30;            // ids de ataques já aplicados guardados no save
+const ATAQUES_LIMITE = 20;           // linhas por consulta de ataques (página completa = pode haver mais)
 
 // Estado só da sessão (não vai para o save)
 const online = {
@@ -25,9 +26,11 @@ const online = {
   timerLista: null,
 };
 
-// Só participa do online quem tem conta e é Líder (tem acesso ao Assentamento)
+// Só participa do online quem tem conta e é Líder (tem acesso ao Assentamento).
+// Aba pausada (outra aba assumiu o jogo) não faz nada: salvarJogo ali é no-op.
 function participaOnline() {
-  return !!(getSB() && _sbUser && estado.criado && estado.ehLider && estado.assentamento?.bando);
+  return !!(getSB() && _sbUser && estado.criado && estado.ehLider && estado.assentamento?.bando)
+    && !(typeof _abaPausada !== 'undefined' && _abaPausada);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -38,6 +41,12 @@ function montarPerfilPublico() {
   const a = estado.assentamento;
   const bonus = Math.min(20, bonusDefesaAssentamento());
   const nome = (a.nome || '').replace(/[<>]/g, '').trim().slice(0, 24) || 'Assentamento';
+  // Itens repetidos no depósito entram somados (antes de filtrar e cortar em 20)
+  const somados = new Map();
+  for (const i of estado.deposito.itens) {
+    if (i.tipo === 'leitura' || i.tipo === 'anotacao' || !/^[a-z0-9_]{1,40}$/.test(i.id) || !(i.qtd > 0)) continue;
+    somados.set(i.id, (somados.get(i.id) || 0) + i.qtd);
+  }
   return {
     nome,
     xp: a.xp,
@@ -46,17 +55,14 @@ function montarPerfilPublico() {
       const s = statsLutador(c);
       return {
         id: String(c.id).slice(0, 40), nome: String(c.nome).replace(/[<>]/g, '').slice(0, 24) || 'Combatente',
-        atq: Math.min(LIMITES_LUTADOR.atq, s.atq), def: Math.min(LIMITES_LUTADOR.def, s.def),
-        vida: Math.max(1, Math.min(LIMITES_LUTADOR.vida, s.vida)),
+        atq: Math.round(Math.min(LIMITES_LUTADOR.atq, s.atq)), def: Math.round(Math.min(LIMITES_LUTADOR.def, s.def)),
+        vida: Math.round(Math.max(1, Math.min(LIMITES_LUTADOR.vida, s.vida))),
       };
     }),
     moradores: Math.min(8, moradores().filter(m => npcAtivo(m.npc)).length),
     bonus_def: bonus,
     baterias: Math.max(0, Math.min(100000, estado.baterias || 0)),
-    deposito: estado.deposito.itens
-      .filter(i => i.tipo !== 'leitura' && i.tipo !== 'anotacao' && /^[a-z0-9_]{1,40}$/.test(i.id) && i.qtd > 0)
-      .slice(0, 20)
-      .map(i => ({ id: i.id, qtd: Math.min(999, i.qtd) })),
+    deposito: [...somados].slice(0, 20).map(([id, qtd]) => ({ id, qtd: Math.min(999, qtd) })),
   };
 }
 
@@ -89,9 +95,10 @@ async function verificarAtaquesOnline() {
       .select('id,atacante,defensor,atacante_nome,defensor_nome,semente,chegada,estado,resultado,aplicado_atacante,aplicado_defensor,time_atacante')
       .or(`and(atacante.eq.${eu},or(estado.eq.a_caminho,aplicado_atacante.eq.false)),and(defensor.eq.${eu},or(estado.eq.a_caminho,aplicado_defensor.eq.false))`)
       .order('chegada', { ascending: true })
-      .limit(20);
+      .limit(ATAQUES_LIMITE);
     if (error) { console.error('[Online] Falha ao verificar ataques:', error.message); return; }
-    reconciliarAtaquesEnviados(data || []);
+    // Só reconcilia com a página completa em mãos; página cheia pode ter cortado ataques
+    if ((data || []).length < ATAQUES_LIMITE) reconciliarAtaquesEnviados(data || []);
     online.contra = [];
     for (const at of data || []) {
       try {
@@ -109,7 +116,11 @@ async function verificarAtaquesOnline() {
         const jaAplicou = papel === 'atacante' ? atual.aplicado_atacante : atual.aplicado_defensor;
         if (atual.estado === 'resolvido' && !jaAplicou) {
           aplicarResultadoAtaque(atual, papel);
-          salvarJogo(); // grava local e na nuvem antes de avisar o servidor
+          // Só avisa o servidor depois de gravar local e na nuvem; se a nuvem falhar, fica para a
+          // próxima verificação (o id em ataquesAplicados impede de reaplicar, e ela salva e marca de novo)
+          salvarJogo();
+          const ok = await sbSalvar(montarDadosSave());
+          if (!ok) { console.error('[Online] Save na nuvem falhou; ataque', atual.id, 'será marcado na próxima verificação.'); continue; }
           const m = await sb.rpc('marcar_ataque_aplicado', { p_ataque: atual.id });
           if (m.error) console.error('[Online] Falha ao marcar ataque aplicado:', m.error.message);
         }
@@ -245,9 +256,9 @@ async function iniciarAtaqueOnline(alvo, ids) {
   const time = membros.map(id => {
     const s = statsLutador(combatentePorId(id));
     return {
-      id: String(s.id).slice(0, 40), nome: String(s.nome).replace(/[<>]/g, '').slice(0, 24),
-      atq: Math.min(LIMITES_LUTADOR.atq, s.atq), def: Math.min(LIMITES_LUTADOR.def, s.def),
-      vida: Math.max(1, Math.min(LIMITES_LUTADOR.vida, s.vida)),
+      id: String(s.id).slice(0, 40), nome: String(s.nome).replace(/[<>]/g, '').slice(0, 24) || 'Combatente',
+      atq: Math.round(Math.min(LIMITES_LUTADOR.atq, s.atq)), def: Math.round(Math.min(LIMITES_LUTADOR.def, s.def)),
+      vida: Math.round(Math.max(1, Math.min(LIMITES_LUTADOR.vida, s.vida))),
     };
   });
   await publicarPerfilOnline(true);

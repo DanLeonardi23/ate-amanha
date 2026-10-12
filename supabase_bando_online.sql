@@ -227,11 +227,11 @@ returns boolean language sql immutable as $$
      and coalesce(char_length(l ->> 'id'), 0) between 1 and 40
      and coalesce(char_length(l ->> 'nome'), 0) between 1 and 24
      and (l ->> 'nome') !~ '[<>]'
-     and case when jsonb_typeof(l -> 'atq') = 'number' and (l ->> 'atq') ~ '^\d+$'
+     and case when jsonb_typeof(l -> 'atq') = 'number' and (l ->> 'atq') ~ '^\d{1,3}$'
               then (l ->> 'atq')::int <= 17 else false end
-     and case when jsonb_typeof(l -> 'def') = 'number' and (l ->> 'def') ~ '^\d+$'
+     and case when jsonb_typeof(l -> 'def') = 'number' and (l ->> 'def') ~ '^\d{1,3}$'
               then (l ->> 'def')::int <= 18 else false end
-     and case when jsonb_typeof(l -> 'vida') = 'number' and (l ->> 'vida') ~ '^\d+$'
+     and case when jsonb_typeof(l -> 'vida') = 'number' and (l ->> 'vida') ~ '^\d{1,3}$'
               then (l ->> 'vida')::int between 1 and 70 else false end;
 $$;
 

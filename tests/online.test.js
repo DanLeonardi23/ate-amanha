@@ -57,6 +57,8 @@ function criarJogo() {
   ctx.mostrarToast = m => ctx.logs.push('toast: ' + m);
   ctx.mostrarConfirmacao = (m, sim) => sim();
   ctx.salvarJogo = () => { ordem.push('salvar'); };
+  ctx.montarDadosSave = () => ({});
+  ctx.sbSalvar = async () => true; // salvar na nuvem; os testes trocam por false para simular falha
   ctx.temItem = (id, q = 1) => id === 'pilha' ? ctx.estado.baterias >= q : false;
   ctx.removerItem = (id, q = 1) => { if (id === 'pilha') ctx.estado.baterias -= q; return true; };
   ctx.adicionarItem = (base, qtd) => { ctx.adicionados.push({ id: base.id, qtd }); return true; };
@@ -221,6 +223,52 @@ test('iniciarAtaqueOnline limita atq/def/vida do time enviado', async () => {
   const m = env.args.p_time[0];
   assert.deepEqual([m.atq, m.def, m.vida], [17, 18, 70]);
   assert.equal(a.ataquesEnviados[0].id, 'x');
+});
+
+test('aba pausada: nada online roda (sem rpc nem consulta)', async () => {
+  const { ctx, run } = criarJogo();
+  ctx._abaPausada = true;
+  await run('publicarPerfilOnline(true)');
+  await run('verificarAtaquesOnline()');
+  assert.equal(ctx.chamadasRpc.length, 0);
+  assert.equal(ctx.ultimasConsultas.length, 0);
+});
+
+test('página cheia (20 linhas): ataque enviado fora da página não é reconciliado', async () => {
+  const { ctx, run, a } = criarJogo();
+  const velho = new Date(Date.now() - 30 * 60000).toISOString();
+  a.bando[0].estado = 'missao';
+  a.ataquesEnviados.push({ id: 'velho', membros: ['c1'], chegada: velho, alvo: 'X' });
+  // 20 ataques a caminho (chegada no futuro), nenhum é o 'velho'
+  const futuro = new Date(Date.now() + 60 * 60000).toISOString();
+  ctx.consultas.ataques = { data: Array.from({ length: 20 }, (_, i) => ({ id: 'f' + i, atacante: 'outro', defensor: 'eu', estado: 'a_caminho', chegada: futuro })), error: null };
+  await run('verificarAtaquesOnline()');
+  assert.deepEqual(simples(a.ataquesEnviados.map(x => x.id)), ['velho']);
+  assert.equal(a.bando[0].estado, 'missao');
+});
+
+test('montarPerfilPublico: soma depósitos duplicados do mesmo id', () => {
+  const { ctx, run } = criarJogo();
+  ctx.estado.deposito.itens = [
+    { id: 'sucata', nome: 'Sucata', tipo: 'material', qtd: 5 },
+    { id: 'sucata', nome: 'Sucata', tipo: 'material', qtd: 7 },
+  ];
+  assert.deepEqual(simples(run('montarPerfilPublico()').deposito), [{ id: 'sucata', qtd: 12 }]);
+});
+
+test('verificarAtaquesOnline: save na nuvem falhou, não marca o ataque no servidor', async () => {
+  const { ctx, run, a } = criarJogo();
+  ctx.console = { ...console, error() {} };
+  ctx.sbSalvar = async () => false;
+  ctx.consultas.ataques = { data: [comoDefensor('d1')], error: null };
+  await run('verificarAtaquesOnline()');
+  assert.deepEqual(simples(a.ataquesAplicados), ['d1']);
+  assert.equal(ctx.chamadasRpc.filter(c => c.nome === 'marcar_ataque_aplicado').length, 0);
+  // próxima verificação: salva com sucesso e marca, sem reaplicar
+  ctx.sbSalvar = async () => true;
+  await run('verificarAtaquesOnline()');
+  assert.equal(a.relatorios.length, 1);
+  assert.equal(ctx.chamadasRpc.filter(c => c.nome === 'marcar_ataque_aplicado').length, 1);
 });
 
 test('publicarPerfilOnline: o limite agenda uma publicação final (um só timer)', async () => {
