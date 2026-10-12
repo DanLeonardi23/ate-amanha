@@ -507,14 +507,17 @@ function guardarLootNoDeposito(base, qtd) {
 function entregarLoot(loot) {
   if (loot.baterias) mudarBaterias(loot.baterias);
   for (const { id, qtd } of loot.itens) {
-    const base = ITENS[id];
+    const base = Object.hasOwn(ITENS, id) ? ITENS[id] : null; // ids vêm da rede: "constructor" não é item
     if (!base) continue;
     if (!guardarLootNoDeposito(base, qtd)) adicionarItem(base, qtd, { forcar: true });
   }
 }
 
 function descreverLoot(loot) {
-  return [`${loot.baterias} 🔋`, ...loot.itens.map(i => `${ITENS[i.id]?.icone || ''} ${ITENS[i.id]?.nome || i.id} ×${i.qtd}`)].join(', ');
+  return [`${loot.baterias} 🔋`, ...loot.itens.map(i => {
+    const base = Object.hasOwn(ITENS, i.id) ? ITENS[i.id] : null;
+    return `${base?.icone || ''} ${base?.nome || i.id} ×${i.qtd}`;
+  })].join(', ');
 }
 
 function registrarRelatorio(rel) {

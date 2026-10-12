@@ -168,6 +168,15 @@ test('loot: baterias na carteira, itens no depósito ou, sem depósito, na mochi
   assert.equal(ctx.adicionados[0].qtd, 3);
 });
 
+test('loot: ids herdados do Object ("constructor") são ignorados', () => {
+  const { ctx, run } = criarJogo();
+  ctx.estado.deposito.nivel = 1;
+  const antes = JSON.stringify(ctx.estado.deposito);
+  run('entregarLoot({ baterias: 0, itens: [{ id: "constructor", qtd: 5 }] });');
+  assert.equal(JSON.stringify(ctx.estado.deposito), antes);
+  assert.equal(ctx.adicionados.length, 0);
+});
+
 test('morte em missão remove o combatente e o equipamento não volta', () => {
   const { ctx, run, a } = criarJogo();
   run('contratarRecruta(0);');

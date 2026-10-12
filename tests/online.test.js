@@ -11,8 +11,13 @@ function criarJogo() {
   const raiz = path.join(__dirname, '..');
   const el = () => ({ innerHTML: '', className: '', style: {}, classList: { contains: () => false }, querySelector: () => null, querySelectorAll: () => [], addEventListener() {}, remove() {} });
   const chamadasRpc = [];
+  const ordem = [];       // ordem de salvarJogo e das chamadas rpc
+  const respostasRpc = {}; // nome do rpc → { data, error } (ou função dos args)
+  const consultas = {};    // tabela → { data, error } devolvido ao fim da cadeia de consulta
+  const timers = [];
   const ctx = {
-    console, Date, Array, Object, Set, JSON, parseInt, String, setInterval: () => 0,
+    console, Date, Array, Object, Set, JSON, parseInt, String, Promise, setInterval: () => 0,
+    setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, timers, ordem, respostasRpc, consultas,
     document: { getElementById: () => null, hidden: true, createElement: el, body: { appendChild() {} }, addEventListener() {}, removeEventListener() {}, querySelectorAll: () => [] },
     estado: {
       dia: 3, criado: true, ehLider: true, inventario: [], baterias: 100, personagem: { nome: 'Ana' },
@@ -27,13 +32,31 @@ function criarJogo() {
     _sbUser: { id: 'eu' },
   };
   ctx.Math = Object.create(Math);
-  ctx.getSB = () => ({ rpc: async (nome, args) => { chamadasRpc.push({ nome, args }); return { data: null, error: null }; } });
+  // Consulta encadeável: cada método devolve a própria cadeia; o await entrega consultas[tabela]
+  const consulta = tabela => {
+    const q = { filtros: [] };
+    for (const m of ['select', 'or', 'order', 'limit', 'eq', 'neq', 'gte', 'lte', 'maybeSingle']) q[m] = (...args) => { q.filtros.push([m, ...args]); return q; };
+    q.then = (ok, falha) => Promise.resolve(consultas[tabela] ?? { data: null, error: null }).then(ok, falha);
+    ctx.ultimasConsultas.push({ tabela, q });
+    return q;
+  };
+  ctx.ultimasConsultas = [];
+  ctx.getSB = () => ({
+    from: consulta,
+    rpc: async (nome, args) => {
+      chamadasRpc.push({ nome, args });
+      ordem.push('rpc:' + nome);
+      const r = respostasRpc[nome];
+      return (typeof r === 'function' ? r(args) : r) ?? { data: null, error: null };
+    },
+  });
+  ctx.abaAssentamentoAberta = () => false;
   ctx.charPath = id => `img/${id}.png`;
   ctx.esc = s => String(s);
   ctx.log = m => ctx.logs.push(m);
   ctx.mostrarToast = m => ctx.logs.push('toast: ' + m);
   ctx.mostrarConfirmacao = (m, sim) => sim();
-  ctx.salvarJogo = () => {};
+  ctx.salvarJogo = () => { ordem.push('salvar'); };
   ctx.temItem = (id, q = 1) => id === 'pilha' ? ctx.estado.baterias >= q : false;
   ctx.removerItem = (id, q = 1) => { if (id === 'pilha') ctx.estado.baterias -= q; return true; };
   ctx.adicionarItem = (base, qtd) => { ctx.adicionados.push({ id: base.id, qtd }); return true; };
@@ -140,4 +163,71 @@ test('normalizarBando não "repara" quem está em ataque em andamento', () => {
   a.ataquesEnviados.push({ id: 'atq9', membros: ['c1'] });
   run('normalizarBando(estado.assentamento, estado.personagem);');
   assert.equal(a.bando[0].estado, 'missao');
+});
+
+// ── verificarAtaquesOnline / reconciliação / envio ──
+const comoDefensor = (id, vencedor = 'B') => ({
+  ...ataqueResolvido(vencedor, { lutadores: [{ id: 'z1', lado: 'A', vida: 0 }, { id: 'c1', lado: 'B', vida: 40 }, { id: 'c2', lado: 'B', vida: 40 }] }),
+  id, atacante: 'outro', defensor: 'eu', aplicado_atacante: true, aplicado_defensor: false,
+});
+
+test('verificarAtaquesOnline: aplica uma vez, salva o jogo antes de marcar no servidor', async () => {
+  const { ctx, run, a } = criarJogo();
+  ctx.consultas.ataques = { data: [comoDefensor('d1')], error: null };
+  await run('verificarAtaquesOnline()');
+  assert.deepEqual(simples(a.ataquesAplicados), ['d1']);
+  assert.equal(a.relatorios.length, 1);
+  assert.equal(ctx.chamadasRpc.filter(c => c.nome === 'marcar_ataque_aplicado').length, 1);
+  assert.ok(ctx.ordem.indexOf('salvar') >= 0 && ctx.ordem.indexOf('salvar') < ctx.ordem.indexOf('rpc:marcar_ataque_aplicado'));
+  // a mesma linha voltando (marcação falhou antes) não reaplica
+  await run('verificarAtaquesOnline()');
+  assert.equal(a.relatorios.length, 1);
+});
+
+test('verificarAtaquesOnline: erro ao aplicar um ataque não o deixa reaplicar nem trava o seguinte', async () => {
+  const { ctx, run, a } = criarJogo();
+  ctx.console = { ...console, error() {} };
+  let n = 0;
+  ctx.entregarLoot = () => { if (n++ === 0) throw new Error('falha no loot'); };
+  const linha = id => ({ ...ataqueResolvido('A'), id, aplicado_atacante: false, aplicado_defensor: true });
+  ctx.consultas.ataques = { data: [linha('r1'), linha('r2')], error: null };
+  await run('verificarAtaquesOnline()');
+  assert.ok(a.ataquesAplicados.includes('r1')); // gravado antes de aplicar
+  assert.ok(a.ataquesAplicados.includes('r2'));
+  assert.equal(a.relatorios.length, 1); // só o r2 chegou ao fim
+  assert.equal(ctx.chamadasRpc.filter(c => c.nome === 'marcar_ataque_aplicado').length, 1);
+});
+
+test('reconciliação: ataque enviado sumido do servidor há >10 min libera o combatente; recente fica', async () => {
+  const { ctx, run, a } = criarJogo();
+  const minutos = m => new Date(Date.now() - m * 60000).toISOString();
+  a.bando[0].estado = 'missao'; a.bando[1].estado = 'missao';
+  a.ataquesEnviados.push({ id: 'velho', membros: ['c1'], chegada: minutos(11), alvo: 'X' }, { id: 'novo', membros: ['c2'], chegada: minutos(2), alvo: 'Y' });
+  ctx.consultas.ataques = { data: [], error: null };
+  await run('verificarAtaquesOnline()');
+  assert.deepEqual(simples(a.ataquesEnviados.map(x => x.id)), ['novo']);
+  assert.equal(a.bando[0].estado, 'pronto');
+  assert.equal(a.bando[1].estado, 'missao');
+  assert.ok(ctx.logs.some(l => /não foi encontrado no servidor/.test(l)));
+});
+
+test('iniciarAtaqueOnline limita atq/def/vida do time enviado', async () => {
+  const { ctx, run, a } = criarJogo();
+  a.bando[0].atqBase = 30; a.bando[0].defBase = 40; a.bando[0].vida = 500;
+  ctx.respostasRpc.iniciar_ataque = { data: { id: 'x', chegada: new Date().toISOString(), defensor_nome: 'Z' }, error: null };
+  ctx.alvo = { user_id: 'outro' };
+  await run('iniciarAtaqueOnline(alvo, ["c1"])');
+  const env = ctx.chamadasRpc.find(c => c.nome === 'iniciar_ataque');
+  const m = env.args.p_time[0];
+  assert.deepEqual([m.atq, m.def, m.vida], [17, 18, 70]);
+  assert.equal(a.ataquesEnviados[0].id, 'x');
+});
+
+test('publicarPerfilOnline: o limite agenda uma publicação final (um só timer)', async () => {
+  const { ctx, run } = criarJogo();
+  await run('publicarPerfilOnline()');
+  await run('publicarPerfilOnline()');
+  await run('publicarPerfilOnline()');
+  assert.equal(ctx.timers.length, 1);
+  assert.equal(ctx.chamadasRpc.length, 1);
 });

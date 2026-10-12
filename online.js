@@ -15,9 +15,12 @@ const APLICADOS_MAX = 30;            // ids de ataques já aplicados guardados n
 // Estado só da sessão (não vai para o save)
 const online = {
   perfis: [],          // linhas de assentamentos_publicos (sub-aba aberta)
+  ranking: [],         // top 20 por pontos
   meuPerfil: null,
   contra: [],          // ataques a caminho contra mim
   ultimaPublicacao: 0,
+  timerPublicar: null, // publicação atrasada (a última mudança não pode se perder no limite de 20 s)
+  publicouNaLista: false, // a lista só força a primeira publicação da sessão
   verificando: false,
   timerLista: null,
 };
@@ -60,7 +63,13 @@ function montarPerfilPublico() {
 async function publicarPerfilOnline(forcar = false) {
   if (!participaOnline()) return;
   const agora = Date.now();
-  if (!forcar && agora - online.ultimaPublicacao < PUBLICAR_INTERVALO_MS) return;
+  const restante = PUBLICAR_INTERVALO_MS - (agora - online.ultimaPublicacao);
+  if (!forcar && restante > 0) {
+    if (!online.timerPublicar) {
+      online.timerPublicar = setTimeout(() => { online.timerPublicar = null; publicarPerfilOnline(); }, restante + 50);
+    }
+    return;
+  }
   online.ultimaPublicacao = agora;
   const { error } = await getSB().rpc('publicar_perfil', { p: montarPerfilPublico() });
   if (error) console.error('[Online] Falha ao publicar o perfil:', error.message);
@@ -75,27 +84,37 @@ async function verificarAtaquesOnline() {
   online.verificando = true;
   try {
     const sb = getSB(), eu = _sbUser.id;
-    const { data, error } = await sb.from('ataques').select('*')
-      .or('estado.eq.a_caminho,aplicado_atacante.eq.false,aplicado_defensor.eq.false');
+    // Só os meus ataques que ainda importam: a caminho ou ainda não aplicados por mim
+    const { data, error } = await sb.from('ataques')
+      .select('id,atacante,defensor,atacante_nome,defensor_nome,semente,chegada,estado,resultado,aplicado_atacante,aplicado_defensor,time_atacante')
+      .or(`and(atacante.eq.${eu},or(estado.eq.a_caminho,aplicado_atacante.eq.false)),and(defensor.eq.${eu},or(estado.eq.a_caminho,aplicado_defensor.eq.false))`)
+      .order('chegada', { ascending: true })
+      .limit(20);
     if (error) { console.error('[Online] Falha ao verificar ataques:', error.message); return; }
+    reconciliarAtaquesEnviados(data || []);
     online.contra = [];
     for (const at of data || []) {
-      const papel = at.atacante === eu ? 'atacante' : 'defensor';
-      let atual = at;
-      if (atual.estado === 'a_caminho') {
-        if (new Date(atual.chegada) > new Date()) {
-          if (papel === 'defensor') online.contra.push(atual);
-          continue;
+      try {
+        const papel = at.atacante === eu ? 'atacante' : 'defensor';
+        let atual = at;
+        if (atual.estado === 'a_caminho') {
+          if (new Date(atual.chegada) > new Date()) {
+            if (papel === 'defensor') online.contra.push(atual);
+            continue;
+          }
+          const r = await sb.rpc('resolver_ataque', { p_ataque: atual.id });
+          if (r.error) { console.error('[Online] Falha ao resolver ataque:', r.error.message); continue; }
+          atual = r.data;
         }
-        const r = await sb.rpc('resolver_ataque', { p_ataque: atual.id });
-        if (r.error) { console.error('[Online] Falha ao resolver ataque:', r.error.message); continue; }
-        atual = r.data;
-      }
-      const jaAplicou = papel === 'atacante' ? atual.aplicado_atacante : atual.aplicado_defensor;
-      if (atual.estado === 'resolvido' && !jaAplicou) {
-        aplicarResultadoAtaque(atual, papel);
-        const m = await sb.rpc('marcar_ataque_aplicado', { p_ataque: atual.id });
-        if (m.error) console.error('[Online] Falha ao marcar ataque aplicado:', m.error.message);
+        const jaAplicou = papel === 'atacante' ? atual.aplicado_atacante : atual.aplicado_defensor;
+        if (atual.estado === 'resolvido' && !jaAplicou) {
+          aplicarResultadoAtaque(atual, papel);
+          salvarJogo(); // grava local e na nuvem antes de avisar o servidor
+          const m = await sb.rpc('marcar_ataque_aplicado', { p_ataque: atual.id });
+          if (m.error) console.error('[Online] Falha ao marcar ataque aplicado:', m.error.message);
+        }
+      } catch (e) {
+        console.error('[Online] Falha ao processar ataque:', e); // um ataque ruim não trava os outros
       }
     }
     atualizarBadgeAssentamento();
@@ -105,11 +124,33 @@ async function verificarAtaquesOnline() {
   }
 }
 
-// Aplica no save a parte deste jogador. Guarda o id para nunca aplicar duas vezes
-// (mesmo que a marcação no servidor falhe e o ataque volte na próxima verificação).
+// Ataque enviado que o servidor não devolve mais (some do save do servidor): depois de
+// 10 min da chegada os combatentes voltam, para não ficarem presos em 'missao' para sempre.
+function reconciliarAtaquesEnviados(linhas) {
+  const a = estado.assentamento;
+  const vistos = new Set(linhas.map(l => l.id));
+  const limite = Date.now() - 10 * 60000;
+  const sumidos = a.ataquesEnviados.filter(x => !vistos.has(x.id) && new Date(x.chegada).getTime() < limite);
+  if (!sumidos.length) return;
+  for (const x of sumidos) {
+    for (const c of a.bando) {
+      if (x.membros.includes(c.id) && c.estado === 'missao') {
+        c.estado = estadoAposCombate(c.vida, c.vidaMax) === 'ferido' ? 'ferido' : 'pronto';
+      }
+    }
+    log('⚠️ Um ataque enviado não foi encontrado no servidor; os combatentes voltaram.', 'log-sistema');
+  }
+  a.ataquesEnviados = a.ataquesEnviados.filter(x => !sumidos.includes(x));
+  atualizarTelaAssentamento();
+}
+
+// Aplica no save a parte deste jogador. O id é guardado ANTES de aplicar para nunca aplicar
+// duas vezes (nem se algo der erro no meio, nem se a marcação no servidor falhar).
 function aplicarResultadoAtaque(at, papel) {
   const a = estado.assentamento;
   if (a.ataquesAplicados.includes(at.id)) return;
+  a.ataquesAplicados.push(at.id);
+  if (a.ataquesAplicados.length > APLICADOS_MAX) a.ataquesAplicados.splice(0, a.ataquesAplicados.length - APLICADOS_MAX);
   const res = at.resultado;
   const souAtacante = papel === 'atacante';
   const venceu = souAtacante === (res.vencedor === 'A');
@@ -147,8 +188,6 @@ function aplicarResultadoAtaque(at, papel) {
   venceu ? 'log-sucesso' : 'log-perigo');
   if (baixas.mortos.length) log(`💀 Mortos: ${baixas.mortos.join(', ')}.`, 'log-perigo');
 
-  a.ataquesAplicados.push(at.id);
-  if (a.ataquesAplicados.length > APLICADOS_MAX) a.ataquesAplicados.splice(0, a.ataquesAplicados.length - APLICADOS_MAX);
   atualizarTelaAssentamento();
 }
 
@@ -205,7 +244,11 @@ async function iniciarAtaqueOnline(alvo, ids) {
   if (!membros.length) { mostrarToast('Nenhum combatente pronto.'); return; }
   const time = membros.map(id => {
     const s = statsLutador(combatentePorId(id));
-    return { id: s.id, nome: String(s.nome).replace(/[<>]/g, '').slice(0, 24), atq: s.atq, def: s.def, vida: s.vida };
+    return {
+      id: String(s.id).slice(0, 40), nome: String(s.nome).replace(/[<>]/g, '').slice(0, 24),
+      atq: Math.min(LIMITES_LUTADOR.atq, s.atq), def: Math.min(LIMITES_LUTADOR.def, s.def),
+      vida: Math.max(1, Math.min(LIMITES_LUTADOR.vida, s.vida)),
+    };
   });
   await publicarPerfilOnline(true);
   const { data, error } = await getSB().rpc('iniciar_ataque', { p_alvo: alvo.user_id, p_time: time });
@@ -223,14 +266,28 @@ async function iniciarAtaqueOnline(alvo, ids) {
 
 async function carregarListaOnline() {
   if (!participaOnline()) return;
-  if (!online.meuPerfil) await publicarPerfilOnline(true); // primeira vez: aparecer na lista antes de consultar
-  const { data, error } = await getSB().from('assentamentos_publicos')
-    .select('user_id,nome,nivel,pontos,vitorias,derrotas,visto_em,defensores,moradores,bonus_def,escudo_ate,ataques_dia,ataques_qtd,alvos_dia')
-    .order('pontos', { ascending: false }).order('vitorias', { ascending: false }).limit(100);
-  if (error) { console.error('[Online] Falha ao carregar assentamentos:', error.message); return; }
-  online.meuPerfil = (data || []).find(p => p.user_id === _sbUser.id) || null;
-  online.perfis = (data || []).filter(p => p.user_id !== _sbUser.id);
-  online.ranking = data || [];
+  const sb = getSB(), eu = _sbUser.id;
+  const colunas = 'user_id,nome,nivel,pontos,vitorias,derrotas,visto_em,defensores,moradores,bonus_def,escudo_ate,ataques_dia,ataques_qtd,alvos_dia';
+  let minha = await sb.from('assentamentos_publicos').select(colunas).eq('user_id', eu).maybeSingle();
+  if (!minha.error && !minha.data && !online.publicouNaLista) {
+    // primeira vez da sessão: aparecer na lista antes de consultar (depois disso vale o limite de 20 s)
+    online.publicouNaLista = true;
+    await publicarPerfilOnline(true);
+    minha = await sb.from('assentamentos_publicos').select(colunas).eq('user_id', eu).maybeSingle();
+  }
+  if (minha.error) { console.error('[Online] Falha ao carregar meu perfil:', minha.error.message); return; }
+  online.meuPerfil = minha.data || null;
+
+  let alvos = sb.from('assentamentos_publicos').select(colunas).neq('user_id', eu);
+  if (online.meuPerfil) alvos = alvos.gte('nivel', online.meuPerfil.nivel - PVP.faixaNivel).lte('nivel', online.meuPerfil.nivel + PVP.faixaNivel);
+  alvos = alvos.order('visto_em', { ascending: false }).limit(50);
+  const rank = sb.from('assentamentos_publicos').select(colunas)
+    .order('pontos', { ascending: false }).order('vitorias', { ascending: false }).limit(20);
+  const [ra, rr] = await Promise.all([alvos, rank]);
+  if (ra.error) { console.error('[Online] Falha ao carregar assentamentos:', ra.error.message); return; }
+  if (rr.error) console.error('[Online] Falha ao carregar o ranking:', rr.error.message);
+  online.perfis = ra.data || [];
+  if (!rr.error) online.ranking = rr.data || [];
   renderizarOnline();
 }
 
