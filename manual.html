@@ -674,6 +674,28 @@ body.marcar [data-h]:hover, body.marcar [data-h].on { box-shadow: 0 0 0 2px var(
     </div>
   </section>
 
+  <!-- ═══════════ ATAQUES ONLINE ═══════════ -->
+  <section class="screen" id="s-ataques" data-nome="Ataques online" hidden>
+    <p class="screen-intro">Com uma conta, seu assentamento aparece para os outros jogadores, e você pode <strong>atacar</strong> os deles com o Bando. Quem vence leva Baterias e itens do depósito do outro. O combate é decidido no servidor, então ninguém consegue inventar uma vitória.</p>
+    <div class="frame stack">
+      <div class="frame-label">Aba Assentamento · sub-aba 🌐 Ataques</div>
+      <div class="card stack" data-h="atq-andamento" tabindex="0">
+        <span class="sec-t" style="margin:0">🚩 Ataques em andamento</span>
+        <span style="color:var(--red)">⚠️ Ataque a caminho: <b>Vila do Zé</b>, chega às 18:42</span>
+        <span>⚔️ Seu ataque a <b>Forte Norte</b> chega às 18:40</span>
+      </div>
+      <div class="card stack">
+        <span class="sec-t" style="margin:0">🌐 Assentamentos</span>
+        <div class="mini-slot" data-h="atq-alvo" tabindex="0">🟢 <b>Vila do Zé</b> <span class="chip">Nível 3</span> <span class="dim">🏆 40 · ⚔️ 22 🛡️ 18</span><span class="btn sm" style="margin-left:auto" data-h="atq-atacar" tabindex="0">Atacar</span></div>
+        <div class="mini-slot" data-h="atq-bloqueio" tabindex="0">⚫ <b>Forte Norte</b> <span class="chip">Nível 4</span> <span class="dim">🏆 25 · ⚔️ 8 🛡️ 9 (milícia)</span><span class="btn sm off" style="margin-left:auto">Atacar</span><span class="dim" style="flex-basis:100%;text-align:right;font-size:12px">Protegido até 21:15</span></div>
+      </div>
+      <div class="card stack" data-h="atq-ranking" tabindex="0">
+        <span class="sec-t" style="margin:0">🏆 Ranking</span>
+        <span>1º Vila do Zé · Nv 3 · 🏆 40 · 4V/1D</span>
+        <span>2º Forte Norte · Nv 4 · 🏆 25 · 3V/2D</span>
+      </div>
+    </div>
+  </section>
   <!-- ═══════════ 8. ITENS E EVENTOS ═══════════ -->
   <section class="screen" id="s-itens" data-nome="Janelas e eventos" hidden>
     <p class="screen-intro">Clicar num item da mochila abre a <strong>janela do item</strong>. Durante as explorações aparecem <strong>eventos</strong> com escolhas, e nem toda escolha é segura.</p>
@@ -920,6 +942,12 @@ const H = {
   missao: ['Missão', 'Escolha quais combatentes prontos vão. Eles ficam fora pelo tempo indicado (o tempo corre mesmo com o jogo fechado). Na volta, o combate é resolvido e aparece o relatório. Vitória traz Baterias, itens (para o Depósito) e XP. Cada alvo pode ser atacado uma vez por dia; os inimigos ficam mais fortes conforme o nível do assentamento.'],
   relatorios: ['Últimos combates', 'Os 5 últimos combates (missões e invasões). Clique para ver rodada a rodada, quem se feriu, quem morreu e o que foi saqueado. Invasões acontecem quando você está fora explorando ao anoitecer; com o Bando pronto em casa, ele luta antes de qualquer item ser roubado.'],
 
+  // Ataques online
+  'atq-andamento': ['Ataques em andamento', 'Seus grupos a caminho e os ataques vindo na sua direção, com a hora de chegada. O grupo leva <b>5 minutos</b> para chegar. Se você estiver fora quando um ataque chegar, o resultado é aplicado e o relatório aparece quando você voltar.'],
+  'atq-alvo': ['Assentamento de outro jogador', '🟢 jogou nos últimos 5 minutos, ⚫ está offline (também pode ser atacado). Mostra nível, pontos de guerra e o ⚔️/🛡️ estimado da defesa. Sem Bando em casa, os moradores defendem como <b>milícia</b> (mais fraca).'],
+  'atq-atacar': ['Atacar', 'Escolha quais combatentes prontos vão. Se vencer, você leva <b>15% das Baterias</b> do outro (no máximo 200) e até <b>3 tipos de item</b> do depósito dele. Mortos e feridos valem para os dois lados. Vitória: +10 pontos e +60 XP; derrota: −3 pontos e +10 XP.'],
+  'atq-bloqueio': ['Quando não dá para atacar', 'Só é possível atacar assentamentos até <b>2 níveis</b> acima ou abaixo do seu, no máximo <b>3 ataques por dia</b> e <b>uma vez por dia</b> o mesmo alvo. Quem foi atacado fica <b>protegido por 6 horas</b>. O motivo aparece embaixo do botão.'],
+  'atq-ranking': ['Ranking', 'Os 20 primeiros por pontos de guerra: vitória atacando +10, defesa vencida +5, derrota atacando −3 (nunca abaixo de zero). Mostra vitórias (V) e derrotas (D).'],
   // Itens e eventos
   'item-efeitos': ['Efeitos', 'O que acontece ao usar. Saciedade e hidratação aparecem como <b>+</b> quando enchem a barra.'],
   usar: ['Usar', 'Consome 1 unidade e aplica os efeitos. Em <b>manuais e revistas</b>, ensina receitas; em <b>anotações</b>, revela um local no mapa.'],
