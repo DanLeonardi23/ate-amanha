@@ -173,6 +173,18 @@ test('ataque online: combatentes do jogador que sobrevivem ganham XP de combate'
   assert.deepEqual(simples(d.a.bando.map(c => c.xp)), [8, 8]); // defensor derrotado
 });
 
+test('defensor que saiu em missão depois do ataque começar fica de fora (vida, estado e XP)', () => {
+  const { ctx, run, a } = criarJogo();
+  a.bando.forEach(c => { c.xp = 0; });
+  const fora = a.bando.find(c => c.id === 'c2');
+  fora.estado = 'missao';
+  const vidaAntes = fora.vida;
+  ctx.ataque = ataqueResolvido('B', { lutadores: [{ id: 'z1', lado: 'A', vida: 0 }, { id: 'c1', lado: 'B', vida: 30 }, { id: 'c2', lado: 'B', vida: 0 }] });
+  run('aplicarResultadoAtaque(ataque, "defensor")');
+  assert.deepEqual(simples(a.bando.map(c => [c.id, c.estado, c.xp])), [['c1', 'pronto', 20], ['c2', 'missao', 0]]);
+  assert.equal(fora.vida, vidaAntes);
+});
+
 test('normalizarBando não "repara" quem está em ataque em andamento', () => {
   const { run, a } = criarJogo();
   a.bando[0].estado = 'missao';

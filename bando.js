@@ -33,8 +33,8 @@ function normalizarBando(assent, personagem) {
   // Reparo: quem ficou "em missão" sem missão nem ataque correspondente (erro ao resolver) volta ao Bando
   const emCampo = new Set([...assent.missoes.emAndamento, ...assent.ataquesEnviados].flatMap(m => m.membros || []));
   for (const c of assent.bando) {
-    if (!c.nivel) c.nivel = 1;                     // evolução dos combatentes
-    if (typeof c.xp !== 'number') c.xp = 0;
+    c.nivel = Math.min(NIVEL_COMBATENTE_MAX, Math.max(1, Math.floor(c.nivel) || 1)); // evolução dos combatentes
+    if (!Number.isFinite(c.xp) || c.xp < 0) c.xp = 0;
     if (c.estado === 'missao' && !emCampo.has(c.id)) {
       const est = estadoAposCombate(c.vida, c.vidaMax);
       if (est === 'morto') { c.vida = 1; c.estado = 'ferido'; } else c.estado = est;

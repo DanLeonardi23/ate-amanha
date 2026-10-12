@@ -178,7 +178,11 @@ function aplicarResultadoAtaque(at, papel) {
     ganharXpAssentamento(venceu ? PVP.xp.vitoria : PVP.xp.derrota);
     partes.push(`+${venceu ? PVP.xp.vitoria : PVP.xp.derrota} XP · ${venceu ? `+${PVP.pontos.vitoria}` : PVP.pontos.derrota} pontos`);
   } else {
-    if (!res.milicia) baixas = aplicarResultadoCombate(res, 'B', venceu);
+    if (!res.milicia) {
+      // Quem saiu em missão depois do ataque começar não estava em casa: fica de fora
+      const emCasa = res.lutadores.filter(l => l.lado !== 'B' || combatentePorId(l.id)?.estado !== 'missao');
+      baixas = aplicarResultadoCombate({ ...res, lutadores: emCasa }, 'B', venceu);
+    }
     else partes.push('Sem Bando em casa: os moradores defenderam como milícia.');
     if (!venceu) {
       const perdas = perderSaque(res.saque);

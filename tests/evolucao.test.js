@@ -92,6 +92,15 @@ test('save antigo: combatentes ganham nível 1 e XP 0', () => {
   assert.deepEqual(a.bando.map(c => [c.nivel, c.xp]).map(x => [...x]), [[1, 0], [1, 0]]);
 });
 
+test('save corrompido: nível fora de 1–5 e XP inválido são corrigidos', () => {
+  const { run, a } = criarJogo();
+  Object.assign(a.bando[0], { nivel: 9, xp: NaN });
+  Object.assign(a.bando[1], { nivel: -2, xp: -5 });
+  run('normalizarBando(estado.assentamento, estado.personagem);');
+  assert.deepEqual(a.bando.map(c => [c.nivel, c.xp]).map(x => [...x]), [[5, 0], [1, 0]]);
+  assert.doesNotThrow(() => run('htmlCombatente(estado.assentamento.bando[0])'));
+});
+
 test('XP só para quem sobreviveu: +20 na vitória, +8 na derrota, nada para morto', () => {
   const { ctx, run, a } = criarJogo();
   ctx.res = { lutadores: [{ id: 'c1', lado: 'A', vida: 30 }, { id: 'c2', lado: 'A', vida: 0 }] };
