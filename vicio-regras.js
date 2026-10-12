@@ -55,22 +55,21 @@
     stats.semUso = 0;
   }
 
-  // Avança 'segundos' de jogo: efeitos da abstinência (se 'efeitos'), queda da dependência
-  // e tempo sem usar. Retorna o estágio de abstinência aplicado (ou null).
+  // Avança 'segundos' de jogo: queda da dependência e tempo sem usar; depois, os efeitos da
+  // abstinência (se 'efeitos') pelo estado já atualizado, para que quem lê o estágio depois
+  // (avisos, causa da morte) veja o mesmo que foi aplicado. Retorna esse estágio (ou null).
   function tickVicio(stats, segundos, opcoes = {}) {
     const { medico = false, estresseMulti = 1, vidaDecay = 1, efeitos = true } = opcoes;
-    let estagio = null;
-    if (efeitos) {
-      estagio = estagioAbstinencia(stats.vicio, stats.semUso);
-      if (estagio) {
-        const f = medico ? VICIO.medico.abstinencia : 1;
-        stats.estresse = limitar(stats.estresse + estagio.estresse * f * estresseMulti * segundos, 0, 100);
-        if (estagio.vida) stats.vida = limitar(stats.vida - estagio.vida * f * vidaDecay * segundos, 0, stats.vidaMax);
-      }
-    }
     const queda = VICIO.quedaPorSegundo * (medico ? VICIO.medico.queda : 1) * segundos;
     stats.vicio = limitar((stats.vicio || 0) - queda, 0, 100);
     stats.semUso = (stats.semUso || 0) + segundos;
+    if (!efeitos) return null;
+    const estagio = estagioAbstinencia(stats.vicio, stats.semUso);
+    if (estagio) {
+      const f = medico ? VICIO.medico.abstinencia : 1;
+      stats.estresse = limitar(stats.estresse + estagio.estresse * f * estresseMulti * segundos, 0, 100);
+      if (estagio.vida) stats.vida = limitar(stats.vida - estagio.vida * f * vidaDecay * segundos, 0, stats.vidaMax);
+    }
     return estagio;
   }
 

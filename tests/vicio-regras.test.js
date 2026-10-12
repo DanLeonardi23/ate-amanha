@@ -52,6 +52,14 @@ test('efeitos por estágio, por segundo, com traço', () => {
   perto(grave.vida, 80 - 0.05 * 2 * 10);
 });
 
+test('o estágio aplicado é o mesmo que se lê depois do tick (causa da morte coerente)', () => {
+  for (const vicio of [75.01, 50.01, 25.01, 90]) {
+    const s = stats({ vicio, semUso: 300 });
+    const aplicado = V.tickVicio(s, 1);
+    assert.equal(aplicado?.id ?? null, V.estagioAbstinencia(s.vicio, s.semUso)?.id ?? null, `vicio ${vicio}`);
+  }
+});
+
 test('Médico corta os efeitos da abstinência pela metade', () => {
   const g = stats({ vicio: 90, semUso: 300 });
   V.tickVicio(g, 10, { medico: true });

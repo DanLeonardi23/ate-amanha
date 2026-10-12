@@ -1715,7 +1715,7 @@ function esc(val) {
 const EFEITO_EXIBICAO = { fome: 'saciedade', sede: 'hidratação' };
 function formatarEfeitos(efeitos, sep = ', ') {
   return Object.entries(efeitos).map(([k, v]) => {
-    const nome = EFEITO_EXIBICAO[k] ?? k;
+    const nome = EFEITO_EXIBICAO[k] ?? (k === 'vicio' ? 'vício' : k);
     const val  = EFEITO_EXIBICAO[k] ? -v : v;
     return `${val > 0 ? '+' : ''}${val} ${nome}`;
   }).join(sep);
@@ -2144,13 +2144,15 @@ function usarItem(id) {
   const efeitos   = item.efeitos || {};
   const tracoData = TRACOS[estado.personagem.traco];
   const dose      = efeitos.vicio || 0; // substância que vicia (Bebida, Whisky, Analgésico)
+  const aplicados = {};                  // valores de fato aplicados (tolerância, traço), para o registro
 
   for (const [stat, val] of Object.entries(efeitos)) {
-    if (stat === 'vicio') continue;      // aplicado abaixo como dose
+    if (stat === 'vicio') { aplicados.vicio = val; continue; } // aplicado abaixo como dose
     let v = val;
     if (dose && stat === 'estresse') v = aliviarComTolerancia(v, estado.stats.vicio);
     if (val > 0 && stat === 'vida' && tracoData.efeitos.curaBonus)
       v = Math.round(v * tracoData.efeitos.curaBonus);
+    aplicados[stat] = v;
     estado.stats[stat] = clamp((estado.stats[stat] || 0) + v, 0,
       stat === 'vida' ? estado.stats.vidaMax : 100);
   }
@@ -2187,7 +2189,7 @@ function usarItem(id) {
   }
 
   removerItem(id, 1);
-  const fx = formatarEfeitos(efeitos);
+  const fx = formatarEfeitos(aplicados);
   log(`Você usou: ${item.icone} ${item.nome} (${fx})`, 'log-sucesso');
   mostrarToast(`${item.icone} ${item.nome} utilizado`);
   fecharModal();
@@ -3365,7 +3367,7 @@ function atualizarUI() {
   if (s.sede >= 80)     av('💧 Com muita sede!', s.sede >= 95 ? 'perigo' : 'alerta');
   if (s.estresse >= 75) av('😤 Estresse elevado', 'alerta');
   const abst = estagioAbstinencia(s.vicio, s.semUso);
-  if (abst) av(`🍶 Abstinência ${abst.nome}${abst.vida ? ', drenando vida' : ''}: beber alivia, ficar limpo cura`, abst.id === 'leve' ? 'alerta' : 'perigo');
+  if (abst) av(`🍶 Abstinência ${abst.nome}${abst.vida ? ', drenando vida' : ''}: uma dose alivia, ficar limpo cura`, abst.id === 'leve' ? 'alerta' : 'perigo');
   else if (estagioDependencia(s.vicio)) av(`💊 Dependente: abstinência em ${minutosParaAbstinencia(s.semUso)} min sem usar`, 'alerta');
   if (estado.condicoes.intoxicado > 0) av('🤢 Intoxicado! Use Carvão Ativado, Soro ou Kit Avançado', 'perigo');
   if (estado.condicoes.contundido)     av('🦯 Contundido! Use uma Tala Improvisada', 'perigo');
@@ -6226,11 +6228,12 @@ function normalizarParcela(p) {
   return p;
 }
 
-// Todos os moradores do assentamento: [{ parcela, idx, slot, npc }]
+// Algum morador Médico ativo (vício cai mais rápido e a abstinência pesa menos)
 function temMedicoAtivo() {
   return moradores().some(({ npc }) => npcAtivo(npc) && habCanonica(npc.habilidade) === 'medico');
 }
 
+// Todos os moradores do assentamento: [{ parcela, idx, slot, npc }]
 function moradores() {
   const lista = [];
   estado.assentamento.parcelas.forEach((parcela, idx) => {
