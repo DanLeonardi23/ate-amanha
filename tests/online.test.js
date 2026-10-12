@@ -221,7 +221,7 @@ test('iniciarAtaqueOnline limita atq/def/vida do time enviado', async () => {
   await run('iniciarAtaqueOnline(alvo, ["c1"])');
   const env = ctx.chamadasRpc.find(c => c.nome === 'iniciar_ataque');
   const m = env.args.p_time[0];
-  assert.deepEqual([m.atq, m.def, m.vida], [17, 18, 70]);
+  assert.deepEqual([m.atq, m.def, m.vida], [21, 22, 90]); // LIMITES_LUTADOR (Elite nível 5 equipado)
   assert.equal(a.ataquesEnviados[0].id, 'x');
 });
 

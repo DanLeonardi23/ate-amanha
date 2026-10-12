@@ -104,9 +104,44 @@
     };
   }
 
-  // Lutador para o motor de combate: atributos base + equipamento (+ bônus de defesa do assentamento)
+  // ── Evolução dos combatentes ──
+  // Nível 1–5: o XP de combate libera o treino, que custa Baterias. Cada nível acima do 1
+  // soma +1 ⚔️ e +1 🛡️ (calculados em statsLutador) e +5 ❤️ máx. (gravados no treino).
+  const NIVEIS_COMBATENTE = [
+    { nivel: 1, xp: 0,   custo: 0 },
+    { nivel: 2, xp: 50,  custo: 15 },
+    { nivel: 3, xp: 120, custo: 30 },
+    { nivel: 4, xp: 220, custo: 50 },
+    { nivel: 5, xp: 350, custo: 80 },
+  ];
+  const NIVEL_COMBATENTE_MAX = NIVEIS_COMBATENTE.length;
+  const BONUS_NIVEL = { atq: 1, def: 1, vida: 5 };
+  const XP_COMBATE = { vitoria: 20, derrota: 8 };
+  const SOLDO_POR_NIVEL = 2;
+
+  // Próximo treino ({ nivel, xp, custo }) ou null no nível máximo
+  function proximoTreino(c) {
+    return NIVEIS_COMBATENTE[c.nivel || 1] || null;
+  }
+
+  // { ok, motivo }: pode treinar agora?
+  function podeTreinar(c, baterias) {
+    const prox = proximoTreino(c);
+    if (!prox) return { ok: false, motivo: 'Nível máximo' };
+    if ((c.xp || 0) < prox.xp) return { ok: false, motivo: `Faltam ${prox.xp - (c.xp || 0)} XP` };
+    if (c.estado === 'missao' || c.estado === 'parado') return { ok: false, motivo: 'Indisponível agora' };
+    if (baterias < prox.custo) return { ok: false, motivo: `Precisa de ${prox.custo} Baterias` };
+    return { ok: true, motivo: null };
+  }
+
+  function soldoDe(c) {
+    return CATEGORIAS[c.categoria].soldo + SOLDO_POR_NIVEL * ((c.nivel || 1) - 1);
+  }
+
+  // Lutador para o motor de combate: atributos base + nível + equipamento (+ bônus de defesa do assentamento)
   function statsLutador(c, bonusDef = 0) {
-    let atq = c.atqBase, def = c.defBase + bonusDef;
+    const extra = ((c.nivel || 1) - 1);
+    let atq = c.atqBase + extra * BONUS_NIVEL.atq, def = c.defBase + extra * BONUS_NIVEL.def + bonusDef;
     for (const slot of SLOTS_COMBATENTE) {
       const e = COMBATE_EQUIP[c.equip?.[slot]];
       if (e) { atq += e.atq; def += e.def; }
@@ -155,7 +190,7 @@
 
   // ── Online (Etapa 2) ── espelho das regras do servidor (supabase_bando_online.sql);
   // aqui só servem para a interface explicar bloqueios antes de chamar o servidor.
-  const LIMITES_LUTADOR = { atq: 17, def: 18, vida: 70 };
+  const LIMITES_LUTADOR = { atq: 21, def: 22, vida: 90 }; // Elite nível 5 com Machado, Capacete Tático e Colete Balístico
   const PVP = {
     viagemMin: 5, escudoHoras: 6, ataquesPorDia: 3, faixaNivel: 2, onlineMin: 5,
     saquePct: 0.15, saqueMaxBaterias: 200, saqueItens: 3, saqueItemPct: 0.25,
@@ -207,6 +242,7 @@
     nivelPorXp, xpParaNivel, limiteBando, sortearCategoria, gerarRecruta, statsLutador,
     gerarInimigos, gerarInvasores, curaDiaria, estadoAposCombate, sortearLoot,
     LIMITES_LUTADOR, PVP, montarMilicia, hojeBrasilia, estaOnline, poderPerfil, motivoBloqueio,
+    NIVEIS_COMBATENTE, NIVEL_COMBATENTE_MAX, BONUS_NIVEL, XP_COMBATE, SOLDO_POR_NIVEL, proximoTreino, podeTreinar, soldoDe,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(raiz, api);
