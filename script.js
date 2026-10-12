@@ -6825,6 +6825,7 @@ function renderizarAssentamento() {
           parcela.habitantes[slot] = null;
           if (parcela.tipo === 'estufa') parcela.plantio = null; // sem cultivador, a plantação se perde
           log(`🚪 ${npc.nome} foi dispensado do assentamento.`, 'log-sistema');
+          perderXpAssentamento(XP_EVENTO.morador); // devolve o XP do acolhimento (evita ganhar de novo ao reacolher)
           mostrarToast(`🚪 ${npc.nome} saiu.`);
           atualizarBadgeAssentamento();
           salvarJogo();
