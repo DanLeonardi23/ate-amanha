@@ -177,6 +177,11 @@ create table if not exists assentamentos_publicos (
   alvos_dia   uuid[] not null default '{}'
 );
 
+alter table assentamentos_publicos drop constraint if exists assentamentos_defensores_tam;
+alter table assentamentos_publicos add constraint assentamentos_defensores_tam check (pg_column_size(defensores) < 8000);
+alter table assentamentos_publicos drop constraint if exists assentamentos_deposito_tam;
+alter table assentamentos_publicos add constraint assentamentos_deposito_tam check (pg_column_size(deposito) < 4000);
+
 alter table assentamentos_publicos enable row level security;
 drop policy if exists "Logados leem os assentamentos" on assentamentos_publicos;
 create policy "Logados leem os assentamentos" on assentamentos_publicos
@@ -222,16 +227,30 @@ returns boolean language sql immutable as $$
      and coalesce(char_length(l ->> 'id'), 0) between 1 and 40
      and coalesce(char_length(l ->> 'nome'), 0) between 1 and 24
      and (l ->> 'nome') !~ '[<>]'
-     and (l ->> 'atq') ~ '^\d+$' and (l ->> 'atq')::int <= 17
-     and (l ->> 'def') ~ '^\d+$' and (l ->> 'def')::int <= 18
-     and (l ->> 'vida') ~ '^\d+$' and (l ->> 'vida')::int between 1 and 70;
+     and case when jsonb_typeof(l -> 'atq') = 'number' and (l ->> 'atq') ~ '^\d+$'
+              then (l ->> 'atq')::int <= 17 else false end
+     and case when jsonb_typeof(l -> 'def') = 'number' and (l ->> 'def') ~ '^\d+$'
+              then (l ->> 'def')::int <= 18 else false end
+     and case when jsonb_typeof(l -> 'vida') = 'number' and (l ->> 'vida') ~ '^\d+$'
+              then (l ->> 'vida')::int between 1 and 70 else false end;
 $$;
 
+-- Time de 1..maximo lutadores válidos, sem ids repetidos
 create or replace function _time_valido(t jsonb, maximo int)
 returns boolean language sql immutable as $$
   select jsonb_typeof(t) = 'array'
      and jsonb_array_length(t) between 1 and maximo
-     and not exists (select 1 from jsonb_array_elements(t) e where not _lutador_valido(e));
+     and not exists (select 1 from jsonb_array_elements(t) e where not _lutador_valido(e))
+     and (select count(distinct e ->> 'id') from jsonb_array_elements(t) e) = jsonb_array_length(t);
+$$;
+
+-- Reconstrói o time só com os campos conhecidos (descarta chaves extras), mantendo a ordem
+create or replace function _time_limpo(t jsonb)
+returns jsonb language sql immutable as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', e ->> 'id', 'nome', e ->> 'nome',
+                                               'atq', (e ->> 'atq')::int, 'def', (e ->> 'def')::int,
+                                               'vida', (e ->> 'vida')::int) order by o), '[]'::jsonb)
+    from jsonb_array_elements(t) with ordinality as x(e, o);
 $$;
 
 -- Dia de jogo para os limites diários (horário de Brasília)
@@ -249,13 +268,15 @@ create or replace function publicar_perfil(p jsonb)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
   v_uid   uuid := auth.uid();
   v_xp    int;
   v_nivel int;
   v_bloq  boolean;
+  v_def_limpo jsonb;
+  v_dep_limpo jsonb;
 begin
   if v_uid is null then raise exception 'Faça login para jogar online.'; end if;
 
@@ -263,26 +284,38 @@ begin
   v_nivel := (p ->> 'nivel')::int;
   if coalesce(char_length(p ->> 'nome'), 0) not between 1 and 24 or (p ->> 'nome') ~ '[<>]' then raise exception 'Perfil inválido: nome.'; end if;
   if v_xp is null or v_xp < 0 or v_nivel is distinct from _nivel_por_xp(v_xp) then raise exception 'Perfil inválido: nível.'; end if;
-  if jsonb_typeof(p -> 'defensores') <> 'array' or jsonb_array_length(p -> 'defensores') > 8
-     or exists (select 1 from jsonb_array_elements(p -> 'defensores') e where not _lutador_valido(e)) then
+  if jsonb_typeof(p -> 'defensores') is distinct from 'array'
+     or not (jsonb_array_length(p -> 'defensores') = 0 or _time_valido(p -> 'defensores', 8)) then
     raise exception 'Perfil inválido: defensores.';
   end if;
   if (p ->> 'moradores')::int not between 0 and 8 then raise exception 'Perfil inválido: moradores.'; end if;
   if (p ->> 'bonus_def')::int not between 0 and 20 then raise exception 'Perfil inválido: bônus de defesa.'; end if;
   if (p ->> 'baterias')::int not between 0 and 100000 then raise exception 'Perfil inválido: Baterias.'; end if;
-  if jsonb_typeof(p -> 'deposito') <> 'array' or jsonb_array_length(p -> 'deposito') > 20
+  if jsonb_typeof(p -> 'deposito') is distinct from 'array' or jsonb_array_length(p -> 'deposito') > 20
      or exists (select 1 from jsonb_array_elements(p -> 'deposito') e
-                where coalesce(e ->> 'id', '') !~ '^[a-z0-9_]{1,40}$'
-                   or coalesce(e ->> 'qtd', '') !~ '^\d+$' or (e ->> 'qtd')::int not between 1 and 999) then
+                where jsonb_typeof(e) is distinct from 'object'
+                   or coalesce(e ->> 'id', '') !~ '^[a-z0-9_]{1,40}$'
+                   or e ->> 'id' in ('constructor', 'prototype', '__proto__', 'tostring', 'valueof', 'hasownproperty')
+                   or jsonb_typeof(e -> 'qtd') is distinct from 'number'
+                   or coalesce(e ->> 'qtd', '') !~ '^\d+$'
+                   or case when coalesce(e ->> 'qtd', '') ~ '^\d{1,4}$' then (e ->> 'qtd')::int not between 1 and 999 else true end)
+     or (select count(distinct e ->> 'id') from jsonb_array_elements(p -> 'deposito') e) <> jsonb_array_length(p -> 'deposito') then
     raise exception 'Perfil inválido: depósito.';
   end if;
+
+  v_def_limpo := _time_limpo(p -> 'defensores');
+  select coalesce(jsonb_agg(jsonb_build_object('id', e ->> 'id', 'qtd', (e ->> 'qtd')::int) order by o), '[]'::jsonb)
+    into v_dep_limpo from jsonb_array_elements(p -> 'deposito') with ordinality as x(e, o);
+
+  -- Trava a própria linha: um saque em andamento não pode ser sobrescrito por este publish
+  perform 1 from assentamentos_publicos where user_id = v_uid for update;
 
   select exists (select 1 from ataques where defensor = v_uid and estado = 'resolvido' and not aplicado_defensor)
     into v_bloq;
 
   insert into assentamentos_publicos (user_id, nome, nivel, xp, visto_em, defensores, moradores, bonus_def, baterias, deposito)
-  values (v_uid, p ->> 'nome', v_nivel, v_xp, now(), p -> 'defensores', (p ->> 'moradores')::int,
-          (p ->> 'bonus_def')::int, (p ->> 'baterias')::int, p -> 'deposito')
+  values (v_uid, p ->> 'nome', v_nivel, v_xp, now(), v_def_limpo, (p ->> 'moradores')::int,
+          (p ->> 'bonus_def')::int, (p ->> 'baterias')::int, v_dep_limpo)
   on conflict (user_id) do update set
     nome       = excluded.nome,
     nivel      = excluded.nivel,
@@ -302,11 +335,11 @@ create or replace function iniciar_ataque(p_alvo uuid, p_time jsonb)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
   v_uid  uuid := auth.uid();
-  v_atk  assentamentos_publicos%rowtype;
+  v_atk assentamentos_publicos%rowtype;
   v_def  assentamentos_publicos%rowtype;
   v_hoje date := _hoje();
   v_qtd  int;
@@ -334,7 +367,7 @@ begin
   if not _time_valido(p_time, least(8, 1 + v_atk.nivel)) then raise exception 'Grupo de ataque inválido.'; end if;
 
   insert into ataques (atacante, defensor, atacante_nome, defensor_nome, time_atacante, semente, chegada)
-  values (v_uid, p_alvo, v_atk.nome, v_def.nome, p_time, floor(random() * 2147483646)::bigint + 1, v_chegada)
+  values (v_uid, p_alvo, v_atk.nome, v_def.nome, _time_limpo(p_time), 0, v_chegada)
   returning id into v_id;
 
   update assentamentos_publicos
@@ -352,17 +385,18 @@ create or replace function resolver_ataque(p_ataque uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
   v_uid   uuid := auth.uid();
-  v_atq   ataques%rowtype;
+  v_atq  ataques%rowtype;
   v_def   assentamentos_publicos%rowtype;
   v_time_b jsonb := '[]';
   v_milicia boolean := false;
   v_res   jsonb;
   v_est   bigint;
-  v_r     double precision;
+  v_semente bigint;
+  v_r    double precision;
   v_sq_bat int := 0;
   v_sq_itens jsonb := '[]';
   v_dep   jsonb;
@@ -378,7 +412,9 @@ begin
   if v_atq.estado = 'resolvido' then return to_jsonb(v_atq); end if;
   if now() < v_atq.chegada then raise exception 'O ataque ainda não chegou.'; end if;
 
-  select * into v_def from assentamentos_publicos where user_id = v_atq.defensor for update;
+  -- Trava os dois perfis sempre na mesma ordem (evita deadlock entre resoluções cruzadas)
+  perform 1 from assentamentos_publicos where user_id in (v_atq.atacante, v_atq.defensor) order by user_id for update;
+  select * into v_def from assentamentos_publicos where user_id = v_atq.defensor;
 
   -- Time defensor: Bando pronto (+ bônus de defesa) ou, sem Bando, a milícia de moradores
   if jsonb_array_length(v_def.defensores) > 0 then
@@ -392,7 +428,9 @@ begin
     end loop;
   end if;
 
-  v_res := _simular_combate(v_atq.time_atacante, v_time_b, v_atq.semente);
+  -- A semente só nasce na hora da resolução (não dá para prever o resultado antes)
+  v_semente := floor(random() * 2147483646)::bigint + 1;
+  v_res := _simular_combate(v_atq.time_atacante, v_time_b, v_semente);
   v_est := (v_res ->> 'estado_rng')::bigint;
 
   if v_res ->> 'vencedor' = 'A' then
@@ -416,7 +454,8 @@ begin
         select jsonb_agg(case when s.qtd is null then d.e
                               else jsonb_build_object('id', d.e ->> 'id', 'qtd', (d.e ->> 'qtd')::int - s.qtd) end)
           from jsonb_array_elements(v_def.deposito) as d(e)
-          left join (select x ->> 'id' as id, (x ->> 'qtd')::int as qtd from jsonb_array_elements(v_sq_itens) x) s
+          left join (select x ->> 'id' as id, sum((x ->> 'qtd')::int)::int as qtd
+                       from jsonb_array_elements(v_sq_itens) x group by 1) s
             on s.id = d.e ->> 'id'
          where s.qtd is null or (d.e ->> 'qtd')::int - s.qtd > 0), '[]'::jsonb),
       derrotas = derrotas + 1,
@@ -431,6 +470,7 @@ begin
 
   update ataques set
     estado = 'resolvido',
+    semente = v_semente,
     resultado = (v_res - 'estado_rng') || jsonb_build_object(
       'saque', jsonb_build_object('baterias', v_sq_bat, 'itens', v_sq_itens),
       'milicia', v_milicia,
@@ -448,7 +488,7 @@ create or replace function marcar_ataque_aplicado(p_ataque uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -462,8 +502,17 @@ $$;
 
 -- ── Teste de paridade (só cálculo, sem acesso a dados) ───────
 create or replace function simular_combate_publico(time_a jsonb, time_b jsonb, semente bigint)
-returns jsonb language sql immutable as $$
-  select _simular_combate(time_a, time_b, semente) - 'estado_rng';
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not (_time_valido(time_a, 8) and _time_valido(time_b, 8)) then
+    raise exception 'Times inválidos.';
+  end if;
+  return _simular_combate(time_a, time_b, semente) - 'estado_rng';
+end;
 $$;
 
 
@@ -477,5 +526,23 @@ grant execute on function iniciar_ataque(uuid, jsonb) to authenticated;
 grant execute on function resolver_ataque(uuid) to authenticated;
 grant execute on function marcar_ataque_aplicado(uuid) to authenticated;
 grant execute on function simular_combate_publico(jsonb, jsonb, bigint) to anon, authenticated;
+
+-- Funções internas: ninguém de fora chama (as RPCs security definer continuam funcionando)
+revoke execute on function _imul32(bigint, bigint) from public, anon, authenticated;
+revoke execute on function _rng_avancar(bigint) from public, anon, authenticated;
+revoke execute on function _rng_valor(bigint) from public, anon, authenticated;
+revoke execute on function _simular_combate(jsonb, jsonb, bigint) from public, anon, authenticated;
+revoke execute on function _nivel_por_xp(int) from public, anon, authenticated;
+revoke execute on function _lutador_valido(jsonb) from public, anon, authenticated;
+revoke execute on function _time_valido(jsonb, int) from public, anon, authenticated;
+revoke execute on function _time_limpo(jsonb) from public, anon, authenticated;
+revoke execute on function _hoje() from public, anon, authenticated;
+
+-- Tabelas: clientes só leem (colunas limitadas); toda escrita passa pelas funções
+revoke insert, update, delete, truncate on assentamentos_publicos, ataques from anon, authenticated;
+revoke select on assentamentos_publicos from anon, authenticated;
+grant select (user_id, nome, nivel, pontos, vitorias, derrotas, visto_em, defensores, moradores,
+              bonus_def, escudo_ate, ataques_dia, ataques_qtd, alvos_dia)
+  on assentamentos_publicos to authenticated;
 
 commit;

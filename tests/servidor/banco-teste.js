@@ -9,6 +9,12 @@ async function prepararBanco(PGlite, sql) {
     create function auth.uid() returns uuid language sql stable
       as $$ select nullif(current_setting('teste.uid', true), '')::uuid $$;
   `);
+  // Como no Supabase: objetos novos do schema public já nascem acessíveis a anon/authenticated
+  await db.exec(`
+    grant usage on schema public, auth to anon, authenticated;
+    alter default privileges in schema public grant all on tables to anon, authenticated;
+    alter default privileges in schema public grant all on sequences to anon, authenticated;
+  `);
   await db.exec(sql);
   return db;
 }

@@ -20,7 +20,7 @@ const { prepararBanco } = require('./banco-teste.js');
     const A = time('A', int(0, 6)), B = time('B', int(0, 6));
     const semente = int(0, 2 ** 32 - 1);
     const js = simularCombate(A, B, semente);
-    const { rows } = await db.query('select simular_combate_publico($1, $2, $3) as r', [JSON.stringify(A), JSON.stringify(B), semente]);
+    const { rows } = await db.query('select _simular_combate($1, $2, $3) - \'estado_rng\' as r', [JSON.stringify(A), JSON.stringify(B), semente]);
     if (util.isDeepStrictEqual(js, rows[0].r)) iguais++;
     else console.log('DIFERENTE: caso', caso, 'semente', semente);
   }
